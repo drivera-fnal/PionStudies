@@ -22,6 +22,7 @@ subrun = array("i", [0])
 run = array("i", [0])
 
 daughter_avg_dEdX = array("d", [-1.]*100)
+daughter_reco_len = array("d", [-1.]*100)
 daughter_true_PDG = array("i", [-1]*100)
 daughter_true_ID = array("i", [-1]*100)
 truncated_avg_dEdX = array("d", [-1.]*100)
@@ -39,7 +40,8 @@ nTrackDaughters  = array("i", [0])
 nShowerDaughters  = array("i", [0])
 min_true_PDG  = array("i", [0])
 min_true_ID  = array("i", [0])
-beam_ID = array("d", [0])
+beam_ID = array("i", [0])
+nTrueDaughters = array("i", [0])
 
 outtree.Branch( "daughter_avg_dEdX", daughter_avg_dEdX, "daughter_avg_dEdX[100]/D" )
 outtree.Branch( "truncated_avg_dEdX", truncated_avg_dEdX, "truncated_avg_dEdX[100]/D" )
@@ -61,6 +63,9 @@ outtree.Branch( "daughter_true_ID", daughter_true_ID, "daughter_true_ID[100]/I" 
 outtree.Branch( "min_true_ID", min_true_ID, "min_true_ID/I" )
 outtree.Branch( "beam_ID", beam_ID, "beam_ID/I" )
 
+outtree.Branch( "nTrueDaughters", nTrueDaughters, "nTrueDaughters/I" )
+outtree.Branch( "daughter_reco_len", daughter_reco_len, "daughter_reco_len[100]/D" )
+
 
 cuts = tuple( [2.5 + i*.1 for i in range(0,31)] )
 
@@ -81,6 +86,7 @@ for e in tree:
   run[0] = e.run
 
   beam_ID[0] = e.reco_beam_truth_ID
+  nTrueDaughters[0] = len([i for i in e.true_beam_daughter_PDGs])
   #print e.reco_beam_truth_ID
 
   nPiPlus[0] = e.nPiPlus_truth
@@ -108,6 +114,7 @@ for e in tree:
     daughter_true_PDG[i] = -1
     daughter_true_ID[i] = -999
     truncated_avg_dEdX[i] = -1.
+    daughter_reco_len[i] = -1.
     nHits[i] = -1
 
   min_avg_dEdX[0] = -1.
@@ -125,6 +132,8 @@ for e in tree:
     
     daughter_true_PDG[n] = e.reco_daughter_truth_PDG[m]
     daughter_true_ID[n] = e.reco_daughter_truth_ID[m]
+
+    daughter_reco_len[n] = e.reco_daughter_len[m]
 
     total_dedx = sum( these_dedxs )
     avg_dedx = total_dedx / len(these_dedxs)
