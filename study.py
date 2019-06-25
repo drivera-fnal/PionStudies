@@ -1,20 +1,10 @@
 from ROOT import * 
 import sys
-from defcuts import defcuts, testcuts
+#from defcuts import defcuts, testcuts, testcuts_FS
+from new_defcuts import defcuts, testcuts, testcuts_FS
 from array import array
 
-def test_dircut(e): 
-  return ( (e.trackDirX*nominalDir[0]) + (e.trackDirY*nominalDir[1]) + (e.trackDirZ*nominalDir[2]) > .92 )
 
-def test_poscut(e):
-  dX = e.startX - nominalWindow[0]
-  dY = e.startY - nominalWindow[1]
-  dZ = e.startZ - nominalWindow[2]
-
-  return (dX > -11. and dX < 16. and dY > -15. and dY < 13. and dZ > 15. and dZ < 21.)
-
-def reco_track_cut(e):
-  return ( e.type == 13 and ( e.geantGood_PDG == -13 or e.geantGood_PDG == 211 ) )
 
 gROOT.SetBatch(1)
 
@@ -22,322 +12,487 @@ f = TFile( sys.argv[1] )
 
 tree = f.Get("pionana/beamana")
 
-#reco_track = "type == 13 && (geantGood_PDG == -13 || geantGood_PDG == 211 || geantGood_PDG == 2212)"
-reco_track = "type == 13 && (geantGood_PDG == -13 || geantGood_PDG == 211)"
+base_cut = " && type == 13 && (true_beam_PDG == -13 || true_beam_PDG == 211)"
 
-
-
-tree.Draw("MC_good_reco>>AllRecoTrack", reco_track)
-AllRecoTrack = gDirectory.Get("AllRecoTrack")
-reco_total = AllRecoTrack.Integral()
+fout = TFile( sys.argv[2], "RECREATE" )
 
 cuts = defcuts()
 
-
-hists = dict()
 lenhists = dict()
 
-fout = TFile( sys.argv[2], "RECREATE")
+names = [
+  "PrimaryPion",
+  "PrimaryMuon",
+  #"PrimaryProton",
+  #"PrimaryElectron",
+  "Cosmic",
+  "PrimaryBeamNotTrig",
+  "UpstreamIntToPiPlus",
+  "UpstreamIntToPiMinus",
+  "UpstreamIntToProton",
+  "UpstreamIntToKaon",
+  "UpstreamIntToNuc",
+  #"PionInelToPiPlus",
+  #"PionInelToPiMinus",
+  #"PionInelToProton",
+  #"PionInelToKaon",
+  #"PionInelToNuc",
+  #"UpstreamInt",
+  "Decay",
+  #"Other"
+]
 
-total = 0
-for name,cut in cuts.iteritems():
-  print name, cut
+tree.Draw( "len>>lenhist(40,0,500.)", "1 " + base_cut )
+lenhist = gDirectory.Get("lenhist")
+print "Total:", lenhist.Integral()
+#for name,cut in cuts.iteritems():
 
-  tree.Draw( "MC_good_reco>>"+name+"(2,0,2)", cut  + " && " +  reco_track)
-  hists[name] = gDirectory.Get(name)
-  fout.cd()
-  total = total + hists[name].Integral()
-  hists[name].Write()
+cut_total = 0
+for name in names:
+  cut = cuts[name]
+  #print name, cut
 
-  tree.Draw( "len>>len"+name+"(40,0.,500.)", cut  + " && " +  reco_track )
+  tree.Draw( "len>>len"+name+"(40,0.,500.)", cut  + base_cut )
   lenhists[name] = gDirectory.Get("len"+name)
-  fout.cd()
-  lenhists[name].Write()
-  
 
-print "Total:", total
-print "RecoTrackTotal:", reco_total
+  print name+":",lenhists[name].Integral()
+  cut_total = cut_total + lenhists[name].Integral()
+
+  fout.cd()
+  #lenhists[name].Write()
+  #print
+
+
+print cut_total
 
 colors = {
   "PrimaryMuon": (kOrange+1),
   "PrimaryPion": (kBlue-4),
-  "PrimaryProton": (kTeal+2),
+  #"PrimaryProton": (kTeal+2),
+  #"PrimaryElectron": (kViolet-7),
   "PrimaryBeamNotTrig": (kRed+2),
   "Cosmic": (kSpring-8),
-#  "PionInel": (kViolet-3),
-  "PionInelToPiPlus": (kViolet-3),
-  "PionInelToPiMinus": (kCyan-2),
-  "PionInelToProton": (kTeal),
-  "PionInelToKaon": (kYellow-6),
-  "PionInelToNuc": (kOrange+10),
-  "ProtonInel":(kViolet-2),
-  "NeutronInel":(kCyan-3),
+  "UpstreamIntToPiPlus": (kViolet-3),
+  "UpstreamIntToPiMinus": (kCyan-2),
+  "UpstreamIntToProton": (kTeal),
+  "UpstreamIntToKaon": (kYellow-6),
+  "UpstreamIntToNuc": (kOrange+10),
+  #"PionInelToPiPlus",
+  #"PionInelToPiMinus",
+  #"PionInelToProton",
+  #"PionInelToKaon",
+  #"PionInelToNuc",
+  #"UpstreamInt",
   "Other":(kMagenta-10),
   "Decay":(kOrange-7)
 }
 
 leg = TLegend(.15,.5,.45,.8)
-names = [
-  "PrimaryPion",
-  "PrimaryMuon",
-  "PrimaryProton",
-  "Cosmic",
-  "PrimaryBeamNotTrig",
-#  "PionInel",
-  "PionInelToPiPlus",
-  "PionInelToPiMinus",
-  "PionInelToProton",
-  "PionInelToKaon",
-  "PionInelToNuc",
-  "Decay",
-  "Other"
-]
 
-stack = THStack("stack","")
+
 lenstack = THStack("lenstack","")
 for name in names:
-  hist = hists[name]
-  print name
-  hist.SetFillColor(colors[name]) 
-  hist.SetLineColor(colors[name]) 
-  stack.Add(hist)
 
   lenhist = lenhists[name]
   lenhist.SetFillColor(colors[name]) 
   lenhist.SetLineColor(colors[name]) 
   lenstack.Add(lenhist)
-  leg.AddEntry( hist, name, "f")
+  leg.AddEntry( lenhist, name, "f")
 
 leg.Write("leg")
 
-stack.Write()
 lenstack.Write()
 
-#newcuts = {
-#  "NeutronInelToPiPlus": "MC_true_Process == \"neutronInelastic\" && MC_true_PDG == 211",
-#  "NeutronInelToPiMinus": "MC_true_Process == \"neutronInelastic\" && MC_true_PDG == -211",
-#  "NeutronInelToProton": "MC_true_Process == \"neutronInelastic\" && MC_true_PDG == 2212",
-#  "NeutronInelToNuc":  "MC_true_Process == \"neutronInelastic\" && MC_true_PDG  > 2212",
-#  "ProtonInelToPiPlus": "MC_true_Process == \"protonInelastic\" && MC_true_PDG == 211",
-#  "ProtonInelToPiMinus": "MC_true_Process == \"protonInelastic\" && MC_true_PDG == -211",
-#  "ProtonInelToProton": "MC_true_Process == \"protonInelastic\" && MC_true_PDG == 2212",
-#  "ProtonInelToNuc":  "MC_true_Process == \"protonInelastic\" && MC_true_PDG  > 2212",
-#  "PionInelToPiPlus": "MC_true_Process == \"pi+Inelastic\" && MC_true_PDG == 211",
-#  "PionInelToPiMinus": "MC_true_Process == \"pi+Inelastic\" && MC_true_PDG == -211",
-#  "PionInelToProton": "MC_true_Process == \"pi+Inelastic\" && MC_true_PDG == 2212",
-#  "PionInelToNuc":  "MC_true_Process == \"pi+Inelastic\" && MC_true_PDG  > 2212"
-#} 
-#
-#for name,cut in newcuts.iteritems():
-#  tree.Draw( "MC_good_reco>>"+name+"(2,0,2)", cut  + " && " +  reco_track)
-#  hists[name] = gDirectory.Get(name)
-#  fout.cd()
-#  hists[name].Write() 
 
-nominalDir = [-0.183637,-0.198218,0.962802]
-nominalWindow = [-29.7518, 421.7255, 0.]
+#### looking at the final state of the primary pions ####
 
 
-pos_draw = {
-  "startX":"( startX - " + str(nominalWindow[0]) + " )",
-  "startY":"( startY - " + str(nominalWindow[1]) + " )",
-  "startZ":"( startZ - " + str(nominalWindow[2]) + " )"
+colors = {
+  "PrimaryPionDecay": (kTeal+3),
+  "PrimaryPionFastScint": (kRed-4),
+  "PrimaryPionInteract": (kBlue-4),
+  "PrimaryMuon": (kOrange+1),
+  #"PrimaryProton": (kTeal+2),
+  #"PrimaryElectron": (kViolet-7),
+  "PrimaryBeamNotTrig": (kRed+2),
+  "Cosmic": (kSpring-8),
+  "UpstreamIntToPiPlus": (kViolet-3),
+  "UpstreamIntToPiMinus": (kCyan-2),
+  "UpstreamIntToProton": (kTeal),
+  "UpstreamIntToKaon": (kYellow-6),
+  "UpstreamIntToNuc": (kOrange+10),
+  #"PionInelToPiPlus",
+  #"PionInelToPiMinus",
+  #"PionInelToProton",
+  #"PionInelToKaon",
+  #"PionInelToNuc",
+  #"UpstreamInt",
+  "Other":(kMagenta-10),
+  "Decay":(kOrange-7)
 }
 
-pos_bin = {
-  "startX":"(90,-35,55)",
-  "startY":"(165,-65,100)",
-  "startZ":"(50,0,50)"
-}
+leg = TLegend(.6,.6,.85,.85)
+names = [
+  "PrimaryPionDecay",
+  "PrimaryPionFastScint",
+  "PrimaryPionInteract",
+  "PrimaryMuon",
+  #"PrimaryProton",
+  #"PrimaryElectron",
+  "Cosmic",
+  "PrimaryBeamNotTrig",
+  "UpstreamIntToPiPlus",
+  "UpstreamIntToPiMinus",
+  "UpstreamIntToProton",
+  "UpstreamIntToKaon",
+  "UpstreamIntToNuc",
+  #"PionInelToPiPlus",
+  #"PionInelToPiMinus",
+  #"PionInelToProton",
+  #"PionInelToKaon",
+  #"PionInelToNuc",
+  #"UpstreamInt",
+  "Decay",
+  #"Other"
+]
 
-print pos_draw
+titles = [
+  "Primary #pi^{+} Decay",
+  "Primary #pi^{+} Decay at Rest",
+  "Primary #pi^{+} Interacting",
+  "Primary #mu",
+  #"PrimaryProton",
+  #"PrimaryElectron",
+  "Cosmic",
+  "Primary Beam Not Trig",
+  "\"Upstream\" Int #rightarrow #pi^{+}",
+  "\"Upstream\" Int #rightarrow #pi^{-}",
+  "\"Upstream\" Int #rightarrow p",
+  "\"Upstream\" Int #rightarrow K",
+  "\"Upstream\" Int #rightarrow Nucleus",
+#  "Pion #rightarrow #pi^{+}",
+#  "Pion #rightarrow #pi^{-}",
+#  "Pion #rightarrow p",
+#  "Pion #rightarrow K",
+#  "Pion #rightarrow Nucleus",
+#  "Pion #rightarrow #gamma",
+#  "\"Upstream\" Interaction",
+  "Decay Product",
+  #"Other"
+]
 
-dir_draw = " (trackDirX*" + "("+str(nominalDir[0])+")" + " + "
-dir_draw = dir_draw + "trackDirY*" + "("+str(nominalDir[1])+")" + " + "
-dir_draw = dir_draw + "trackDirZ*" + "("+str(nominalDir[2])+")" + ")"
-print dir_draw
+lenhists = dict()
 
-for name,cut in cuts.iteritems():
-  print name, cut
-
-  for pos,draw in pos_draw.iteritems():
-    tree.Draw( draw + ">>"+pos+name+pos_bin[pos], cut  + " && " +  reco_track)
-    hists[pos+name] = gDirectory.Get(pos+name)
-    fout.cd()
-    hists[pos+name].Write()
-
-  tree.Draw( dir_draw + ">>dir" + name + "(100,.80,1.)", cut + " && " + reco_track)
-  hists["dir"+name] = gDirectory.Get("dir"+name)
-  fout.cd()
-  hists["dir"+name].Write()
-
-
-
-dirstack = THStack("dirstack","")
-posstacks = {
-  "startX": THStack("startXstack", ""),
-  "startY": THStack("startYstack", ""),
-  "startZ": THStack("startZstack", "")
-}
+endP_hists = dict()
+endP_stack = THStack("endPstack","")
 
 for name in names:
-
-  #dir
-  hist = hists["dir"+name]
-  hist.SetFillColor(colors[name]) 
-  hist.SetLineColor(colors[name]) 
-  dirstack.Add(hist)
-
-  for pos,posstack in posstacks.iteritems():
-    hist = hists[pos+name]
-    hist.SetFillColor(colors[name]) 
-    hist.SetLineColor(colors[name]) 
-    posstack.Add(hist)
-
-fout.cd()
-dirstack.Write()
-[ps.Write() for p,ps in posstacks.items()]
-
-
-
-#Now go through with the position and direction cuts
-
-dircut = "( (trackDirX*" + "("+str(nominalDir[0])+")" + " + "
-dircut = dircut + "trackDirY*" + "("+str(nominalDir[1])+")" + " + "
-dircut = dircut + "trackDirZ*" + "("+str(nominalDir[2])+")" + ") > .92 )"
-print dircut
-
-poscut =        "( ( ( startX - " + str(nominalWindow[0]) + " ) > -11. ) && "
-poscut = poscut + "( ( startX - " + str(nominalWindow[0]) + " ) < 16. )  && "
-poscut = poscut + "( ( startY - " + str(nominalWindow[1]) + " ) > -15. ) && "
-poscut = poscut + "( ( startY - " + str(nominalWindow[1]) + " ) < 13. )  && "
-poscut = poscut + "( ( startZ - " + str(nominalWindow[2]) + " ) > 15. ) && "
-poscut = poscut + "( ( startZ - " + str(nominalWindow[2]) + " ) < 21. ) )"
-print poscut
-
-
-
-for name,cut in cuts.iteritems():
+  cut = cuts[name]
   print name, cut
 
-  #tree.Draw( "MC_good_reco>>"+name+"extra_cut"+"(2,0,2)", cut  + " && " +  reco_track)
-  tree.Draw( "MC_good_reco>>"+name+"extra_cut"+"(2,0,2)", cut  + " && " +  reco_track + " && " + poscut + " && " + dircut)
-  hists[name+"extra_cut"] = gDirectory.Get(name + "extra_cut")
+  tree.Draw( "len>>len_FS_"+name+"(40,0.,500.)", cut  + base_cut )
+  lenhists[name] = gDirectory.Get("len_FS_"+name)
   fout.cd()
-  hists[name+"extra_cut"].Write()
+  #lenhists[name].Write()
+  print
 
-  tree.Draw( "len>>len"+name+"extra_cut"+"(40,0.,500.)", cut  + " && " +  reco_track + " && " + poscut + " && " + dircut)
-  #tree.Draw( "len>>len"+name+"extra_cut"+"(40,0.,500.)", cut  + " && " +  reco_track)
-  lenhists[name+"extra_cut"] = gDirectory.Get("len"+name + "extra_cut")
-  fout.cd()
-  lenhists[name+"extra_cut"].Write()
-  
+  tree.Draw( "reco_beam_truth_End_P>>endP_"+name+"(40,0.,1.2)", cut  + base_cut)
+  endP_hists[name] = gDirectory.Get("endP_"+name)
+  #endP_hists[name].Write()
 
-fout.cd()
-stack = THStack("stack_extra_cut","")
-lenstack = THStack("lenstack_extra_cut","")
-for name in names:
-  hist = hists[name+"extra_cut"]
-  print name
-  hist.SetFillColor(colors[name]) 
-  hist.SetLineColor(colors[name]) 
-  stack.Add(hist)
+  endP_hists[name].SetFillColor(colors[name]) 
+  endP_hists[name].SetLineColor(colors[name]) 
+  endP_stack.Add(endP_hists[name])
 
-  lenhist = lenhists[name+"extra_cut"]
+endP_stack.Write()
+
+endP_total_signal = endP_hists["PrimaryPionInteract"].Clone("endP_total_signal")
+endP_total_signal.Sumw2()
+
+leg = TLegend(.6,.6,.85,.85)
+lenstack = THStack("lenstack_FS","")
+
+for name,title in zip(names,titles):
+
+  lenhist = lenhists[name]
   lenhist.SetFillColor(colors[name]) 
   lenhist.SetLineColor(colors[name]) 
   lenstack.Add(lenhist)
-  leg.AddEntry( hist, name, "f")
+  leg.AddEntry( lenhist, title, "f")
 
-stack.Write()
+leg.Write("leg_FS")
+
 lenstack.Write()
 
-avg_dEdX = array("d", [0])
-pdg = array("d", [0])
-nhits = array("d",[0])
-end_dEdX = array("d",[0])
-endp = array("i", [0])
 
-dEdX_tree = TTree("dEdX_tree","")
-dEdX_tree.Branch( "avg_dEdX", avg_dEdX, "avg_dEdX/D" )
-dEdX_tree.Branch( "pdg", pdg, "pdg/D" )
-dEdX_tree.Branch( "nhits", nhits, "nhits/D" )
-dEdX_tree.Branch( "end", endp, "endp/I" )
+endhists = dict()
 
-print "Building dEdX hists"
 for name in names:
-  print name+"dEdX"
-  hists[name+"dEdX"] = TH1D(name+"dEdX","", 200,0,100)
-  hists[name+"dEdX_extra_cuts"] = TH1D(name+"dEdX_extra_cuts","", 200,0,100)
-  hists["len"+name+"dEdX_cuts"] = TH1D("len"+name+"dEdX_cuts","",40,0.,500.)
-  hists["MC_good_reco"+name+"dEdX_cuts"] = TH1D("MC_good_reco"+name+"dEdX_cuts", "", 2,0,2)
+  cut = cuts[name]
+  print name, cut
 
-##Now go through and check the average dEdX 
+  tree.Draw( "true_beam_EndVertex_Z:endZ>>endZ"+name+"(40,0.,500.,40,0.,500.)", cut  + base_cut, "colz" )
+  endhists[name] = gDirectory.Get("endZ"+name)
+  fout.cd()
+  #endhists[name].Write()
+  print
+
+
+
+##### Z pos #####
+
+z_pos_dir = fout.mkdir( "z_pos_dir", "track z position" )
+z_pos_dir.cd()
+
+zhists = dict()
+zstack = THStack("zstack","")
+
+for name in names:
+  cut = cuts[name]
+  print name, cut
+  tree.Draw( "startZ>>startZ_"+name+"(50,0.,50.)", cut  + base_cut )
+
+  zhists[name] = gDirectory.Get("startZ_"+name)
+  #zhists[name].Write()
+
+  zhists[name].SetFillColor(colors[name]) 
+  zhists[name].SetLineColor(colors[name]) 
+  zstack.Add(zhists[name])
+
+  print
+
+zstack.Write()
+#################
+
+
+
+### Defining angular and position cuts ###
+ang_cut = " && (true_beam_Start_DirX*trackDirX + true_beam_Start_DirY*trackDirY + true_beam_Start_DirZ*trackDirZ > .93)"
+
+pos_cut = " && ( (true_beam_Start_X + -1.*true_beam_Start_Z*(true_beam_Start_DirX/true_beam_Start_DirZ) - startX) > -4. )"
+pos_cut = pos_cut + " && ( (true_beam_Start_X + -1.*true_beam_Start_Z*(true_beam_Start_DirX/true_beam_Start_DirZ) - startX) < 4. )"
+pos_cut = pos_cut + " && ( (true_beam_Start_Y + -1.*true_beam_Start_Z*(true_beam_Start_DirY/true_beam_Start_DirZ) - startY) > -7. )"
+pos_cut = pos_cut + " && ( (true_beam_Start_Y + -1.*true_beam_Start_Z*(true_beam_Start_DirY/true_beam_Start_DirZ) - startY) < 8. )"
+pos_cut = pos_cut + " && ( startZ > 16. && startZ < 20.)"
+##########################################
+
+def ang_pos_test_cut(e):
+  if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
+
+  if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) < -4. ): return 0
+
+  if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) > 4. ): return 0
+
+  if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) < -7. ): return 0
+
+  if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) > 8. ): return 0
+
+  if( e.startZ < 16. or e.startZ > 20. ): return 0
+
+  return 1
+
+
+
+### First cut: with angular and position cuts ###
+first_cut_dir = fout.mkdir( "first_cut_dir", "Cuts include start position and angular cuts")
+first_cut_dir.cd()
+
+lenhists = dict()
+lenstack = THStack("lenstack_ang_pos","")
+
+endP_hists = dict()
+endP_stack = THStack("endPstack_ang_pos","")
+
+
+for name in names:
+  cut = cuts[name]
+  print name, cut
+
+  tree.Draw( "len>>len_ang_pos_cut_"+name+"(40,0.,500.)", cut  + base_cut + ang_cut + pos_cut)
+  lenhists[name] = gDirectory.Get("len_ang_pos_cut_"+name)
+  #lenhists[name].Write()
+
+  lenhists[name].SetFillColor(colors[name]) 
+  lenhists[name].SetLineColor(colors[name]) 
+  lenstack.Add(lenhists[name])
+
+  tree.Draw( "reco_beam_truth_End_P>>endP_ang_pos_cut_"+name+"(40,0.,1.2)", cut  + base_cut + ang_cut + pos_cut)
+  endP_hists[name] = gDirectory.Get("endP_ang_pos_cut_"+name)
+  #endP_hists[name].Write()
+
+  endP_hists[name].SetFillColor(colors[name]) 
+  endP_hists[name].SetLineColor(colors[name]) 
+  endP_stack.Add(endP_hists[name])
+
+  print
+
+lenstack.Write()
+endP_stack.Write()
+
+endP_first_cut_signal = endP_hists["PrimaryPionInteract"].Clone("first_cut_signal")
+endP_first_cut_signal.Sumw2()
+endP_first_cut_signal.SetFillColor(0)
+endP_first_cut_signal.Divide(endP_total_signal)
+endP_first_cut_signal.Write("endP_first_cut_efficiency")
+###################################################
+
+
+
+
+
+## Now with length cuts ###
+second_cut_dir = fout.mkdir( "second_cut_dir", "Cuts include start position and angular cuts and track length cut")
+second_cut_dir.cd()
+
+lenhists = dict()
+lenstack = THStack("lenstack_ang_pos_len","")
+
+endP_hists = dict()
+endP_stack = THStack("endPstack_ang_pos_len","")
+
+len_cut = " && len < 250."
+
+for name in names:
+  cut = cuts[name]
+  print name, cut
+
+  tree.Draw( "len>>len_ang_pos_len_cut_"+name+"(40,0.,500.)", cut  + base_cut + ang_cut + pos_cut + len_cut)
+  lenhists[name] = gDirectory.Get("len_ang_pos_len_cut_"+name)
+  #lenhists[name].Write()
+
+  lenhists[name].SetFillColor(colors[name]) 
+  lenhists[name].SetLineColor(colors[name]) 
+  lenstack.Add(lenhists[name])
+
+  tree.Draw( "reco_beam_truth_End_P>>endP_ang_pos_len_cut_"+name+"(40,0.,1.2)", cut  + base_cut + ang_cut + pos_cut + len_cut)
+  endP_hists[name] = gDirectory.Get("endP_ang_pos_len_cut_"+name)
+  #endP_hists[name].Write()
+
+  endP_hists[name].SetFillColor(colors[name]) 
+  endP_hists[name].SetLineColor(colors[name]) 
+  endP_stack.Add(endP_hists[name])
+
+  print
+
+lenstack.Write()
+endP_stack.Write()
+
+endP_second_cut_signal = endP_hists["PrimaryPionInteract"].Clone("second_cut_signal")
+endP_second_cut_signal.Sumw2()
+endP_second_cut_signal.SetFillColor(0)
+endP_second_cut_signal.Divide(endP_total_signal)
+endP_second_cut_signal.Write("endP_second_cut_efficiency")
+###########################
+
+
+
+
+## Now with dedx cuts ###
+third_cut_dir = fout.mkdir( "third_cut_dir", "Cuts include start position and angular cuts and dedx cut")
+third_cut_dir.cd()
+
+lenhists = dict()
+lenstack = THStack("lenstack_ang_pos_dedx","")
+
+endP_hists = dict()
+endP_stack = THStack("endPstack_ang_pos_dedx","")
+
+for name in names:
+  print name
+
+  lenhists[name] = TH1D("len_ang_pos_dedx_cut_"+name, "", 40, 0., 500.)
+  lenhists[name].SetFillColor(colors[name]) 
+  lenhists[name].SetLineColor(colors[name]) 
+
+  endP_hists[name] = TH1D("endP_ang_pos_dedx_cut_"+name, "", 40, 0., 1.2)
+  endP_hists[name].SetFillColor(colors[name]) 
+  endP_hists[name].SetLineColor(colors[name]) 
+
+  print
+
 for e in tree:
-  if not reco_track_cut(e): continue
-  pdg[0] = e.MC_true_PDG
-  
-  if( e.MC_true_EndProcess == "pi+Inelastic" ):
-    endp[0] = 1
-  else:
-    endp[0] = 0
 
-  dedxs = [dedx for dedx in e.dEdX]
-  nhits[0] = len(dedxs)
-  if len( dedxs ): 
-    avg_dEdX[0] = sum( dedxs ) / (len(dedxs))
-#    avg_dEdX[0] = sum( dedxs ) / e.len 
-#    avg_dEdX[0] = sum( dedxs[0:len(dedxs)/2+1] ) / (len(dedxs[0:len(dedxs)/2+1]))
-#    avg_dEdX[0] = sum( dedxs[len(dedxs)/2:] ) / (len(dedxs[len(dedxs)/2:]))
+  if len([i for i in e.dEdX]) < 1: continue
+  if not ang_pos_test_cut(e): continue
 
-  dEdX_tree.Fill()
+  total_dedx = sum( [i for i in e.dEdX] )
+  avg_dedx =  total_dedx /  len( [i for i in e.dEdX] ) 
+  len_avg_dedx = total_dedx / e.len 
 
-  passed_cut = testcuts(e)
-  if( passed_cut is "bad" ): continue
-  elif( passed_cut not in names ): continue
-  else:
-    hists[passed_cut+"dEdX"].Fill( avg_dEdX[0] )
+  if( avg_dedx > 5. ): continue
 
-    if( test_dircut(e) and test_poscut(e) ):
-      hists[passed_cut+"dEdX_extra_cuts"].Fill( avg_dEdX[0] )
+  cut = testcuts_FS(e)
+  if cut == "bad" or cut == "PrimaryElectron" or cut == "PrimaryProton" or cut == "NeutronInel" or cut == "ProtonInel" or cut == "Other": continue
 
-      if( avg_dEdX[0] < 5. ):
-        hists["len"+passed_cut+"dEdX_cuts"].Fill( e.len )
-        hists["MC_good_reco"+passed_cut+"dEdX_cuts"].Fill( e.MC_good_reco )
-
-dEdX_stack = THStack( "dEdX_stack","")
-dEdX_stack_extra_cuts = THStack( "dEdX_stack_extra_cuts","")
-len_dEdX_stack = THStack( "len_dEdX_stack","")
-good_reco_dEdX_stack = THStack( "good_reco_dEdX_stack","")
+  lenhists[cut].Fill( e.len )
+  endP_hists[cut].Fill( e.reco_beam_truth_End_P )
 
 for name in names:
-  hist = hists[name+"dEdX"]
-  hist.SetFillColor(colors[name])
-  hist.SetLineColor(colors[name])
-  
-  dEdX_stack.Add(hist)
+  lenstack.Add( lenhists[name] )
+  endP_stack.Add( endP_hists[name] )
 
-  hist = hists[name+"dEdX_extra_cuts"]
-  hist.SetFillColor(colors[name])
-  hist.SetLineColor(colors[name])
+  #lenhists[name].Write()
+  #endP_hists[name].Write()
 
-  dEdX_stack_extra_cuts.Add(hist)
+lenstack.Write()
+endP_stack.Write()
+###########################
 
-  hist = hists["len"+name+"dEdX_cuts"]
-  hist.SetFillColor(colors[name])
-  hist.SetLineColor(colors[name])
-  len_dEdX_stack.Add(hist)
+### ###
+fourth_cut_dir = fout.mkdir( "fourth_cut_dir", "Cuts include start position and angular cuts and track length cut and dedx cut")
+fourth_cut_dir.cd()
 
-  hist = hists["MC_good_reco"+name+"dEdX_cuts"]
-  hist.SetFillColor(colors[name])
-  hist.SetLineColor(colors[name])
-  good_reco_dEdX_stack.Add(hist)
+lenhists = dict()
+lenstack = THStack("lenstack_ang_pos_dedx_len","")
 
+endP_hists = dict()
+endP_stack = THStack("endPstack_ang_pos_dedx_len","")
 
-fout.cd()
-dEdX_stack.Write()
-dEdX_stack_extra_cuts.Write()
-len_dEdX_stack.Write()
-good_reco_dEdX_stack.Write()
-dEdX_tree.Write()
-fout.Close();
+for name in names:
+  print name
+
+  lenhists[name] = TH1D("len_ang_pos_dedx_len_cut_"+name, "", 40, 0., 500.)
+  lenhists[name].SetFillColor(colors[name]) 
+  lenhists[name].SetLineColor(colors[name]) 
+
+  endP_hists[name] = TH1D("endP_ang_pos_dedx_len_cut_"+name, "", 40, 0., 1.2)
+  endP_hists[name].SetFillColor(colors[name]) 
+  endP_hists[name].SetLineColor(colors[name]) 
+
+  print
+
+for e in tree:
+
+  if len([i for i in e.dEdX]) < 1: continue
+  if not ang_pos_test_cut(e): continue
+  if e.len > 250.: continue
+
+  total_dedx = sum( [i for i in e.dEdX] )
+  avg_dedx =  total_dedx /  len( [i for i in e.dEdX] ) 
+  len_avg_dedx = total_dedx / e.len 
+
+  if( avg_dedx > 5. ): continue
+
+  cut = testcuts_FS(e)
+  if cut == "bad" or cut == "PrimaryElectron" or cut == "PrimaryProton" or cut == "NeutronInel" or cut == "ProtonInel" or cut == "Other": continue
+
+  lenhists[cut].Fill( e.len )
+  endP_hists[cut].Fill( e.reco_beam_truth_End_P )
+
+for name in names:
+  lenstack.Add( lenhists[name] )
+  endP_stack.Add( endP_hists[name] )
+
+  #lenhists[name].Write()
+  #endP_hists[name].Write()
+
+lenstack.Write()
+endP_stack.Write()
+
+endP_fourth_cut_signal = endP_hists["PrimaryPionInteract"].Clone("fourth_cut_signal")
+endP_fourth_cut_signal.Sumw2()
+endP_fourth_cut_signal.SetFillColor(0)
+endP_fourth_cut_signal.Divide(endP_total_signal)
+endP_fourth_cut_signal.Write("endP_fourth_cut_efficiency")
+###########################
+
