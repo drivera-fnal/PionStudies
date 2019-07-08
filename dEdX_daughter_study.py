@@ -2,8 +2,10 @@ from ROOT import *
 import sys
 from defcuts import defcuts, testcuts, testcuts_FS
 from array import array
+from set_style import * 
 
 from has_mip import has_mip as hm
+from has_mip import has_mip_chi2 as hm_chi2
 
 gROOT.SetBatch(1)
 gStyle.SetOptStat(0)
@@ -43,6 +45,8 @@ min_true_ID  = array("i", [0])
 beam_ID = array("i", [0])
 nTrueDaughters = array("i", [0])
 
+outtree.Branch( "event", event, "event/I" )
+outtree.Branch( "subrun", subrun, "subrun/I" )
 outtree.Branch( "daughter_avg_dEdX", daughter_avg_dEdX, "daughter_avg_dEdX[100]/D" )
 outtree.Branch( "truncated_avg_dEdX", truncated_avg_dEdX, "truncated_avg_dEdX[100]/D" )
 outtree.Branch( "nPiPlus", nPiPlus, "nPiPlus/I" )
@@ -68,10 +72,15 @@ outtree.Branch( "daughter_reco_len", daughter_reco_len, "daughter_reco_len[100]/
 
 
 cuts = tuple( [2.5 + i*.1 for i in range(0,31)] )
+chi2_cuts = tuple( [0. + i for i in range(1,151)] )
 
 cuts_vals = dict() 
 for cut in cuts:
   cuts_vals[cut] = [0, 0]
+
+chi2_cuts_vals = dict() 
+for cut in chi2_cuts:
+  chi2_cuts_vals[cut] = [0, 0]
 
 sigTotal = 0
 for e in tree:
@@ -177,6 +186,12 @@ for e in tree:
         cuts_vals[cut][0] = cuts_vals[cut][0] + 1
       else: 
         cuts_vals[cut][1] = cuts_vals[cut][1] + 1
+  for cut in chi2_cuts:
+    if not hm_chi2(e,cut):
+      if isSignal:
+        chi2_cuts_vals[cut][0] = chi2_cuts_vals[cut][0] + 1
+      else:
+        chi2_cuts_vals[cut][1] = chi2_cuts_vals[cut][1] + 1
 
   if isSignal: signal_branch[0] = 1
   else: signal_branch[0] = 0
@@ -205,46 +220,89 @@ grpur = TGraph( len(sorted_cuts), array("d", sorted_cuts), array("d", sorted_pur
 
 grpur_vs_eff = TGraph( len(sorted_effs), array("d", sorted_effs), array("d", sorted_purs) )
 
+##### chi2 cut ####
+cut_effs = dict()
+cut_purs = dict()
+for cut,val in chi2_cuts_vals.iteritems(): 
+  print cut,val
+  cut_effs[cut] = float(val[0]) / float(sigTotal)
+  cut_purs[cut] = float(val[0]) / float(val[0] + val[1])
+
+for cut in cut_effs.keys(): print cut, cut_effs[cut], cut_purs[cut]
+
+sorted_cuts = []
+sorted_effs = [] 
+sorted_purs = [] 
+for i in sorted(cut_effs):
+  sorted_cuts.append(i)
+  sorted_effs.append(cut_effs[i])
+  sorted_purs.append(cut_purs[i])
+
+greff_chi2 = TGraph( len(sorted_cuts), array("d", sorted_cuts), array("d", sorted_effs) )
+grpur_chi2 = TGraph( len(sorted_cuts), array("d", sorted_cuts), array("d", sorted_purs) )
+
+grpur_vs_eff_chi2 = TGraph( len(sorted_effs), array("d", sorted_effs), array("d", sorted_purs) )
+
+
 
 c1 = TCanvas("c1","c1", 500, 400)
 c1.SetTicks()
 gStyle.SetOptStat(0)
 
-greff.SetTitle(";Cut Value (MeV/cm);Efficiency")
-greff.GetXaxis().SetTitleSize(.05)
-greff.GetYaxis().SetTitleSize(.05)
-greff.GetXaxis().SetTitleOffset(.85)
-greff.GetYaxis().SetTitleOffset(.9)
-greff.GetXaxis().SetLabelSize(.04)
-greff.GetYaxis().SetLabelSize(.04)
-greff.SetMarkerStyle(20)
+set_eff_style( greff, "Cut Value", "Efficiency", rebin = False)
+#greff.SetTitle(";Cut Value (MeV/cm);Efficiency")
+#greff.GetXaxis().SetTitleSize(.05)
+#greff.GetYaxis().SetTitleSize(.05)
+#greff.GetXaxis().SetTitleOffset(.85)
+#greff.GetYaxis().SetTitleOffset(.9)
+#greff.GetXaxis().SetLabelSize(.04)
+#greff.GetYaxis().SetLabelSize(.04)
+#greff.SetMarkerStyle(20)
 greff.Draw("AP")
 c1.Write("efficiency")
 greff.Write("eff")
 
-grpur.SetTitle(";Cut Value (MeV/cm);Purity")
-grpur.GetXaxis().SetTitleSize(.05)
-grpur.GetYaxis().SetTitleSize(.05)
-grpur.GetXaxis().SetTitleOffset(.85)
-grpur.GetYaxis().SetTitleOffset(.9)
-grpur.GetXaxis().SetLabelSize(.04)
-grpur.GetYaxis().SetLabelSize(.04)
-grpur.SetMarkerStyle(20)
+set_eff_style( grpur, "Cut Value", "Efficiency", rebin = False )
+#grpur.SetTitle(";Cut Value (MeV/cm);Purity")
+#grpur.GetXaxis().SetTitleSize(.05)
+#grpur.GetYaxis().SetTitleSize(.05)
+#grpur.GetXaxis().SetTitleOffset(.85)
+#grpur.GetYaxis().SetTitleOffset(.9)
+#grpur.GetXaxis().SetLabelSize(.04)
+#grpur.GetYaxis().SetLabelSize(.04)
+#grpur.SetMarkerStyle(20)
 grpur.Draw("AP")
 c1.Write("purity")
 grpur.Write("pur")
 
-grpur_vs_eff.SetTitle(";Efficiency;Purity")
-grpur_vs_eff.GetXaxis().SetTitleSize(.05)
-grpur_vs_eff.GetYaxis().SetTitleSize(.05)
-grpur_vs_eff.GetXaxis().SetTitleOffset(.85)
-grpur_vs_eff.GetYaxis().SetTitleOffset(.9)
-grpur_vs_eff.GetXaxis().SetLabelSize(.04)
-grpur_vs_eff.GetYaxis().SetLabelSize(.04)
-grpur_vs_eff.SetMarkerStyle(20)
+set_eff_style( grpur_vs_eff, "Efficiency", "Purity", rebin = False)
+#grpur_vs_eff.SetTitle(";Efficiency;Purity")
+#grpur_vs_eff.GetXaxis().SetTitleSize(.05)
+#grpur_vs_eff.GetYaxis().SetTitleSize(.05)
+#grpur_vs_eff.GetXaxis().SetTitleOffset(.85)
+#grpur_vs_eff.GetYaxis().SetTitleOffset(.9)
+#grpur_vs_eff.GetXaxis().SetLabelSize(.04)
+#grpur_vs_eff.GetYaxis().SetLabelSize(.04)
+#grpur_vs_eff.SetMarkerStyle(20)
 grpur_vs_eff.Draw("AP")
 c1.Write("purity_vs_eficiency")
 grpur_vs_eff.Write("pur_vs_eff")
+
+set_eff_style( greff_chi2, "Cut Value", "Efficiency", rebin = False )
+greff_chi2.Draw("AP")
+c1.Write("efficiency_chi2")
+greff_chi2.Write("eff_chi2")
+
+set_eff_style( grpur_chi2, "Cut Value", "Purity", rebin = False )
+grpur_chi2.Draw("AP")
+c1.Write("purity_chi2")
+grpur_chi2.Write("pur_chi2")
+
+set_eff_style( grpur_vs_eff_chi2, "Efficiency", "Purity", rebin = False)
+grpur_vs_eff_chi2.Draw("AP")
+c1.Write("purity_vs_efficiency_chi2")
+grpur_vs_eff_chi2.Write("pur_vs_eff_chi2")
+
 
 outtree.Draw("daughter_avg_dEdX>>hsig(60,0,20)", "signal")
 outtree.Draw("daughter_avg_dEdX>>hbg(60,0,20)", "!signal")

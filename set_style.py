@@ -9,12 +9,13 @@ def set_style(hist, xtitle, ytitle):
   hist.GetYaxis().SetTitleOffset(.85)
   hist.GetYaxis().SetLabelSize(.04)
 
-def set_eff_style(hist, xtitle, ytitle):
+def set_eff_style(hist, xtitle, ytitle, rebin=True):
   set_style(hist, xtitle, ytitle)
 
   hist.SetMarkerStyle(20)
   hist.SetLineColor(1)
-  hist.Rebin(2)
-  hist.Scale(.5)
+  if( rebin ):
+    hist.Rebin(2)
+    hist.Scale(.5)
   hist.SetMaximum(1.)
   hist.SetMinimum(0.)
