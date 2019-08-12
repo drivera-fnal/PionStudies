@@ -11,7 +11,9 @@ particles = {
   2212: "p",
   211:  "#pi^{+}",
   -211: "#pi^{-}",
-  3000: "Nucleus"
+  3000: "Nucleus",
+  11: "e-",
+  -11: "e+"
 }
 
 gROOT.SetBatch(1)
@@ -19,15 +21,15 @@ gROOT.SetBatch(1)
 f = TFile( sys.argv[1] )
 
 tree = f.Get("pionana/beamana")
-pdgs = [ 3000,  321, 13, -13, 22, 2212, 211, -211]
-colors = [ (kOrange+10), (kOrange+1), (kBlue-4), (kRed+2), (kSpring-8), (kViolet-3), (kTeal), (kCyan-2) ] 
+pdgs = [ 3000,  321, 13, -13, 22, 2212, 211, -211, 11, -11]
+colors = [ (kOrange+10), (kOrange+1), (kBlue-4), (kRed+2), (kSpring-8), (kViolet-3), (kTeal), (kCyan-2), kBlack, kBlue ] 
 pdg_stack = THStack()
 
 leg = TLegend(.6,.6, .85,.85)
 
-signal = "reco_beam_truth_Process == \"primary\" && reco_beam_good && type == 13 && reco_beam_truth_PDG == 211 && true_beam_EndProcess == \"pi+Inelastic\" && nPiPlus_truth + nPiMinus_truth == 0 && nPi0_truth < 2"
+signal = "reco_beam_truth_Process == \"primary\" && reco_beam_good && type == 13 && reco_beam_truth_PDG == 211 && true_beam_EndProcess == \"pi+Inelastic\" && nPiPlus_truth + nPiMinus_truth == 0 && nPi0_truth < 2 && !daughter_is_primary "
 
-bg = "reco_beam_truth_Process == \"primary\" && reco_beam_good && type == 13 && reco_beam_truth_PDG == 211 && (true_beam_EndProcess == \"pi+Inelastic\" && nPiPlus_truth + nPiMinus_truth > 0 || nPi0_truth > 1)"
+bg = "reco_beam_truth_Process == \"primary\" && reco_beam_good && type == 13 && reco_beam_truth_PDG == 211 && true_beam_EndProcess == \"pi+Inelastic\" && ( (nPiPlus_truth + nPiMinus_truth > 0 || nPi0_truth > 1) || daughter_is_primary)"
 
 delta_r = "sqrt( (reco_daughter_startX - endX)*(reco_daughter_startX - endX) + (reco_daughter_startY - endY)*(reco_daughter_startY - endY) + (reco_daughter_startZ - endZ)*(reco_daughter_startZ - endZ) )"
 

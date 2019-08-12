@@ -13,16 +13,20 @@ particles = {
   2212: "p",
   211:  "#pi^{+}",
   -211: "#pi^{-}",
-  3000: "Nucleus"
+  3000: "Nucleus",
+  11:   "e^{-}",
+  -11:  "e^{+}"
 }
 
 gROOT.SetBatch(1)
 
 f = TFile( sys.argv[1] )
 
+set_shower = int(sys.argv[2])
+
 tree = f.Get("pionana/beamana")
-pdgs = [ 3000,  321, 13, -13, 22, 2212, 211, -211]
-colors = [ (kOrange+10), (kOrange+1), (kBlue-4), (kRed+2), (kSpring-8), (kViolet-3), (kTeal), (kCyan-2) ] 
+pdgs = [ 3000,  321, 13, -13, 22, 2212, 211, -211, 11, -11]
+colors = [ (kOrange+10), (kOrange+1), (kBlue-4), (kRed+2), (kSpring-8), (kViolet-3), (kTeal), (kCyan-2), kBlack, kBlue ] 
 pdg_stack = THStack()
 
 leg = TLegend(.6,.6, .85,.85)
@@ -30,24 +34,29 @@ leg = TLegend(.6,.6, .85,.85)
 signal = "reco_beam_truth_Process == \"primary\" && reco_beam_good && type == 13 && reco_beam_truth_PDG == 211 && true_beam_EndProcess == \"pi+Inelastic\" && nPiPlus_truth + nPiMinus_truth == 0 && nPi0_truth < 2"
 
 def base_signal(e):
-  if( e.reco_beam_truth_Process == "primary" and e.reco_beam_good and e.type == 13 and e.reco_beam_truth_PDG == 211 and e.true_beam_EndProcess == "pi+Inelastic" and e.nPiPlus_truth + e.nPiMinus_truth == 0 and e.nPi0_truth < 2 ): 
+  if( e.reco_beam_truth_Process == "primary" and e.reco_beam_good and e.type == 13 and e.reco_beam_truth_PDG == 211 and e.true_beam_EndProcess == "pi+Inelastic" and e.nPiPlus_truth + e.nPiMinus_truth == 0 and e.nPi0_truth < 2 and not e.daughter_is_primary): 
     return True
   return False
 
 bg = "reco_beam_truth_Process == \"primary\" && reco_beam_good && type == 13 && reco_beam_truth_PDG == 211 && (true_beam_EndProcess == \"pi+Inelastic\" && nPiPlus_truth + nPiMinus_truth > 0 || nPi0_truth > 1)"
 
 def base_bg(e):
-  if(e.reco_beam_truth_Process == "primary" and e.reco_beam_good and e.type == 13 and e.reco_beam_truth_PDG == 211 and (e.true_beam_EndProcess == "pi+Inelastic" and e.nPiPlus_truth + e.nPiMinus_truth > 0 or e.nPi0_truth > 1) ):
+  if(e.reco_beam_truth_Process == "primary" and e.reco_beam_good and e.type == 13 and e.reco_beam_truth_PDG == 211 and ( (e.true_beam_EndProcess == "pi+Inelastic" and e.nPiPlus_truth + e.nPiMinus_truth > 0 or e.nPi0_truth > 1 ) or e.daughter_is_primary) ):
     return True
   return False
 
 
-def delta_start(e,i):
-  return sqrt( (e.reco_daughter_startX[i] - e.endX)**2 + (e.reco_daughter_startY[i] - e.endY)**2 + (e.reco_daughter_startZ[i] - e.endZ)**2 ) 
-
-def delta_end(e,i):
-  return sqrt( (e.reco_daughter_endX[i] - e.endX)**2 + (e.reco_daughter_endY[i] - e.endY)**2 + (e.reco_daughter_endZ[i] - e.endZ)**2 ) 
-
+if not set_shower: 
+  def delta_start(e,i):
+    return sqrt( (e.reco_daughter_startX[i] - e.endX)**2 + (e.reco_daughter_startY[i] - e.endY)**2 + (e.reco_daughter_startZ[i] - e.endZ)**2 ) 
+  
+  def delta_end(e,i):
+    return sqrt( (e.reco_daughter_endX[i] - e.endX)**2 + (e.reco_daughter_endY[i] - e.endY)**2 + (e.reco_daughter_endZ[i] - e.endZ)**2 ) 
+else:
+  def delta_start(e,i):
+    return sqrt( (e.reco_daughter_shower_startX[i] - e.endX)**2 + (e.reco_daughter_shower_startY[i] - e.endY)**2 + (e.reco_daughter_shower_startZ[i] - e.endZ)**2 ) 
+  def delta_end(e,i):
+    return 1.e6
 #delta_r = "sqrt( (reco_daughter_endX - endX)*(reco_daughter_endX - endX) + (reco_daughter_endY - endY)*(reco_daughter_endY - endY) + (reco_daughter_endZ - endZ)*(reco_daughter_endZ - endZ) )"
 delta_r = "sqrt( (reco_daughter_startX - endX)*(reco_daughter_startX - endX) + (reco_daughter_startY - endY)*(reco_daughter_startY - endY) + (reco_daughter_startZ - endZ)*(reco_daughter_startZ - endZ) )"
 
@@ -91,7 +100,10 @@ for e in tree:
     d_PDG[i] = -1
     flipped[i] = -1
 
-  daughter_pdgs = [i for i in e.reco_daughter_truth_PDG]
+  if not set_shower:
+    daughter_pdgs = [i for i in e.reco_daughter_truth_PDG]
+  else: 
+    daughter_pdgs = [i for i in e.reco_daughter_shower_truth_PDG]
   for i in range(0, len(daughter_pdgs)):
     pdg = daughter_pdgs[i]
     if pdg > 2212: pdg = 3000
@@ -104,13 +116,15 @@ for e in tree:
       pdg_hists[pdg].Fill( delta_end(e,i) )
       dr[i] = delta_end(e,i)
       flipped[i] = 1
-    d_ID[i] = e.reco_daughter_trackID[i]
-    d_PDG[i] = e.reco_daughter_truth_PDG[i]
+    #d_ID[i] = e.reco_daughter_trackID[i]
+    d_PDG[i] = pdg 
 
   outtree.Fill()
 outfile.cd()
 outtree.Write()
-for pdg,pdg_hist in pdg_hists.iteritems():
+#for pdg,pdg_hist in zip(pdgs, pdg_hists.values()):
+for pdg in pdgs:
+  pdg_hist = pdg_hists[pdg]
   leg.AddEntry( pdg_hist, particles[pdg], "f" )
   pdg_stack.Add(pdg_hist)
 
@@ -121,8 +135,13 @@ pdg_stack.Draw()
 set_style(pdg_stack, "#Delta r", "Count")
 pdg_stack.Draw()
 leg.Draw("same")
-c1.SaveAs("daughter_vertex.pdf")
-c1.SaveAs("daughter_vertex.png")
+
+if not set_shower:
+  c1.SaveAs("daughter_vertex.pdf")
+  c1.SaveAs("daughter_vertex.png")
+else:
+  c1.SaveAs("daughter_shower_vertex.pdf")
+  c1.SaveAs("daughter_shower_vertex.png")
 
 '''BG'''
 pdg_stack = THStack()
@@ -139,7 +158,10 @@ for pdg,color in zip(pdgs,colors):
 
 for e in tree:
   if not base_bg(e): continue
-  daughter_pdgs = [i for i in e.reco_daughter_truth_PDG]
+  if not set_shower:
+    daughter_pdgs = [i for i in e.reco_daughter_truth_PDG]
+  else: 
+    daughter_pdgs = [i for i in e.reco_daughter_shower_truth_PDG]
   for i in range(0, len(daughter_pdgs)):
     pdg = daughter_pdgs[i]
     if pdg > 2212: pdg == 3000
@@ -148,16 +170,23 @@ for e in tree:
       pdg_hists[pdg].Fill( delta_start(e,i) )
     else: pdg_hists[pdg].Fill( delta_end(e,i) )
 
-for pdg,pdg_hist in pdg_hists.iteritems():
+#for pdg,pdg_hist in pdg_hists.iteritems():
+#for pdg,pdg_hist in zip(pdgs, pdg_hists.values()):
+for pdg in pdgs:
+  pdg_hist = pdg_hists[pdg]
   pdg_stack.Add(pdg_hist)
 
 pdg_stack.Draw()
 set_style(pdg_stack, "#Delta r", "Count")
 pdg_stack.Draw()
 leg.Draw("same")
-c1.SaveAs("bg_daughter_vertex.pdf")
-c1.SaveAs("bg_daughter_vertex.png")
 
+if not set_shower:
+  c1.SaveAs("bg_daughter_vertex.pdf")
+  c1.SaveAs("bg_daughter_vertex.png")
+else:
+  c1.SaveAs("bg_daughter_shower_vertex.pdf")
+  c1.SaveAs("bg_daughter_shower_vertex.png")
 
 exit()
 

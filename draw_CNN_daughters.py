@@ -5,8 +5,8 @@ from set_style import *
 
 particles = {
   321:  "K",
-  13:   "#mu^{+}",
-  -13:  "#mu^{-}",
+  13:   "#mu^{-}",
+  -13:  "#mu^{+}",
   22:   "#gamma",
   2212: "p",
   211:  "#pi^{+}",
@@ -24,20 +24,26 @@ if score_type not in ["none", "em", "track", "michel"]:
   exit()
 
 do_showers = False
-if( len(sys.argv) > 3 ):
-  if( int(sys.argv[3]) == 1 ):
-    score_type = "shower_" + score_type
-
+add_shower = ""
 tree = f.Get("pionana/beamana")
 pdgs = [ 3000,  321, 13, -13, 22, 2212, 211, -211]
 colors = [ (kOrange+10), (kOrange+1), (kBlue-4), (kRed+2), (kSpring-8), (kViolet-3), (kTeal), (kCyan-2) ] 
 pdg_stack = THStack()
 
+if( len(sys.argv) > 3 ):
+  if( int(sys.argv[3]) == 1 ):
+    score_type = "shower_" + score_type
+    add_shower = "_shower"
+particles[11] = "e^{-}"
+particles[-11] = "e^{+}"
+pdgs = pdgs + [11,-11]
+colors = colors + [ (kOrange+10), (kBlue-4) ]
+
 leg = TLegend(.6,.6, .85,.85)
 
-signal = "reco_beam_truth_Process == \"primary\" && reco_beam_good && type == 13 && reco_beam_truth_PDG == 211 && true_beam_EndProcess == \"pi+Inelastic\" && nPiPlus_truth + nPiMinus_truth == 0 && nPi0_truth < 2"
+signal = "reco_beam_truth_Process == \"primary\" && reco_beam_good && type == 13 && reco_beam_truth_PDG == 211 && true_beam_EndProcess == \"pi+Inelastic\" && nPiPlus_truth + nPiMinus_truth == 0 && nPi0_truth < 2 && !daughter_is_primary"
 
-bg = "reco_beam_truth_Process == \"primary\" && reco_beam_good && type == 13 && reco_beam_truth_PDG == 211 && (true_beam_EndProcess == \"pi+Inelastic\" && nPiPlus_truth + nPiMinus_truth > 0 || nPi0_truth > 1)"
+bg = "reco_beam_truth_Process == \"primary\" && reco_beam_good && type == 13 && reco_beam_truth_PDG == 211 && (true_beam_EndProcess == \"pi+Inelastic\" && ( (nPiPlus_truth + nPiMinus_truth > 0 || nPi0_truth > 1) || daughter_is_primary ) ) "
 
 '''All signal'''
 for pdg,color in zip(pdgs,colors):
@@ -45,9 +51,9 @@ for pdg,color in zip(pdgs,colors):
   if pdg < 0: pdgname = "n"+str(abs(pdg))
 
   if pdg == 3000:
-     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "(100,0,1.)", signal + " && reco_daughter_truth_PDG > " + str(pdg))   
+     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "(100,0,1.)", signal + " && reco_daughter" + add_shower + "_truth_PDG > " + str(pdg))   
   else:
-     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "(100,0,1.)", signal + " && reco_daughter_truth_PDG == " + str(pdg))   
+     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "(100,0,1.)", signal + " && reco_daughter" + add_shower + "_truth_PDG == " + str(pdg))   
   pdg_hist = gDirectory.Get("h"+score_type+pdgname)  
   
   pdg_hist.SetFillColor( color )
@@ -73,9 +79,9 @@ for pdg,color in zip(pdgs,colors):
   pdgname = str(pdg)
   if pdg < 0: pdgname = "n"+str(abs(pdg))
   if pdg == 3000:
-     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "abs(100,0,1.)", signal + " && nPi0_truth == 0 && reco_daughter_truth_PDG > " + str(pdg))   
-  else:
-     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "abs(100,0,1.)", signal + " && nPi0_truth == 0 && reco_daughter_truth_PDG == " + str(pdg))   
+     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "abs(100,0,1.)", signal + " && nPi0_truth == 0 && reco_daughter" + add_shower + "_truth_PDG > " + str(pdg))   
+  else:                                                                                                                                                              
+     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "abs(100,0,1.)", signal + " && nPi0_truth == 0 && reco_daughter" + add_shower + "_truth_PDG == " + str(pdg))   
 
   pdg_hist = gDirectory.Get("h"+score_type+pdgname+"abs")  
   
@@ -96,9 +102,9 @@ for pdg,color in zip(pdgs,colors):
   pdgname = str(pdg)
   if pdg < 0: pdgname = "n"+str(abs(pdg))
   if pdg == 3000:
-     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "cex(100,0,1.)", signal + " && nPi0_truth == 1 && reco_daughter_truth_PDG > " + str(pdg))   
-  else:
-     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "cex(100,0,1.)", signal + " && nPi0_truth == 1 && reco_daughter_truth_PDG == " + str(pdg))   
+     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "cex(100,0,1.)", signal + " && nPi0_truth == 1 && reco_daughter" + add_shower + "_truth_PDG > " + str(pdg))   
+  else:                                                                                                                                                              
+     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "cex(100,0,1.)", signal + " && nPi0_truth == 1 && reco_daughter" + add_shower + "_truth_PDG == " + str(pdg))   
 
   pdg_hist = gDirectory.Get("h"+score_type+pdgname+"cex")  
   
@@ -119,9 +125,9 @@ for pdg,color in zip(pdgs,colors):
   pdgname = str(pdg)
   if pdg < 0: pdgname = "n"+str(abs(pdg))
   if pdg == 3000:
-     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "bg(100,0,1.)", bg + " && reco_daughter_truth_PDG > " + str(pdg))   
-  else:
-    tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "bg(100,0,1.)",  bg + " && reco_daughter_truth_PDG == " + str(pdg))
+     tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "bg(100,0,1.)", bg + " && reco_daughter" + add_shower + "_truth_PDG > " + str(pdg))   
+  else:                                                                                                                                      
+    tree.Draw("reco_daughter_" + score_type + "_score>>h" + score_type + pdgname + "bg(100,0,1.)",  bg + " && reco_daughter" + add_shower + "_truth_PDG == " + str(pdg))
 
   pdg_hist = gDirectory.Get("h"+score_type+pdgname+"bg")  
   
