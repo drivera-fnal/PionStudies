@@ -162,7 +162,7 @@ for name,title in zip(names,titles):
 
   ##Angle diffs
   cos_theta = "(true_beam_Start_DirX*trackDirX + true_beam_Start_DirY*trackDirY + true_beam_Start_DirZ*trackDirZ)"
-  tree.Draw( cos_theta + ">>cos_" + name + " (50,.9,1.)", cut + base_cut )
+  tree.Draw( cos_theta + ">>cos_" + name + " (500,0.,1.)", cut + base_cut )
   cos_hists[ "cos_" + name ] = gDirectory.Get( "cos_" + name )
   cos_hists[ "cos_" + name ].SetFillColor(colors[name])
   cos_hists[ "cos_" + name ].SetLineColor(colors[name])

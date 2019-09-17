@@ -19,6 +19,10 @@ fout = TFile( sys.argv[2], "RECREATE" )
 cuts = defcuts()
 
 lenhists = dict()
+endZhists = dict()
+startZhists = dict()
+startXhists = dict()
+startYhists = dict()
 
 names = [
   "PrimaryPion",
@@ -58,6 +62,18 @@ for name in names:
   print name+":",lenhists[name].Integral()
   cut_total = cut_total + lenhists[name].Integral()
 
+  tree.Draw( "endZ>>endZ"+name+"(40,0.,500.)", cut  + base_cut )
+  endZhists[name] = gDirectory.Get("endZ"+name)
+
+  tree.Draw( "startX>>startX"+name+"(40,-100.,100.)", cut  + base_cut )
+  startXhists[name] = gDirectory.Get("startX"+name)
+
+  tree.Draw( "startY>>startY"+name+"(40,380.,500.)", cut  + base_cut )
+  startYhists[name] = gDirectory.Get("startY"+name)
+
+  tree.Draw( "startZ>>startZ"+name+"(40,0.,100.)", cut  + base_cut )
+  startZhists[name] = gDirectory.Get("startZ"+name)
+
   fout.cd()
   #lenhists[name].Write()
   #print
@@ -91,17 +107,47 @@ leg = TLegend(.15,.5,.45,.8)
 
 
 lenstack = THStack("lenstack","")
+endZstack = THStack("endZstack","")
+startXstack = THStack("startXstack","")
+startYstack = THStack("startYstack","")
+startZstack = THStack("startZstack","")
 for name in names:
+
 
   lenhist = lenhists[name]
   lenhist.SetFillColor(colors[name]) 
   lenhist.SetLineColor(colors[name]) 
   lenstack.Add(lenhist)
-  leg.AddEntry( lenhist, name, "f")
+
+  endZhist = endZhists[name]
+  endZhist.SetFillColor(colors[name]) 
+  endZhist.SetLineColor(colors[name]) 
+  endZstack.Add(endZhist)
+
+  startXhist = startXhists[name]
+  startXhist.SetFillColor(colors[name]) 
+  startXhist.SetLineColor(colors[name]) 
+  startXstack.Add(startXhist)
+
+  startYhist = startYhists[name]
+  startYhist.SetFillColor(colors[name]) 
+  startYhist.SetLineColor(colors[name]) 
+  startYstack.Add(startYhist)
+
+  startZhist = startZhists[name]
+  startZhist.SetFillColor(colors[name]) 
+  startZhist.SetLineColor(colors[name]) 
+  startZstack.Add(startZhist)
+  leg.AddEntry( startZhist, name, "f")
 
 leg.Write("leg")
 
 lenstack.Write()
+endZstack.Write()
+startZstack.Write()
+startYstack.Write()
+startXstack.Write()
+
 
 
 #### looking at the final state of the primary pions ####
@@ -182,6 +228,7 @@ titles = [
 ]
 
 lenhists = dict()
+endZhists = dict()
 
 endP_hists = dict()
 endP_stack = THStack("endPstack","")
@@ -204,6 +251,10 @@ for name in names:
   endP_hists[name].SetLineColor(colors[name]) 
   endP_stack.Add(endP_hists[name])
 
+  tree.Draw( "endZ>>endZ_FS_"+name+"(40,0.,500.)", cut  + base_cut )
+  endZhists[name] = gDirectory.Get("endZ_FS_"+name)
+
+
 endP_stack.Write()
 
 endP_total_signal = endP_hists["PrimaryPionInteract"].Clone("endP_total_signal")
@@ -211,6 +262,7 @@ endP_total_signal.Sumw2()
 
 leg = TLegend(.6,.6,.85,.85)
 lenstack = THStack("lenstack_FS","")
+endZstack = THStack("endZstack_FS","")
 
 for name,title in zip(names,titles):
 
@@ -220,9 +272,15 @@ for name,title in zip(names,titles):
   lenstack.Add(lenhist)
   leg.AddEntry( lenhist, title, "f")
 
+  endZhist = endZhists[name]
+  endZhist.SetFillColor(colors[name]) 
+  endZhist.SetLineColor(colors[name]) 
+  endZstack.Add(endZhist)
+
 leg.Write("leg_FS")
 
 lenstack.Write()
+endZstack.Write()
 
 
 endhists = dict()
