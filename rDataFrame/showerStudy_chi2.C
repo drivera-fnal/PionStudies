@@ -9,14 +9,16 @@
 #include "TColor.h"
 #include "TLatex.h"
 #include "TMath.h"
-#include "/Users/fstocker/cernbox/pionAnalyzer/analysis/rDataFrame/lambda.h"
 #include <ROOT/RDataFrame.hxx>
-
 
 #include <iostream>
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
+
+//Local Header
+#include "lambda.h"
+
 
 //using RDataFrame to cut and analyse PionTtrr
 
@@ -30,9 +32,9 @@ using namespace ROOT::VecOps;
 
 //***********************
 //Main FunctioN
-int showerStudy_chi2(){
+int showerStudy_chi2(const string path = inputFile){
 
-   ROOT::RDataFrame frame("pionana/beamana", "/Users/fstocker/cernbox/pionAnalyzer/pionAnalyzerTree/pionana_9_17_19.root");
+   ROOT::RDataFrame frame(inputTree, path);
 
    TFile* output = new TFile("out_showerStudy_chi2.root", "RECREATE");
 

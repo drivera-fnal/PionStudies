@@ -9,7 +9,7 @@
 #include "TColor.h"
 #include "TLatex.h"
 #include "TMath.h"
-#include "/Users/fstocker/cernbox/pionAnalyzer/analysis/rDataFrame/lambda.h"
+#include "lambda.h"
 #include <ROOT/RDataFrame.hxx>
 
 
@@ -30,9 +30,9 @@ using namespace ROOT::VecOps;
 
 //***********************
 //Main FunctioN
-int showerStudy_cnn(){
+int showerStudy_cnn(const string path = inputFile){
 
-   ROOT::RDataFrame frame("pionana/beamana", "/Users/fstocker/cernbox/pionAnalyzer/pionAnalyzerTree/pionana_9_17_19.root");
+   ROOT::RDataFrame frame(inputTree, path);
 
    TFile* output = new TFile("out_showerStudy_cnn.root", "RECREATE");
 

@@ -16,15 +16,19 @@
 #include <vector>
 //using RDataFrame to cut and analyse PionTtrr
 
-using namespace std;
 using namespace ROOT::VecOps;
 //lambda.h includes the definitions used for the pionAnalysis 
+//
+//INPUTfiles
+const std::string inputTree = "pionana/beamana";
+const std::string inputFile = "inputFile/dummyInput.root";
 //**********************************************************
 //DEFINITIONS
 //
 //**********************************************************
+//
 
-int compString(string s1, string s2){
+int compString(std::string s1, std::string s2){
 
    if(s1 != s2) return 0;
    if(s1 == s2) return 1;
@@ -78,7 +82,7 @@ auto pdg_nucleus = [](){return 9999;}; //watchout for nucleuss in comparing func
 //Find properties (stored in vector) of a specific daughter particle, special for nucleus daughters
 auto daughter_property = [](int pdg, const ROOT::RVec<int> &reco_beam_truth_daughter_true_PDGs, const ROOT::RVec<double> &daughter_property){
    ROOT::RVec<double> return_vec; 
-   for (string::size_type pos =0; pos < reco_beam_truth_daughter_true_PDGs.size(); pos++){ 
+   for (std::string::size_type pos =0; pos < reco_beam_truth_daughter_true_PDGs.size(); pos++){ 
       if(pdg!= 9999 && reco_beam_truth_daughter_true_PDGs.at(pos) == pdg && daughter_property.size()> pos){
          return_vec.push_back(daughter_property.at(pos));}
       else if(pdg == 9999 && reco_beam_truth_daughter_true_PDGs.at(pos) > 3000 && daughter_property.size() > pos) {
@@ -91,14 +95,14 @@ auto daughter_property = [](int pdg, const ROOT::RVec<int> &reco_beam_truth_daug
 auto daugh_trkANDshow_property = [](int pdg, const ROOT::RVec<int> &reco_beam_truth_daughter_true_PDGs, const ROOT::RVec<int> &reco_beam_truth_daughter_shower_true_PDGs, const ROOT::RVec<double> &daugh_track_property, const ROOT::RVec<double> &daugh_show_property){
    ROOT::RVec<double> return_vec; 
    
-   for (string::size_type pos =0; pos < reco_beam_truth_daughter_true_PDGs.size(); pos++){ 
+   for (std::string::size_type pos =0; pos < reco_beam_truth_daughter_true_PDGs.size(); pos++){ 
       if(pdg!= 9999 && reco_beam_truth_daughter_true_PDGs.at(pos) == pdg && daugh_track_property.size()> pos){
          return_vec.push_back(daugh_track_property.at(pos));}
       else if(pdg == 9999 && reco_beam_truth_daughter_true_PDGs.at(pos) > 3000 && daugh_track_property.size() > pos) {
          return_vec.push_back(daugh_track_property.at(pos));};
    };
 
-   for (string::size_type pos =0; pos < reco_beam_truth_daughter_shower_true_PDGs.size(); pos++){ 
+   for (std::string::size_type pos =0; pos < reco_beam_truth_daughter_shower_true_PDGs.size(); pos++){ 
       if(pdg!= 9999 && reco_beam_truth_daughter_shower_true_PDGs.at(pos) == pdg && daugh_show_property.size()> pos){
          return_vec.push_back(daugh_show_property.at(pos));}
       else if(pdg == 9999 && reco_beam_truth_daughter_shower_true_PDGs.at(pos) > 3000 && daugh_show_property.size() > pos) {
@@ -110,10 +114,10 @@ auto daugh_trkANDshow_property = [](int pdg, const ROOT::RVec<int> &reco_beam_tr
 
 auto merge_trk_show_property = [](const ROOT::RVec<double> &daughter_trk_property, const ROOT::RVec<double> &daughter_shower_property){
    ROOT::RVec<double> merge_vec;
-   for(string::size_type pos = 0; pos < daughter_trk_property.size(); pos++){
+   for(std::string::size_type pos = 0; pos < daughter_trk_property.size(); pos++){
       merge_vec.push_back(daughter_trk_property.at(pos));
    };
-   for(string::size_type pos = 0; pos < daughter_shower_property.size(); pos++){
+   for(std::string::size_type pos = 0; pos < daughter_shower_property.size(); pos++){
       merge_vec.push_back(daughter_shower_property.at(pos));
    };
    return merge_vec;
