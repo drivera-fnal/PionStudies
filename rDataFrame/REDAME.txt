@@ -10,4 +10,4 @@ on this. do run one of the macros do:
 root -l .x macroName.C
 
 if you'd like to change the input file run the macro as:
-root -l .x "macroName.C('path/to/file.root')"
+root -l .x "macroName.C(\"path/to/file.root\")"

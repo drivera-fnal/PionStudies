@@ -38,8 +38,8 @@ Int_t palette[] = {kRed, kOrange+7, kBlue+2, kRed+3, kGreen+2, kViolet-5, kCyan-
 
 
 //good Reco primary Pions (true MC) with pi+inelastic interaction in the end
-auto truePrimaryPionInel = []
-(int reco_beam_truth_PDG, int reco_beam_truth_origin, bool reco_beam_good, std::string reco_beam_truth_Process, std::string true_beam_EndProcess){
+auto truePrimaryPionInel = [](int reco_beam_truth_PDG, int reco_beam_truth_origin, bool reco_beam_good, std::string reco_beam_truth_Process, std::string true_beam_EndProcess)
+{
 
    std::string pionInel("pi+Inelastic");
    std::string prim ("primary");
@@ -49,7 +49,8 @@ auto truePrimaryPionInel = []
 };
 
 //True Charge Exchange + Absorption Signal, has no piPlus or piMinus as daughters
-auto trueChExAbsProcess = [](const int nPiPlus_truth, const int nPiMinus_truth,const int nPi0_truth){
+auto trueChExAbsProcess = [](const int nPiPlus_truth, const int nPiMinus_truth,const int nPi0_truth)
+{
    return nPiPlus_truth + nPiMinus_truth == 0 && nPi0_truth < 2;
 };
 
@@ -94,7 +95,7 @@ auto daughter_property = [](int pdg, const ROOT::RVec<int> &reco_beam_truth_daug
 //Indepentend of shower or track tag from Pandora, find the property for both Tags for a certain particle and fill a vector
 auto daugh_trkANDshow_property = [](int pdg, const ROOT::RVec<int> &reco_beam_truth_daughter_true_PDGs, const ROOT::RVec<int> &reco_beam_truth_daughter_shower_true_PDGs, const ROOT::RVec<double> &daugh_track_property, const ROOT::RVec<double> &daugh_show_property){
    ROOT::RVec<double> return_vec; 
-   
+
    for (std::string::size_type pos =0; pos < reco_beam_truth_daughter_true_PDGs.size(); pos++){ 
       if(pdg!= 9999 && reco_beam_truth_daughter_true_PDGs.at(pos) == pdg && daugh_track_property.size()> pos){
          return_vec.push_back(daugh_track_property.at(pos));}
