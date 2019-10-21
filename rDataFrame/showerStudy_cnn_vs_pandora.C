@@ -759,7 +759,7 @@ int showerStudy_cnn_vs_pandora(const string path = inputFile){
    auto gr4_ChEx = new TGraph(1, &pur_cut4_ChEx, &eff_cut4_ChEx );
    auto gr5_ChEx = new TGraph(1, &pur_cut5_ChEx, &eff_cut5_ChEx);
    auto gr6_ChEx = new TGraph(1, &pur_showTag_ChEx,&eff_showTag_ChEx);
-   auto gr7_ChEx = new TGraph(1, &pur_pandora_cut1_ChEx, &eff_pandora_cut1_ChEx);
+   /*auto gr7_ChEx = new TGraph(1, &pur_pandora_cut1_ChEx, &eff_pandora_cut1_ChEx);
    auto gr8_ChEx = new TGraph(1, &pur_pandora_cut2_ChEx, &eff_pandora_cut2_ChEx);
    auto gr9_ChEx = new TGraph(1, &pur_pandora_cut3_ChEx, &eff_pandora_cut3_ChEx);
    auto gr10_ChEx = new TGraph(1, &pur_pandora_cut4_ChEx, &eff_pandora_cut4_ChEx);
@@ -769,14 +769,15 @@ int showerStudy_cnn_vs_pandora(const string path = inputFile){
    auto gr14_ChEx = new TGraph(1, &pur_cut3_pandora_ChEx, &eff_cut3_pandora_ChEx);
    auto gr15_ChEx = new TGraph(1, &pur_cut4_pandora_ChEx, &eff_cut4_pandora_ChEx);
    auto gr16_ChEx = new TGraph(1, &pur_cut5_pandora_ChEx, &eff_cut5_pandora_ChEx);
+   */
    
-   gr1_ChEx->SetTitle("cnn_cut1"); 
-   gr2_ChEx->SetTitle("cnn_cut2");
-   gr3_ChEx->SetTitle("cnn_cut3");
-   gr4_ChEx->SetTitle("cnn_cut4");
-   gr5_ChEx->SetTitle("cnn_cut5");
+   gr1_ChEx->SetTitle("cnn_cut1 = 0.3"); 
+   gr2_ChEx->SetTitle("cnn_cut2 = 0.35");
+   gr3_ChEx->SetTitle("cnn_cut3 = 0.4");
+   gr4_ChEx->SetTitle("cnn_cut4 = 0.45");
+   gr5_ChEx->SetTitle("cnn_cut5 = 0.5");
    gr6_ChEx->SetTitle("pandoraShowerTag");
-   gr7_ChEx->SetTitle("pandora_cnn_cut1");
+   /*gr7_ChEx->SetTitle("pandora_cnn_cut1");
    gr8_ChEx->SetTitle("pandora_cnn_cut2");
    gr9_ChEx->SetTitle("pandora_cnn_cut3");
    gr10_ChEx->SetTitle("pandora_cnn_cut4");
@@ -786,14 +787,14 @@ int showerStudy_cnn_vs_pandora(const string path = inputFile){
    gr14_ChEx->SetTitle("cnn_cut3_pandora");
    gr15_ChEx->SetTitle("cnn_cut4_pandora");
    gr16_ChEx->SetTitle("cnn_cut5_pandora");
-
-   gr1_ChEx->SetMarkerSize(2);  gr1_ChEx->SetMarkerColor(2);    gr1_ChEx->SetMarkerStyle(20);
-   gr2_ChEx->SetMarkerSize(2);  gr2_ChEx->SetMarkerColor(3);    gr2_ChEx->SetMarkerStyle(20);
-   gr3_ChEx->SetMarkerSize(2);  gr3_ChEx->SetMarkerColor(4);    gr3_ChEx->SetMarkerStyle(20);
-   gr4_ChEx->SetMarkerSize(2);  gr4_ChEx->SetMarkerColor(5);    gr4_ChEx->SetMarkerStyle(20);
-   gr5_ChEx->SetMarkerSize(2);  gr5_ChEx->SetMarkerColor(6);    gr5_ChEx->SetMarkerStyle(20);
-   gr6_ChEx->SetMarkerSize(2);  gr6_ChEx->SetMarkerColor(2);    gr6_ChEx->SetMarkerStyle(21);
-   gr7_ChEx->SetMarkerSize(2);  gr7_ChEx->SetMarkerColor(2);    gr7_ChEx->SetMarkerStyle(22);
+*/
+   gr1_ChEx->SetMarkerSize(2);  gr1_ChEx->SetMarkerColor(2);    gr1_ChEx->SetMarkerStyle(20);   gr1_ChEx->SetLineColor(0);
+   gr2_ChEx->SetMarkerSize(2);  gr2_ChEx->SetMarkerColor(3);    gr2_ChEx->SetMarkerStyle(20);   gr2_ChEx->SetLineColor(0);
+   gr3_ChEx->SetMarkerSize(2);  gr3_ChEx->SetMarkerColor(4);    gr3_ChEx->SetMarkerStyle(20);   gr3_ChEx->SetLineColor(0);
+   gr4_ChEx->SetMarkerSize(2);  gr4_ChEx->SetMarkerColor(5);    gr4_ChEx->SetMarkerStyle(20);   gr4_ChEx->SetLineColor(0);
+   gr5_ChEx->SetMarkerSize(2);  gr5_ChEx->SetMarkerColor(6);    gr5_ChEx->SetMarkerStyle(20);   gr5_ChEx->SetLineColor(0);
+   gr6_ChEx->SetMarkerSize(2);  gr6_ChEx->SetMarkerColor(2);    gr6_ChEx->SetMarkerStyle(21);   gr6_ChEx->SetLineColor(0);
+   /*gr7_ChEx->SetMarkerSize(2);  gr7_ChEx->SetMarkerColor(2);    gr7_ChEx->SetMarkerStyle(22);
    gr8_ChEx->SetMarkerSize(2);  gr8_ChEx->SetMarkerColor(3);    gr8_ChEx->SetMarkerStyle(22);
    gr9_ChEx->SetMarkerSize(2);  gr9_ChEx->SetMarkerColor(4);    gr9_ChEx->SetMarkerStyle(22);
    gr10_ChEx->SetMarkerSize(2); gr10_ChEx->SetMarkerColor(5);   gr10_ChEx->SetMarkerStyle(22);
@@ -802,20 +803,25 @@ int showerStudy_cnn_vs_pandora(const string path = inputFile){
    gr13_ChEx->SetMarkerSize(2); gr13_ChEx->SetMarkerColor(3);   gr13_ChEx->SetMarkerStyle(23);
    gr14_ChEx->SetMarkerSize(2); gr14_ChEx->SetMarkerColor(4);   gr14_ChEx->SetMarkerStyle(23);
    gr15_ChEx->SetMarkerSize(2); gr15_ChEx->SetMarkerColor(5);   gr15_ChEx->SetMarkerStyle(23);
-   gr16_ChEx->SetMarkerSize(2); gr16_ChEx->SetMarkerColor(6);   gr16_ChEx->SetMarkerStyle(23);
+   gr16_ChEx->SetMarkerSize(2); gr16_ChEx->SetMarkerColor(6);   gr16_ChEx->SetMarkerStyle(23);*/
 
    mg_ChEx->Add(gr1_ChEx); mg_ChEx->Add(gr2_ChEx); mg_ChEx->Add(gr3_ChEx); mg_ChEx->Add(gr4_ChEx); 
    mg_ChEx->Add(gr5_ChEx); mg_ChEx->Add(gr6_ChEx); 
-   mg_ChEx->Add(gr7_ChEx); mg_ChEx->Add(gr8_ChEx); mg_ChEx->Add(gr9_ChEx); mg_ChEx->Add(gr10_ChEx); mg_ChEx->Add(gr11_ChEx); mg_ChEx->Add(gr12_ChEx); 
+   /*mg_ChEx->Add(gr7_ChEx); mg_ChEx->Add(gr8_ChEx); mg_ChEx->Add(gr9_ChEx); mg_ChEx->Add(gr10_ChEx); mg_ChEx->Add(gr11_ChEx); mg_ChEx->Add(gr12_ChEx); 
    mg_ChEx->Add(gr13_ChEx); mg_ChEx->Add(gr14_ChEx); mg_ChEx->Add(gr15_ChEx); mg_ChEx->Add(gr16_ChEx);
+   */
    
 
+   TAxis *axis_ChEx = mg_ChEx->GetXaxis();
+   
    mg_ChEx->GetXaxis()->SetTitle("Purity");
    //mg_ChEx->GetXaxis()->SetRangeUser(0.,1.);
    mg_ChEx->GetYaxis()->SetTitle("Efficiency");
-   //mg_ChEx->GetYaxis()->SetRangeUser(0.,1.);
-   mg_ChEx->Draw("AP PFC");
-   canv_mg_ChEx->BuildLegend();
+   mg_ChEx->GetYaxis()->SetRangeUser(0.,1.);
+   axis_ChEx->SetLimits(0.,1.);
+   axis_ChEx->SetNdivisions(510,kFALSE);
+   mg_ChEx->Draw("ALP PFC");
+   canv_mg_ChEx->BuildLegend(0.3,0.21,0.3,0.21,"","p");
    canv_mg_ChEx->SetGrid();
    canv_mg_ChEx->Write();
    mg_ChEx->Write();
@@ -831,7 +837,7 @@ int showerStudy_cnn_vs_pandora(const string path = inputFile){
    auto gr4_Abs = new TGraph(1, &pur_cut4_Abs, &eff_cut4_Abs );
    auto gr5_Abs = new TGraph(1, &pur_cut5_Abs, &eff_cut5_Abs);
    auto gr6_Abs = new TGraph(1, &pur_showTag_Abs,&eff_showTag_Abs);
-   auto gr7_Abs = new TGraph(1, &pur_pandora_cut1_Abs, &eff_pandora_cut1_Abs);
+   /*auto gr7_Abs = new TGraph(1, &pur_pandora_cut1_Abs, &eff_pandora_cut1_Abs);
    auto gr8_Abs = new TGraph(1, &pur_pandora_cut2_Abs, &eff_pandora_cut2_Abs);
    auto gr9_Abs = new TGraph(1, &pur_pandora_cut3_Abs, &eff_pandora_cut3_Abs);
    auto gr10_Abs = new TGraph(1, &pur_pandora_cut4_Abs, &eff_pandora_cut4_Abs);
@@ -841,14 +847,15 @@ int showerStudy_cnn_vs_pandora(const string path = inputFile){
    auto gr14_Abs = new TGraph(1, &pur_cut3_pandora_Abs, &eff_cut3_pandora_Abs);
    auto gr15_Abs = new TGraph(1, &pur_cut4_pandora_Abs, &eff_cut4_pandora_Abs);
    auto gr16_Abs = new TGraph(1, &pur_cut5_pandora_Abs, &eff_cut5_pandora_Abs);
+   */
    
-   gr1_Abs->SetTitle("cnn_cut1"); 
-   gr2_Abs->SetTitle("cnn_cut2");
-   gr3_Abs->SetTitle("cnn_cut3");
-   gr4_Abs->SetTitle("cnn_cut4");
-   gr5_Abs->SetTitle("cnn_cut5");
+   gr1_Abs->SetTitle("cnn_cut1 = 0.3"); 
+   gr2_Abs->SetTitle("cnn_cut2 = 0.35");
+   gr3_Abs->SetTitle("cnn_cut3 = 0.4");
+   gr4_Abs->SetTitle("cnn_cut4 = 0.45");
+   gr5_Abs->SetTitle("cnn_cut5 = 0.5");
    gr6_Abs->SetTitle("pandoraShowerTag");
-   gr7_Abs->SetTitle("pandora_cnn_cut1");
+   /*gr7_Abs->SetTitle("pandora_cnn_cut1");
    gr8_Abs->SetTitle("pandora_cnn_cut2");
    gr9_Abs->SetTitle("pandora_cnn_cut3");
    gr10_Abs->SetTitle("pandora_cnn_cut4");
@@ -858,14 +865,15 @@ int showerStudy_cnn_vs_pandora(const string path = inputFile){
    gr14_Abs->SetTitle("cnn_cut3_pandora");
    gr15_Abs->SetTitle("cnn_cut4_pandora");
    gr16_Abs->SetTitle("cnn_cut5_pandora");
+   */
 
-   gr1_Abs->SetMarkerSize(2);  gr1_Abs->SetMarkerColor(2);    gr1_Abs->SetMarkerStyle(20);
-   gr2_Abs->SetMarkerSize(2);  gr2_Abs->SetMarkerColor(3);    gr2_Abs->SetMarkerStyle(20);
-   gr3_Abs->SetMarkerSize(2);  gr3_Abs->SetMarkerColor(4);    gr3_Abs->SetMarkerStyle(20);
-   gr4_Abs->SetMarkerSize(2);  gr4_Abs->SetMarkerColor(5);    gr4_Abs->SetMarkerStyle(20);
-   gr5_Abs->SetMarkerSize(2);  gr5_Abs->SetMarkerColor(6);    gr5_Abs->SetMarkerStyle(20);
-   gr6_Abs->SetMarkerSize(2);  gr6_Abs->SetMarkerColor(2);    gr6_Abs->SetMarkerStyle(21);
-   gr7_Abs->SetMarkerSize(2);  gr7_Abs->SetMarkerColor(2);    gr7_Abs->SetMarkerStyle(22);
+   gr1_Abs->SetMarkerSize(2);  gr1_Abs->SetMarkerColor(2);    gr1_Abs->SetMarkerStyle(20);   gr1_Abs->SetLineColor(0);
+   gr2_Abs->SetMarkerSize(2);  gr2_Abs->SetMarkerColor(3);    gr2_Abs->SetMarkerStyle(20);   gr2_Abs->SetLineColor(0);
+   gr3_Abs->SetMarkerSize(2);  gr3_Abs->SetMarkerColor(4);    gr3_Abs->SetMarkerStyle(20);   gr3_Abs->SetLineColor(0);
+   gr4_Abs->SetMarkerSize(2);  gr4_Abs->SetMarkerColor(5);    gr4_Abs->SetMarkerStyle(20);   gr4_Abs->SetLineColor(0);
+   gr5_Abs->SetMarkerSize(2);  gr5_Abs->SetMarkerColor(6);    gr5_Abs->SetMarkerStyle(20);   gr5_Abs->SetLineColor(0);
+   gr6_Abs->SetMarkerSize(2);  gr6_Abs->SetMarkerColor(2);    gr6_Abs->SetMarkerStyle(21);   gr6_Abs->SetLineColor(0);
+   /*gr7_Abs->SetMarkerSize(2);  gr7_Abs->SetMarkerColor(2);    gr7_Abs->SetMarkerStyle(22);
    gr8_Abs->SetMarkerSize(2);  gr8_Abs->SetMarkerColor(3);    gr8_Abs->SetMarkerStyle(22);
    gr9_Abs->SetMarkerSize(2);  gr9_Abs->SetMarkerColor(4);    gr9_Abs->SetMarkerStyle(22);
    gr10_Abs->SetMarkerSize(2); gr10_Abs->SetMarkerColor(5);   gr10_Abs->SetMarkerStyle(22);
@@ -874,20 +882,24 @@ int showerStudy_cnn_vs_pandora(const string path = inputFile){
    gr13_Abs->SetMarkerSize(2); gr13_Abs->SetMarkerColor(3);   gr13_Abs->SetMarkerStyle(23);
    gr14_Abs->SetMarkerSize(2); gr14_Abs->SetMarkerColor(4);   gr14_Abs->SetMarkerStyle(23);
    gr15_Abs->SetMarkerSize(2); gr15_Abs->SetMarkerColor(5);   gr15_Abs->SetMarkerStyle(23);
-   gr16_Abs->SetMarkerSize(2); gr16_Abs->SetMarkerColor(6);   gr16_Abs->SetMarkerStyle(23);
+   gr16_Abs->SetMarkerSize(2); gr16_Abs->SetMarkerColor(6);   gr16_Abs->SetMarkerStyle(23);*/
 
    mg_Abs->Add(gr1_Abs); mg_Abs->Add(gr2_Abs); mg_Abs->Add(gr3_Abs); mg_Abs->Add(gr4_Abs); 
    mg_Abs->Add(gr5_Abs); mg_Abs->Add(gr6_Abs); 
-   mg_Abs->Add(gr7_Abs); mg_Abs->Add(gr8_Abs); mg_Abs->Add(gr9_Abs); mg_Abs->Add(gr10_Abs); mg_Abs->Add(gr11_Abs); mg_Abs->Add(gr12_Abs); 
+   /*mg_Abs->Add(gr7_Abs); mg_Abs->Add(gr8_Abs); mg_Abs->Add(gr9_Abs); mg_Abs->Add(gr10_Abs); mg_Abs->Add(gr11_Abs); mg_Abs->Add(gr12_Abs); 
    mg_Abs->Add(gr13_Abs); mg_Abs->Add(gr14_Abs); mg_Abs->Add(gr15_Abs); mg_Abs->Add(gr16_Abs);
-   
+   */
+
+   TAxis *axis_Abs = mg_Abs->GetXaxis();
 
    mg_Abs->GetXaxis()->SetTitle("Purity");
-   //mg_Abs->GetXaxis()->SetRangeUser(0.,1.);
    mg_Abs->GetYaxis()->SetTitle("Efficiency");
-   //mg_Abs->GetYaxis()->SetRangeUser(0.,1.);
    mg_Abs->Draw("AP PFC");
-   canv_mg_Abs->BuildLegend();
+   mg_Abs->GetYaxis()->SetRangeUser(0.,1.);
+   axis_Abs->SetLimits(0.,1.);
+   axis_Abs->SetNdivisions(510,kFALSE);
+   mg_Abs->Draw("AP PFC");
+   canv_mg_Abs->BuildLegend(0.3,0.21,0.3,0.21,"","p");
    canv_mg_Abs->SetGrid();
    canv_mg_Abs->Write();
    mg_Abs->Write();

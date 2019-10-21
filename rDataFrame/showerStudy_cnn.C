@@ -37,8 +37,8 @@ int showerStudy_cnn(const string path = inputFile){
    TFile* output = new TFile("out_showerStudy_cnn.root", "RECREATE");
 
    THStack *nShowerProcessStack = new THStack("nShowerPerEvent","Number of Showers found in specific Process");
-   
-  //Em and Track Scores
+
+   //Em and Track Scores
    THStack *pdg_emScore_BG = new THStack("pdg_emScore_BG", "CNN emScore of shower-tagged Particles in BackGround");
    THStack *pdg_emScore_ChExAbs = new THStack("pdg_emScore_ChExAbs", "CNN emScore of shower-tagged Particles in ChEx + Abs Signal");
    THStack *pdg_emScore_ChEx = new THStack("pdg_emScore_ChEx", "CNN emScore of shower-tagged Particles in ChEx Signal");
@@ -69,12 +69,12 @@ int showerStudy_cnn(const string path = inputFile){
    auto hist_showDaugh_Abs = filter_trueAbsProcess.Histo1D({"Signal Abs", "", 10, 0.,10.},"nShowerDaughters");
    auto hist_showDaugh_ChEx = filter_trueChExProcess.Histo1D({"Signal ChEx", "", 10, 0.,10.},"nShowerDaughters");
    auto hist_showDaugh_BG = filter_trueBackGround.Histo1D({"BackGround", "", 10, 0.,10.},"nShowerDaughters");
-   
+
    //*******************************************************************
    //Track Score CNN stuff
    //
    //ChEx + Abs
-  auto h_show_trackScore_ChExAbs_nucleus = filter_trueChExAbsProcess
+   auto h_show_trackScore_ChExAbs_nucleus = filter_trueChExAbsProcess
       .Define("nucleus", pdg_nucleus)
       .Define("ChExAbs_nucleus", daughter_property,{"nucleus","reco_beam_truth_daughter_shower_true_PDGs","reco_daughter_shower_track_score"})
       .Histo1D({"nucleus", "", 50,0.,1.},"ChExAbs_nucleus");
@@ -233,7 +233,7 @@ int showerStudy_cnn(const string path = inputFile){
    //EM Score CNN stuff
    //
    //ChEx + Abs
-  auto h_show_emScore_ChExAbs_nucleus = filter_trueChExAbsProcess
+   auto h_show_emScore_ChExAbs_nucleus = filter_trueChExAbsProcess
       .Define("nucleus", pdg_nucleus)
       .Define("ChExAbs_nucleus", daughter_property,{"nucleus","reco_beam_truth_daughter_shower_true_PDGs","reco_daughter_shower_em_score"})
       .Histo1D({"nucleus", "", 50,0.,1.},"ChExAbs_nucleus");
@@ -390,8 +390,8 @@ int showerStudy_cnn(const string path = inputFile){
 
 
 
-   
-   
+
+
    auto count_all = frame.Count();
    auto count_truePrimaryPionInel = filter_truePrimaryPionInel.Count();
    auto count_trueChExAbsProcess = filter_trueChExAbsProcess.Count();
@@ -436,7 +436,7 @@ int showerStudy_cnn(const string path = inputFile){
    pdg_trackScore_ChExAbs->Draw("pfc");
    pdg_trackScore_ChExAbs->GetXaxis()->SetTitle("CNN trackScore");
    c2->BuildLegend();
- 
+
    //cnn EM ChEx
    pdg_trackScore_ChEx->Add(h_show_trackScore_ChEx_nucleus.GetPtr());
    pdg_trackScore_ChEx->Add(h_show_trackScore_ChEx_kaon.GetPtr());
@@ -452,7 +452,7 @@ int showerStudy_cnn(const string path = inputFile){
    pdg_trackScore_ChEx->Draw("pfc");
    pdg_trackScore_ChEx->GetXaxis()->SetTitle("CNN trackScore");
    c3->BuildLegend();
- 
+
    //cnn EM Abs
    pdg_trackScore_Abs->Add(h_show_trackScore_Abs_nucleus.GetPtr());
    pdg_trackScore_Abs->Add(h_show_trackScore_Abs_kaon.GetPtr());
@@ -468,7 +468,7 @@ int showerStudy_cnn(const string path = inputFile){
    pdg_trackScore_Abs->Draw("pfc");
    pdg_trackScore_Abs->GetXaxis()->SetTitle("CNN trackScore");
    c4->BuildLegend();
- 
+
    //cnn EM BG
    pdg_trackScore_BG->Add(h_show_trackScore_BG_nucleus.GetPtr());
    pdg_trackScore_BG->Add(h_show_trackScore_BG_kaon.GetPtr());
@@ -501,7 +501,7 @@ int showerStudy_cnn(const string path = inputFile){
    pdg_emScore_ChExAbs->Draw("pfc");
    pdg_emScore_ChExAbs->GetXaxis()->SetTitle("CNN emScore");
    c6->BuildLegend();
- 
+
    //cnn EM ChEx
    pdg_emScore_ChEx->Add(h_show_emScore_ChEx_nucleus.GetPtr());
    pdg_emScore_ChEx->Add(h_show_emScore_ChEx_kaon.GetPtr());
@@ -517,7 +517,7 @@ int showerStudy_cnn(const string path = inputFile){
    pdg_emScore_ChEx->Draw("pfc");
    pdg_emScore_ChEx->GetXaxis()->SetTitle("CNN emScore");
    c7->BuildLegend();
- 
+
    //cnn EM Abs
    pdg_emScore_Abs->Add(h_show_emScore_Abs_nucleus.GetPtr());
    pdg_emScore_Abs->Add(h_show_emScore_Abs_kaon.GetPtr());
@@ -533,7 +533,7 @@ int showerStudy_cnn(const string path = inputFile){
    pdg_emScore_Abs->Draw("pfc");
    pdg_emScore_Abs->GetXaxis()->SetTitle("CNN emScore");
    c8->BuildLegend();
- 
+
    //cnn EM BG
    pdg_emScore_BG->Add(h_show_emScore_BG_nucleus.GetPtr());
    pdg_emScore_BG->Add(h_show_emScore_BG_kaon.GetPtr());
@@ -549,19 +549,19 @@ int showerStudy_cnn(const string path = inputFile){
    pdg_emScore_BG->Draw("pfc");
    pdg_emScore_BG->GetXaxis()->SetTitle("CNN emScore");
    c9->BuildLegend();
-  
+
    nShowerProcessStack->Write();
-  
+
    pdg_emScore_ChExAbs->Write();
    pdg_emScore_ChEx->Write();
    pdg_emScore_Abs->Write();
    pdg_emScore_BG->Write();
- 
+
    pdg_trackScore_ChExAbs->Write();
    pdg_trackScore_ChEx->Write();
    pdg_trackScore_Abs->Write();
    pdg_trackScore_BG->Write();
-   
+
 
    c1->Write();
    c2->Write();
@@ -572,7 +572,7 @@ int showerStudy_cnn(const string path = inputFile){
    c7->Write();
    c8->Write();
    c9->Write();
-        
+
    output->Write();
 
    output->Close();

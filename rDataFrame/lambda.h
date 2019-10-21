@@ -64,7 +64,7 @@ auto trueAbsProcess = [](int nPi0_truth) { return nPi0_truth == 0;};
 //True Background Signal, NOT Charge Exchange and NOT Absorption
 //
 auto trueBackGround = [](int nPiPlus_truth, int nPiMinus_truth, int nPi0_truth){
-   return !(nPiPlus_truth + nPiMinus_truth == 0 && nPi0_truth >2);
+   return !(nPiPlus_truth + nPiMinus_truth == 0 && nPi0_truth <2);
 };
 
 //Define all particle types
