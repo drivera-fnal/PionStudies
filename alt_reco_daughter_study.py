@@ -16,18 +16,6 @@ def ang_pos_test_cut(e):
 
   if( e.startZ < 28. or e.startZ > 32. ): return 0
 
-  '''  if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
-
-  if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) < -4. ): return 0
-
-  if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) > 4. ): return 0
-
-  if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) < -7. ): return 0
-
-  if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) > 8. ): return 0
-
-  if( e.startZ < 16. or e.startZ > 20. ): return 0'''
-
   return 1
 
 
@@ -36,6 +24,8 @@ tree = f.Get("pionana/beamana")
 
 fout = TFile( sys.argv[2], "RECREATE" )
 outtree = TTree("tree","")
+
+use_pma = int( sys.argv[3] )
 
 dR = array("d", [0.])
 vertex_slice = array("i", [0])
@@ -92,9 +82,7 @@ print "Entries:", tree.GetEntries()
 for e in tree:
   if not ( e.reco_beam_good and e.true_beam_PDG == 211 and e.type == 13 ): continue
 
-  if( len(sys.argv) > 3 ):
-    if( int(sys.argv[3]) ):
-      if not ( ang_pos_test_cut(e) ): continue
+  if not ( ang_pos_test_cut(e) ): continue
 
 
   vertex_type[0] = vt(e, 5.)
@@ -107,83 +95,45 @@ for e in tree:
 
   pi0_decay_IDs = [i for i in e.true_beam_Pi0_decay_IDs]
 
-  for i in range(0, e.nTrackDaughters):
+  pfp_ids = [i for i in e.reco_daughter_PFP_ID]
+  for i in range(0, len(pfp_ids)):
 
-    is_track[0] = 1
+    daughterTrackID[0] = pfp_ids[i]
+    is_cosmic[0] = int( e.alt_reco_daughter_PFP_truth_Origin[i] == 2 )
 
-    daughterTrackID[0] = e.reco_daughter_trackID[i]
-
-    is_cosmic[0] = int( e.alt_reco_daughter_truth_Origin[i] == 2 )
-
-    is_self[0] = int( e.alt_reco_daughter_truth_ID[i] == e.true_beam_ID )
+    is_self[0] = int( e.alt_reco_daughter_PFP_truth_ID[i] == e.true_beam_ID )
       
     #dR[0] = e.reco_daughter_dR[i]
-    dR[0] = e.reco_daughter_to_vertex[i]
-    daughter_slice[0] = e.reco_daughter_slice[i]
 
-    pdg[0] = e.alt_reco_daughter_truth_PDG[i]
-    chi2[0] = e.reco_daughter_Chi2_proton[i] / e.reco_daughter_Chi2_ndof[i]
-    cnn[0] = e.reco_daughter_track_score[i] 
+    pdg[0] = e.alt_reco_daughter_PFP_truth_PDG[i]
+    cnn[0] = e.reco_daughter_PFP_track_score[i] 
+
+    if( use_pma and not e.reco_daughter_PMA_ID[i] == -1 and e.reco_daughter_PMA_Chi2_ndof[i] > 0):
+      dR[0] = e.reco_daughter_PMA_to_vertex[i]
+      #daughter_slice[0] = e.reco_daughter_PMA_slice[i]
+      chi2[0] = e.reco_daughter_PMA_Chi2_proton[i] / e.reco_daughter_PMA_Chi2_ndof[i]
+    elif( not e.reco_daughter_pandora2_ID[i] == -1 and e.reco_daughter_pandora2_Chi2_ndof[i] > 0):
+      dR[0] = e.reco_daughter_pandora2_to_vertex[i]
+      #daughter_slice[0] = e.reco_daughter_pandora2_slice[i]
+      chi2[0] = e.reco_daughter_pandora2_Chi2_proton[i] / e.reco_daughter_pandora2_Chi2_ndof[i]
 
     pi0_gamma[0] = 0
     #check if this is a pi0 gamma:
     if( pdg[0] == 22 ):
       if 111 in [j for j in e.true_beam_daughter_PDGs]:
-        if e.alt_reco_daughter_truth_ID[i] in pi0_decay_IDs:
+        if e.alt_reco_daughter_PFP_truth_ID[i] in pi0_decay_IDs:
           pi0_gamma[0] = 1
 
-    true_daughter[0] = int( e.alt_reco_daughter_truth_ParID[i] == e.true_beam_ID )
-    true_grand_daughter[0] = int( e.alt_reco_daughter_truth_ID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
-    true_great_grand_daughter[0] = int( e.alt_reco_daughter_truth_ParID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
+    true_daughter[0] = int( e.alt_reco_daughter_PFP_truth_ParID[i] == e.true_beam_ID )
+    true_grand_daughter[0] = int( e.alt_reco_daughter_PFP_truth_ID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
+    true_great_grand_daughter[0] = int( e.alt_reco_daughter_PFP_truth_ParID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
 
     if true_grand_daughter[0]:
       true_gd_IDs = [j for j in e.true_beam_grand_daughter_IDs]
       true_gd_ParIDs = [j for j in e.true_beam_grand_daughter_ParIDs]
 
       for gd_ID, gd_ParID in zip(true_gd_IDs, true_gd_ParIDs):
-        if e.alt_reco_daughter_truth_ID[i] == gd_ID:
-          for d_ID, d_PDG in zip([j for j in e.true_beam_daughter_IDs], [j for j in e.true_beam_daughter_PDGs]):
-            if gd_ParID == d_ID:
-              true_gd_ParPDG[0] = d_PDG
-
-    outtree.Fill()
-
-  for i in range(0, e.nShowerDaughters):
-
-    is_track[0] = 0
-
-    daughterTrackID[0] = e.reco_daughter_showerID[i]
-
-    is_cosmic[0] = int( e.alt_reco_daughter_shower_truth_Origin[i] == 2 )
-
-    is_self[0] = int( e.alt_reco_daughter_shower_truth_ID[i] == e.true_beam_ID )
-      
-    #dR[0] = e.reco_daughter_dR[i]
-    dR[0] = e.reco_daughter_shower_to_vertex[i]
-    #print dR[0]
-    daughter_slice[0] = 0 
-
-    pdg[0] = e.alt_reco_daughter_shower_truth_PDG[i]
-    chi2[0] = e.reco_daughter_shower_Chi2_proton[i] / e.reco_daughter_shower_Chi2_ndof[i]
-    cnn[0] = e.reco_daughter_shower_track_score[i] 
-
-    pi0_gamma[0] = 0
-    #check if this is a pi0 gamma:
-    if( pdg[0] == 22 ):
-      if 111 in [j for j in e.true_beam_daughter_PDGs]:
-        if e.alt_reco_daughter_shower_truth_ID[i] in pi0_decay_IDs:
-          pi0_gamma[0] = 1
-
-    true_daughter[0] = int( e.alt_reco_daughter_shower_truth_ParID[i] == e.true_beam_ID )
-    true_grand_daughter[0] = int( e.alt_reco_daughter_shower_truth_ID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
-    true_great_grand_daughter[0] = int( e.alt_reco_daughter_shower_truth_ParID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
-
-    if true_grand_daughter[0]:
-      true_gd_IDs = [j for j in e.true_beam_grand_daughter_IDs]
-      true_gd_ParIDs = [j for j in e.true_beam_grand_daughter_ParIDs]
-
-      for gd_ID, gd_ParID in zip(true_gd_IDs, true_gd_ParIDs):
-        if e.alt_reco_daughter_shower_truth_ID[i] == gd_ID:
+        if e.alt_reco_daughter_PFP_truth_ID[i] == gd_ID:
           for d_ID, d_PDG in zip([j for j in e.true_beam_daughter_IDs], [j for j in e.true_beam_daughter_PDGs]):
             if gd_ParID == d_ID:
               true_gd_ParPDG[0] = d_PDG
@@ -240,32 +190,33 @@ print outtree.GetEntries()
 
 for i in range(0, 5):
   for cat in cats: 
-    print cuts[cat] + " && vertex_type == " + str(i) + " && is_track == " + str(sys.argv[5])
-    outtree.Draw("dR>>h" + cat + str(i) + "(175,0,350)", cuts[cat] + " && vertex_type == " + str(i) + " && is_track == " + str(sys.argv[5]))
+    print cuts[cat] + " && vertex_type == " + str(i) 
+    outtree.Draw("dR>>h" + cat + str(i) + "(175,0,350)", cuts[cat] + " && vertex_type == " + str(i) )
     dR_hists[cat + str(i)] = gDirectory.Get("h"+cat + str(i))
     print dR_hists[cat + str(i)].Integral()
     dR_hists[cat + str(i)].SetLineColor(colors[cat])
     dR_hists[cat + str(i)].SetFillColor(colors[cat])
     print cat, dR_hists[cat + str(i)].Integral()
   
-    outtree.Draw( "vertex_slice - daughter_slice>>hSlice" + cat + str(i) + "(600,0,600)", cuts[cat]  + " && vertex_type == " + str(i) + " && is_track == " + str(sys.argv[5]))
+    outtree.Draw( "vertex_slice - daughter_slice>>hSlice" + cat + str(i) + "(600,0,600)", cuts[cat]  + " && vertex_type == " + str(i) )
     slice_hists[cat + str(i)] = gDirectory.Get("hSlice"+cat + str(i))
     slice_hists[cat + str(i)].SetLineColor(colors[cat])
     slice_hists[cat + str(i)].SetFillColor(colors[cat])
   
     chi2_cut = cuts[cat]  + " && vertex_type == " + str(i)
 
+    '''
     if( len(sys.argv) > 4 ):
       if( int(sys.argv[4]) ): 
         chi2_cut = chi2_cut + " && dR < 8. && (vertex_slice - daughter_slice) < 10"  
-       
+    '''   
 
-    outtree.Draw( "chi2>>hChi2" + cat + str(i) + "(100,0,300)", chi2_cut  + " && is_track == " + str(sys.argv[5]))
+    outtree.Draw( "chi2>>hChi2" + cat + str(i) + "(100,0,500)", chi2_cut + " && cnn > .3" )
     chi2_hists[cat + str(i)] = gDirectory.Get("hChi2"+cat + str(i))
     chi2_hists[cat + str(i)].SetLineColor(colors[cat])
     chi2_hists[cat + str(i)].SetFillColor(colors[cat])
 
-    outtree.Draw( "cnn>>hCNN" + cat + str(i) + "(100,0,1)", chi2_cut  + " && is_track == " + str(sys.argv[5]))
+    outtree.Draw( "cnn>>hCNN" + cat + str(i) + "(100,0,1)", chi2_cut  )
     cnn_hists[cat + str(i)] = gDirectory.Get("hCNN"+cat + str(i))
     cnn_hists[cat + str(i)].SetLineColor(colors[cat])
     cnn_hists[cat + str(i)].SetFillColor(colors[cat])
