@@ -1,13 +1,14 @@
-def set_style(hist, xtitle, ytitle):
+def set_style(hist, xtitle, ytitle, form=1 ):
   hist.SetTitle(";" + xtitle + ";" + ytitle )
+  
+  if form: 
+    hist.GetXaxis().SetTitleSize(.05)
+    hist.GetXaxis().SetTitleOffset(.85)
+    hist.GetXaxis().SetLabelSize(.04)
 
-  hist.GetXaxis().SetTitleSize(.05)
-  hist.GetXaxis().SetTitleOffset(.85)
-  hist.GetXaxis().SetLabelSize(.04)
-
-  hist.GetYaxis().SetTitleSize(.05)
-  hist.GetYaxis().SetTitleOffset(.85)
-  hist.GetYaxis().SetLabelSize(.04)
+    hist.GetYaxis().SetTitleSize(.05)
+    hist.GetYaxis().SetTitleOffset(.85)
+    hist.GetYaxis().SetLabelSize(.04)
 
 def set_eff_style(hist, xtitle, ytitle, rebin=True):
   set_style(hist, xtitle, ytitle)
