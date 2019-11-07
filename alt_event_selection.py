@@ -49,10 +49,11 @@ missed_pion_daughter_PFP   = array("i", [0])
 missed_pion_daughter_track = array("i", [0])
 event = array("i", [0])
 run = array("i", [0])
-missed_pion_P = array("d", [0.]*20)
-pion_P = array("d", [0.]*20)
-pion_len = array("d", [0.]*20)
-missed_pion = array("i", [0]*20)
+missed_pion_P = array("d", [0.]*50)
+pion_P = array("d", [0.]*50)
+pion_len = array("d", [0.]*50)
+missed_pion = array("i", [0]*50)
+missed_pion_track = array("i", [0]*50)
 good_reco = array("i", [0])
 
 #Abs = 1; Cex = 2
@@ -71,10 +72,11 @@ outtree.Branch("cnn_skipped_pion", cnn_skipped_pion, "cnn_skipped_pion/I")
 outtree.Branch("chi2_surv_pion", chi2_surv_pion, "chi2_surv_pion/I")
 outtree.Branch("missed_pion_daughter_PFP", missed_pion_daughter_PFP, "missed_pion_daughter_PFP/I")
 outtree.Branch("missed_pion_daughter_track", missed_pion_daughter_track, "missed_pion_daughter_track/I")
-outtree.Branch("missed_pion_P", missed_pion_P, "missed_pion_P[20]/D")
-outtree.Branch("pion_P", pion_P, "pion_P[20]/D")
-outtree.Branch("pion_len", pion_len, "pion_len[20]/D")
-outtree.Branch("missed_pion", missed_pion, "missed_pion[20]/I")
+outtree.Branch("missed_pion_P", missed_pion_P, "missed_pion_P[50]/D")
+outtree.Branch("pion_P", pion_P, "pion_P[50]/D")
+outtree.Branch("pion_len", pion_len, "pion_len[50]/D")
+outtree.Branch("missed_pion", missed_pion, "missed_pion[50]/I")
+outtree.Branch("missed_pion_track", missed_pion_track, "missed_pion_track[50]/I")
 outtree.Branch("good_reco", good_reco, "good_reco/I")
 
 nTrueSignal = 0
@@ -84,6 +86,12 @@ n_signal_as_bg = 0
 n_signal_as_signal = 0
 n_bg_as_bg = 0
 n_bg_as_signal = 0
+
+n_other = 0
+n_inel = 0
+n_un = 0
+n_el = 0
+n_mixed = 0
 
 for e in tree:
   if not ( e.reco_beam_good and e.true_beam_PDG == 211 and e.type == 13 ): continue
@@ -96,7 +104,7 @@ for e in tree:
   good_reco[0] = test_good_reco(e)
 
   #Determine if this is our true signal 
-  vertex[0] = vt(e, 5.)
+  vertex[0] = vt(e, float(sys.argv[4]))
   
   event[0] = e.event
   run[0] = e.run
@@ -104,6 +112,7 @@ for e in tree:
   true_signal[0] = False 
   multiple_pi0[0] = False
   if vertex[0] == 1 :
+    n_inel = n_inel + 1
     #Define Abs+Cex as signal
     # and e.nPi0_truth < 2
     if ( e.nPiPlus_truth + e.nPiMinus_truth ) == 0 and e.nPi0_truth < 2:
@@ -112,11 +121,22 @@ for e in tree:
       else: AbsCex_type[0] = 2
     else:
       true_signal[0] = False
-      if( (e.nPiPlus_truth + e.nPiMinus_truth) == 0 and e.nPi0_truth > 1 ): multiple_pi0[0] = True
-  elif vertex[0] == 2 or vertex[0] == 0: 
+      if( (e.nPiPlus_truth + e.nPiMinus_truth) == 0 and e.nPi0_truth > 1 ): 
+        multiple_pi0[0] = True
+        true_signal[0] = True
+  elif vertex[0] == 2:
+    n_el = n_el + 1
+    true_signal[0] = False
+  elif vertex[0] == 0: 
+    n_un = n_un + 1
     true_signal[0] = False
   ##Skip the mixed vertex for now
-  else: continue
+  elif vertex[0] == 3:
+    n_mixed = n_mixed + 1
+    continue
+  else: 
+    n_other = n_other + 1
+    continue
 
   if true_signal[0]: nTrueSignal = nTrueSignal + 1
   else: nTrueBG = nTrueBG + 1
@@ -141,6 +161,11 @@ for e in tree:
       #PMA or Pandora
       if( use_pma ): 
         if( e.reco_daughter_PMA_ID[i] != -1 ):
+
+          if e.reco_daughter_PMA_to_vertex[i] > .6: 
+            if abs( e.alt_reco_daughter_PFP_truth_PDG[i] ) == 211: dR_skipped_pion[0] = True
+            #continue
+
           chi2 = e.reco_daughter_PMA_Chi2_proton[i] / e.reco_daughter_PMA_Chi2_ndof[i]
           if e.alt_reco_daughter_PFP_truth_PDG[i] == 22 and e.alt_reco_daughter_PFP_truth_ID[i] in [j for j in e.true_beam_Pi0_decay_IDs]:
             pi0_gamma_as_track[0] = True
@@ -157,6 +182,10 @@ for e in tree:
       else:
         if( e.reco_daughter_pandora2_ID[i] != -1 ):
 
+          if e.reco_daughter_pandora2_to_vertex[i] > .6: 
+            if abs( e.alt_reco_daughter_PFP_truth_PDG[i] ) == 211: dR_skipped_pion[0] = True
+            #continue
+
           chi2 = e.reco_daughter_pandora2_Chi2_proton[i] / e.reco_daughter_pandora2_Chi2_ndof[i]
           if e.alt_reco_daughter_PFP_truth_PDG[i] == 22 and e.alt_reco_daughter_PFP_truth_ID[i] in [j for j in e.true_beam_Pi0_decay_IDs]:
             pi0_gamma_as_track[0] = True
@@ -166,8 +195,8 @@ for e in tree:
           elif abs(e.alt_reco_daughter_PFP_truth_PDG[i]) == 211:
             chi2_surv_pion[0] = True
 
-        else: 
-          print "Warning: no pandora2 Track associated"
+    #    else: 
+          #print "Warning: no pandora2 Track associated"
 
     elif abs(e.alt_reco_daughter_PFP_truth_PDG[i]) == 211:
       has_pion_shower[0] = True
@@ -180,8 +209,10 @@ for e in tree:
     pion_P[i] = 0.
     pion_len[i] = 0.
     missed_pion[i] = 0
+    missed_pion_track[i] = 0
 
   a = 0
+  #print len([i for i in e.true_beam_daughter_IDs]), len([i for i in e.true_beam_daughter_PDGs]), len([i for i in e.true_beam_daughter_startP])
   for tID, tPDG in zip([i for i in e.true_beam_daughter_IDs],[i for i in e.true_beam_daughter_PDGs]):
     if abs(tPDG) == 211:
       pion_P[a] = e.true_beam_daughter_startP[a]*1.e3
@@ -191,16 +222,19 @@ for e in tree:
         missed_pion_daughter_PFP[0] = True
         missed_pion_P[a] = 1.e3*e.true_beam_daughter_startP[a]
         missed_pion[a] = 1
-        print missed_pion_P[a]
+        missed_pion_track[a] = 1
+        #print missed_pion_P[a]
       else:
         if( use_pma ):
           for pfp_truthID,trackID in zip([i for i in e.alt_reco_daughter_PFP_truth_ID],[i for i in e.reco_daughter_PMA_ID]): 
             if pfp_truthID == tID and trackID == -1:
               missed_pion_daughter_track[0] = True
+              missed_pion_track[a] = 1
         else:
           for pfp_truthID,trackID in zip([i for i in e.alt_reco_daughter_PFP_truth_ID],[i for i in e.reco_daughter_pandora2_ID]): 
             if pfp_truthID == tID and trackID == -1:
               missed_pion_daughter_track[0] = True
+              missed_pion_track[a] = 1
     a = a + 1      
 
 
@@ -225,6 +259,12 @@ print "BG:", nTrueBG, n_bg_as_signal, n_bg_as_bg
 if nTrueSignal > 0:
   print "Efficiency:", float( n_signal_as_signal ) / float( nTrueSignal )
 print "Purity:", float( n_signal_as_signal ) / float( n_signal_as_signal + n_bg_as_signal )
+
+print "Mixed vt:", n_mixed
+print "Other vt:", n_other
+print "Inel vt:", n_inel
+print "El vt:", n_el
+print "Unmatched vt:", n_un
 
 fout.cd()
 outtree.Write()

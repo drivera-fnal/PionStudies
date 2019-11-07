@@ -80,6 +80,10 @@ vertex_stack.GetXaxis().SetBinLabel(1, "Unmatched")
 vertex_stack.GetXaxis().SetBinLabel(2, "Inelastic")
 vertex_stack.GetXaxis().SetBinLabel(3, "Elastic")
 
+print [i for i in vertex_stack.GetStack()][-1].GetBinContent(1),
+print [i for i in vertex_stack.GetStack()][-1].GetBinContent(2),
+print [i for i in vertex_stack.GetStack()][-1].GetBinContent(3)
+
 vertex_stack.Draw()
 leg.Draw()
 c1.SaveAs("vertex_try.png")
