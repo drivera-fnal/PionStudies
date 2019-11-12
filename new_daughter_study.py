@@ -1,22 +1,7 @@
 from ROOT import * 
 import sys
 from array import array
-
-def ang_pos_test_cut(e):
-  if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
-
-  if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) < -4. ): return 0
-
-  if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) > 4. ): return 0
-
-  if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) < -7. ): return 0
-
-  if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) > 8. ): return 0
-
-  if( e.startZ < 16. or e.startZ > 20. ): return 0
-
-  return 1
-
+from new_defcuts import ang_pos_test_cut
 
 f = TFile( sys.argv[1] )
 tree = f.Get("pionana/beamana")
@@ -57,7 +42,9 @@ outtree.Branch("daughterTrackID", daughterTrackID, "daughterTrackID/I")
 gROOT.SetBatch(1)
 
 for e in tree:
-  if not ( e.reco_beam_good and e.true_beam_PDG == 211 and e.vertex_type == int(sys.argv[3]) ): continue
+  #if not ( e.reco_beam_true_byE_matched and e.true_beam_PDG == 211 and e.vertex_type == int(sys.argv[3]) ): continue
+  #need to add vertex type from python module
+  if not ( e.reco_beam_true_byE_matched and e.true_beam_PDG == 211  ): continue
 
   if( len(sys.argv) > 4 ):
     if( int(sys.argv[4]) ):
@@ -65,38 +52,38 @@ for e in tree:
 
   event[0] = e.event
   subrun[0] = e.subrun
-  beamTrackID[0] = e.beamTrackID  
+  beamTrackID[0] = e.reco_beam_trackID  
 
-  vertex_slice[0] = e.vertex_slice
+  vertex_slice[0] = e.reco_beam_vertex_slice
 
-  pi0_decay_IDs = [i for i in e.true_beam_Pi0_decay_IDs]
+  pi0_decay_IDs = [i for i in e.true_beam_Pi0_decay_ID]
 
-  for i in range(0, e.nTrackDaughters):
+  for i in range(0, e.reco_beam_nTrackDaughters):
     daughterTrackID[0] = e.reco_daughter_trackID[i]
 
     '''if( e.reco_daughter_truth_Origin[i] == 2 ): 
       is_cosmic[0] = 1 
     else: 
       is_cosmic[0] = 0'''
-    is_cosmic[0] = int( e.reco_daughter_truth_Origin[i] == 2 )
+    is_cosmic[0] = int( e.reco_daughter_true_byE_origin[i] == 2 )
 
-    is_self[0] = int( e.reco_daughter_truth_ID[i] == e.true_beam_ID )
+    is_self[0] = int( e.reco_daughter_true_byE_ID[i] == e.true_beam_ID )
       
     dR[0] = e.reco_daughter_dR[i]
     daughter_slice[0] = e.reco_daughter_slice[i]
 
-    pdg[0] = e.reco_daughter_truth_PDG[i]
+    pdg[0] = e.reco_daughter_true_byE_PDG[i]
 
     pi0_gamma[0] = 0
     #check if this is a pi0 gamma:
     if( pdg[0] == 22 ):
-      if 211 in [j for j in e.true_beam_daughter_PDGs]:
-        if e.reco_daughter_truth_ID[i] in pi0_decay_IDs:
+      if 211 in [j for j in e.true_beam_daughter_PDG]:
+        if e.reco_daughter_true_byE_ID[i] in pi0_decay_IDs:
           pi0_gamma[0] = 1
 
-    true_daughter[0] = int( e.reco_daughter_truth_ParID[i] == e.true_beam_ID )
-    true_grand_daughter[0] = int( e.reco_daughter_truth_ID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
-    true_great_grand_daughter[0] = int( e.reco_daughter_truth_ParID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
+    true_daughter[0] = int( e.reco_daughter_true_byE_parID[i] == e.true_beam_ID )
+    true_grand_daughter[0] = int( e.reco_daughter_true_byE_ID[i] in [j for j in e.true_beam_grand_daughter_ID] )
+    true_great_grand_daughter[0] = int( e.reco_daughter_true_byE_parID[i] in [j for j in e.true_beam_grand_daughter_ID] )
       
 
     outtree.Fill()

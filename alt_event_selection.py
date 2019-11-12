@@ -188,9 +188,9 @@ for e in tree:
       else:
         if( e.reco_daughter_pandora2_ID[i] != -1 ):
 
-          if e.reco_daughter_pandora2_to_vertex[i] > .6: 
-            if abs( e.alt_reco_daughter_PFP_truth_PDG[i] ) == 211: dR_skipped_pion[0] = True
-            #continue
+          #if e.reco_daughter_pandora2_to_vertex[i] > .6: 
+          #  if abs( e.alt_reco_daughter_PFP_truth_PDG[i] ) == 211: dR_skipped_pion[0] = True
+          #  #continue
 
           chi2 = e.reco_daughter_pandora2_Chi2_proton[i] / e.reco_daughter_pandora2_Chi2_ndof[i]
           if e.alt_reco_daughter_PFP_truth_PDG[i] == 22 and e.alt_reco_daughter_PFP_truth_ID[i] in [j for j in e.true_beam_Pi0_decay_IDs]:

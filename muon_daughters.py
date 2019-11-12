@@ -9,11 +9,11 @@ f = TFile( sys.argv[1] )
 tree = f.Get("pionana/beamana")
 
 def base_signal(e):
-  if( e.type == 13 and e.reco_beam_good and e.true_beam_PDG == 211 and e.reco_beam_truth_EndProcess == "pi+Inelastic" and e.reco_beam_truth_Process == "primary" ):
+  if( e.type == 13 and e.reco_beam_true_byE_matched and e.true_beam_PDG == 211 and e.reco_beam_true_byE_endProcess == "pi+Inelastic" and e.reco_beam_true_byE_process == "primary" ):
     return True
   return False
 def abscex_signal(e):
-  if( e.nPiPlus_truth + e.nPiMinus_truth == 0 and e.nPi0_truth < 2 ):
+  if( e.true_daughter_nPiPlus + e.true_daughter_nPiMinus == 0 and e.true_daughter_nPi0 < 2 ):
     return True
   return False
 
@@ -29,16 +29,16 @@ for e in tree:
   if not base_signal(e): continue
   
 
-  daughter_PDGs =      [i for i in e.reco_daughter_truth_PDG    ]
-  daughter_Origins =   [i for i in e.reco_daughter_truth_Origin ]
-  daughter_Processes = [i for i in e.reco_daughter_truth_Process]
-  daughter_ParIDs =    [i for i in e.reco_daughter_truth_ParID  ]
-  daughter_IDs =       [i for i in e.reco_daughter_truth_ID     ]
-  true_daughter_PDGs = [i for i in e.true_beam_daughter_PDGs    ]
-  true_daughter_IDs =  [i for i in e.true_beam_daughter_IDs     ]
-  true_grand_daughter_PDGs = [i for i in e.true_beam_grand_daughter_PDGs    ]
-  true_grand_daughter_IDs =  [i for i in e.true_beam_grand_daughter_IDs     ]
-  true_grand_daughter_ParIDs =  [i for i in e.true_beam_grand_daughter_ParIDs     ]
+  daughter_PDGs =      [i for i in e.reco_daughter_true_byE_PDG    ]
+  daughter_Origins =   [i for i in e.reco_daughter_true_byE_origin ]
+  daughter_Processes = [i for i in e.reco_daughter_true_byE_process]
+  daughter_ParIDs =    [i for i in e.reco_daughter_true_byE_parID  ]
+  daughter_IDs =       [i for i in e.reco_daughter_true_byE_ID     ]
+  true_daughter_PDGs = [i for i in e.true_beam_daughter_PDG    ]
+  true_daughter_IDs =  [i for i in e.true_beam_daughter_ID     ]
+  true_grand_daughter_PDGs = [i for i in e.true_beam_grand_daughter_PDG    ]
+  true_grand_daughter_IDs =  [i for i in e.true_beam_grand_daughter_ID     ]
+  true_grand_daughter_ParIDs =  [i for i in e.true_beam_grand_daughter_ParID     ]
 
   
   for i in range( 0, len(daughter_PDGs) ):

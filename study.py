@@ -1,7 +1,7 @@
 from ROOT import * 
 import sys
 #from defcuts import defcuts, testcuts, testcuts_FS
-from new_defcuts import defcuts, testcuts, testcuts_FS
+from new_defcuts import defcuts, testcuts, testcuts_FS, ang_pos_test_cut
 from array import array
 
 
@@ -46,7 +46,7 @@ names = [
   #"Other"
 ]
 
-tree.Draw( "len>>lenhist(40,0,500.)", "1 " + base_cut )
+tree.Draw( "reco_beam_len>>lenhist(40,0,500.)", "1 " + base_cut )
 lenhist = gDirectory.Get("lenhist")
 print "Total:", lenhist.Integral()
 #for name,cut in cuts.iteritems():
@@ -56,22 +56,22 @@ for name in names:
   cut = cuts[name]
   #print name, cut
 
-  tree.Draw( "len>>len"+name+"(40,0.,500.)", cut  + base_cut )
+  tree.Draw( "reco_beam_len>>len"+name+"(40,0.,500.)", cut  + base_cut )
   lenhists[name] = gDirectory.Get("len"+name)
 
   print name+":",lenhists[name].Integral()
   cut_total = cut_total + lenhists[name].Integral()
 
-  tree.Draw( "endZ>>endZ"+name+"(40,0.,500.)", cut  + base_cut )
+  tree.Draw( "reco_beam_endZ>>endZ"+name+"(40,0.,500.)", cut  + base_cut )
   endZhists[name] = gDirectory.Get("endZ"+name)
 
-  tree.Draw( "startX>>startX"+name+"(40,-100.,100.)", cut  + base_cut )
+  tree.Draw( "reco_beam_startX>>startX"+name+"(40,-100.,100.)", cut  + base_cut )
   startXhists[name] = gDirectory.Get("startX"+name)
 
-  tree.Draw( "startY>>startY"+name+"(40,380.,500.)", cut  + base_cut )
+  tree.Draw( "reco_beam_startY>>startY"+name+"(40,380.,500.)", cut  + base_cut )
   startYhists[name] = gDirectory.Get("startY"+name)
 
-  tree.Draw( "startZ>>startZ"+name+"(40,0.,100.)", cut  + base_cut )
+  tree.Draw( "reco_beam_startZ>>startZ"+name+"(40,0.,100.)", cut  + base_cut )
   startZhists[name] = gDirectory.Get("startZ"+name)
 
   fout.cd()
@@ -237,13 +237,13 @@ for name in names:
   cut = cuts[name]
   print name, cut
 
-  tree.Draw( "len>>len_FS_"+name+"(40,0.,500.)", cut  + base_cut )
+  tree.Draw( "reco_beam_len>>len_FS_"+name+"(40,0.,500.)", cut  + base_cut )
   lenhists[name] = gDirectory.Get("len_FS_"+name)
   fout.cd()
   #lenhists[name].Write()
   print
 
-  tree.Draw( "reco_beam_truth_End_P>>endP_"+name+"(40,0.,1.2)", cut  + base_cut)
+  tree.Draw( "reco_beam_reco_beam_truth_End_P>>endP_"+name+"(40,0.,1.2)", cut  + base_cut)
   endP_hists[name] = gDirectory.Get("endP_"+name)
   #endP_hists[name].Write()
 
@@ -251,7 +251,7 @@ for name in names:
   endP_hists[name].SetLineColor(colors[name]) 
   endP_stack.Add(endP_hists[name])
 
-  tree.Draw( "endZ>>endZ_FS_"+name+"(40,0.,500.)", cut  + base_cut )
+  tree.Draw( "reco_beam_endZ>>endZ_FS_"+name+"(40,0.,500.)", cut  + base_cut )
   endZhists[name] = gDirectory.Get("endZ_FS_"+name)
 
 
@@ -289,7 +289,7 @@ for name in names:
   cut = cuts[name]
   print name, cut
 
-  tree.Draw( "true_beam_EndVertex_Z:endZ>>endZ"+name+"(40,0.,500.,40,0.,500.)", cut  + base_cut, "colz" )
+  tree.Draw( "true_beam_endZ:endZ>>reco_beam_endZ"+name+"(40,0.,500.,40,0.,500.)", cut  + base_cut, "colz" )
   endhists[name] = gDirectory.Get("endZ"+name)
   fout.cd()
   #endhists[name].Write()
@@ -308,7 +308,7 @@ zstack = THStack("zstack","")
 for name in names:
   cut = cuts[name]
   print name, cut
-  tree.Draw( "startZ>>startZ_"+name+"(50,0.,50.)", cut  + base_cut )
+  tree.Draw( "reco_beam_startZ>>startZ_"+name+"(50,0.,50.)", cut  + base_cut )
 
   zhists[name] = gDirectory.Get("startZ_"+name)
   #zhists[name].Write()
@@ -334,6 +334,7 @@ pos_cut = pos_cut + " && ( (true_beam_Start_Y + -1.*true_beam_Start_Z*(true_beam
 pos_cut = pos_cut + " && ( startZ > 16. && startZ < 20.)"
 ##########################################
 
+'''
 def ang_pos_test_cut(e):
   if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
 
@@ -348,6 +349,7 @@ def ang_pos_test_cut(e):
   if( e.startZ < 16. or e.startZ > 20. ): return 0
 
   return 1
+'''
 
 
 
@@ -366,7 +368,7 @@ for name in names:
   cut = cuts[name]
   print name, cut
 
-  tree.Draw( "len>>len_ang_pos_cut_"+name+"(40,0.,500.)", cut  + base_cut + ang_cut + pos_cut)
+  tree.Draw( "reco_beam_len>>len_ang_pos_cut_"+name+"(40,0.,500.)", cut  + base_cut + ang_cut + pos_cut)
   lenhists[name] = gDirectory.Get("len_ang_pos_cut_"+name)
   #lenhists[name].Write()
 
@@ -374,7 +376,7 @@ for name in names:
   lenhists[name].SetLineColor(colors[name]) 
   lenstack.Add(lenhists[name])
 
-  tree.Draw( "reco_beam_truth_End_P>>endP_ang_pos_cut_"+name+"(40,0.,1.2)", cut  + base_cut + ang_cut + pos_cut)
+  tree.Draw( "reco_beam_true_byE_endP>>endP_ang_pos_cut_"+name+"(40,0.,1.2)", cut  + base_cut + ang_cut + pos_cut)
   endP_hists[name] = gDirectory.Get("endP_ang_pos_cut_"+name)
   #endP_hists[name].Write()
 
@@ -414,7 +416,7 @@ for name in names:
   cut = cuts[name]
   print name, cut
 
-  tree.Draw( "len>>len_ang_pos_len_cut_"+name+"(40,0.,500.)", cut  + base_cut + ang_cut + pos_cut + len_cut)
+  tree.Draw( "reco_beam_len>>len_ang_pos_len_cut_"+name+"(40,0.,500.)", cut  + base_cut + ang_cut + pos_cut + len_cut)
   lenhists[name] = gDirectory.Get("len_ang_pos_len_cut_"+name)
   #lenhists[name].Write()
 
@@ -422,7 +424,7 @@ for name in names:
   lenhists[name].SetLineColor(colors[name]) 
   lenstack.Add(lenhists[name])
 
-  tree.Draw( "reco_beam_truth_End_P>>endP_ang_pos_len_cut_"+name+"(40,0.,1.2)", cut  + base_cut + ang_cut + pos_cut + len_cut)
+  tree.Draw( "reco_beam_true_byE_endP>>endP_ang_pos_len_cut_"+name+"(40,0.,1.2)", cut  + base_cut + ang_cut + pos_cut + len_cut)
   endP_hists[name] = gDirectory.Get("endP_ang_pos_len_cut_"+name)
   #endP_hists[name].Write()
 
@@ -470,20 +472,20 @@ for name in names:
 
 for e in tree:
 
-  if len([i for i in e.dEdX]) < 1: continue
+  if len([i for i in e.reco_beam_dEdX]) < 1: continue
   if not ang_pos_test_cut(e): continue
 
-  total_dedx = sum( [i for i in e.dEdX] )
-  avg_dedx =  total_dedx /  len( [i for i in e.dEdX] ) 
-  len_avg_dedx = total_dedx / e.len 
+  total_dedx = sum( [i for i in e.reco_beam_dEdX] )
+  avg_dedx =  total_dedx /  len( [i for i in e.reco_beam_dEdX] ) 
+  len_avg_dedx = total_dedx / e.reco_beam_len 
 
   if( avg_dedx > 5. ): continue
 
   cut = testcuts_FS(e)
   if cut == "bad" or cut == "PrimaryElectron" or cut == "PrimaryProton" or cut == "NeutronInel" or cut == "ProtonInel" or cut == "Other": continue
 
-  lenhists[cut].Fill( e.len )
-  endP_hists[cut].Fill( e.reco_beam_truth_End_P )
+  lenhists[cut].Fill( e.reco_beam_len )
+  endP_hists[cut].Fill( e.reco_beam_true_byE_endP )
 
 for name in names:
   lenstack.Add( lenhists[name] )
@@ -521,21 +523,21 @@ for name in names:
 
 for e in tree:
 
-  if len([i for i in e.dEdX]) < 1: continue
+  if len([i for i in e.reco_beam_dEdX]) < 1: continue
   if not ang_pos_test_cut(e): continue
-  if e.len > 250.: continue
+  if e.reco_beam_len > 250.: continue
 
-  total_dedx = sum( [i for i in e.dEdX] )
-  avg_dedx =  total_dedx /  len( [i for i in e.dEdX] ) 
-  len_avg_dedx = total_dedx / e.len 
+  total_dedx = sum( [i for i in e.reco_beam_dEdX] )
+  avg_dedx =  total_dedx /  len( [i for i in e.reco_beam_dEdX] ) 
+  len_avg_dedx = total_dedx / e.reco_beam_len 
 
   if( avg_dedx > 5. ): continue
 
   cut = testcuts_FS(e)
   if cut == "bad" or cut == "PrimaryElectron" or cut == "PrimaryProton" or cut == "NeutronInel" or cut == "ProtonInel" or cut == "Other": continue
 
-  lenhists[cut].Fill( e.len )
-  endP_hists[cut].Fill( e.reco_beam_truth_End_P )
+  lenhists[cut].Fill( e.reco_beam_len )
+  endP_hists[cut].Fill( e.reco_beam_true_byE_endP )
 
 for name in names:
   lenstack.Add( lenhists[name] )
