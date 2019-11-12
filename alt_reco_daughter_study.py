@@ -85,7 +85,7 @@ for e in tree:
   if not ( ang_pos_test_cut(e) ): continue
 
 
-  vertex_type[0] = vt(e, 5.)
+  vertex_type[0] = vt(e, 5., 3)
   event[0] = e.event
   subrun[0] = e.subrun
   run[0] = e.run

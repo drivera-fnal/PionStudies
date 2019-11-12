@@ -1,6 +1,6 @@
 from ROOT import *
 
-def vertex_type(e, cut):
+def vertex_type(e, cut, max_slices=1):
   procs = [i for i in e.processes]
   nProcs = len(procs)
 
@@ -8,8 +8,18 @@ def vertex_type(e, cut):
   inel = False
   el = False
   Other = False
+
+  vertex_hits_slices = [i for i in e.vertex_hits_slices]
+
   for i in range(0, nProcs):
-    the_dRs = [j for j in e.vertex_dRs[i]]
+    #the_dRs = [j for j in e.vertex_dRs[i]]
+    the_dRs = []
+    for dR,hits_slice in zip(e.vertex_dRs[i], vertex_hits_slices):
+      if hits_slice < max_slices:
+        the_dRs.append( dR )
+      else:
+        break
+
     if len( the_dRs ) < 1:
       break
     min_dR = min( the_dRs )

@@ -51,6 +51,9 @@ event = array("i", [0])
 run = array("i", [0])
 missed_pion_P = array("d", [0.]*50)
 pion_P = array("d", [0.]*50)
+pion_Px = array("d", [0.]*50)
+pion_Py = array("d", [0.]*50)
+pion_Pz = array("d", [0.]*50)
 pion_len = array("d", [0.]*50)
 missed_pion = array("i", [0]*50)
 missed_pion_track = array("i", [0]*50)
@@ -74,6 +77,9 @@ outtree.Branch("missed_pion_daughter_PFP", missed_pion_daughter_PFP, "missed_pio
 outtree.Branch("missed_pion_daughter_track", missed_pion_daughter_track, "missed_pion_daughter_track/I")
 outtree.Branch("missed_pion_P", missed_pion_P, "missed_pion_P[50]/D")
 outtree.Branch("pion_P", pion_P, "pion_P[50]/D")
+outtree.Branch("pion_Px", pion_Px, "pion_Px[50]/D")
+outtree.Branch("pion_Py", pion_Py, "pion_Py[50]/D")
+outtree.Branch("pion_Pz", pion_Pz, "pion_Pz[50]/D")
 outtree.Branch("pion_len", pion_len, "pion_len[50]/D")
 outtree.Branch("missed_pion", missed_pion, "missed_pion[50]/I")
 outtree.Branch("missed_pion_track", missed_pion_track, "missed_pion_track[50]/I")
@@ -133,10 +139,10 @@ for e in tree:
   ##Skip the mixed vertex for now
   elif vertex[0] == 3:
     n_mixed = n_mixed + 1
-    continue
+    #continue
   else: 
     n_other = n_other + 1
-    continue
+    #continue
 
   if true_signal[0]: nTrueSignal = nTrueSignal + 1
   else: nTrueBG = nTrueBG + 1
@@ -207,6 +213,9 @@ for e in tree:
   for i in range(0, len(missed_pion_P)): 
     missed_pion_P[i] = 0.
     pion_P[i] = 0.
+    pion_Px[i] = 0.
+    pion_Py[i] = 0.
+    pion_Pz[i] = 0.
     pion_len[i] = 0.
     missed_pion[i] = 0
     missed_pion_track[i] = 0
@@ -216,6 +225,9 @@ for e in tree:
   for tID, tPDG in zip([i for i in e.true_beam_daughter_IDs],[i for i in e.true_beam_daughter_PDGs]):
     if abs(tPDG) == 211:
       pion_P[a] = e.true_beam_daughter_startP[a]*1.e3
+      pion_Px[a] = e.true_beam_daughter_startPX[a]*1.e3
+      pion_Py[a] = e.true_beam_daughter_startPY[a]*1.e3
+      pion_Pz[a] = e.true_beam_daughter_startPZ[a]*1.e3
       pion_len[a] = e.true_beam_daughter_lens[a]
 
       if tID not in [i for i in e.alt_reco_daughter_PFP_truth_ID]: 
