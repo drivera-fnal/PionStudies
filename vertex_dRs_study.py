@@ -26,9 +26,9 @@ for dR_cut in [.5 + .5 * z for z in range(0,30)]:
 
   for e in tree:
     
-    if not ( e.reco_beam_good and e.true_beam_PDG == 211 and e.type == 13 ): continue
+    if not ( e.reco_beam_true_byE_matched and e.true_beam_PDG == 211 and e.reco_beam_type == 13 ): continue
 
-    procs = [i for i in e.processes] 
+    procs = [i for i in e.true_beam_processes] 
     nProcs = len(procs)
   
     if( nProcs < 1 ): 
@@ -37,7 +37,7 @@ for dR_cut in [.5 + .5 * z for z in range(0,30)]:
 
     matched = False
     for i in range(0, nProcs):
-      the_dRs = [j for j in e.vertex_dRs[i]]
+      the_dRs = [j for j in e.reco_beam_vertex_dRs[i]]
       if len( the_dRs ) < 1 : 
         print e.event, e.subrun
         continue

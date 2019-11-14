@@ -1,7 +1,7 @@
 from ROOT import * 
 import sys
 from array import array
-from new_defcuts import ang_pos_test_cut
+from defcuts import ang_pos_test_cut
 
 f = TFile( sys.argv[1] )
 tree = f.Get("pionana/beamana")

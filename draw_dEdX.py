@@ -8,13 +8,13 @@ f = TFile(sys.argv[1])
 
 tree = f.Get("pionana/beamana")
 
-tree.Draw("dEdX:resRange>>hpi(200,0,200,50,0,25)", "type == 13 && reco_beam_good && reco_beam_truth_PDG == 211", "colz")
+tree.Draw("reco_beam_calibrated_dEdX:reco_beam_resRange>>hpi(200,0,200,50,0,25)", "reco_beam_type == 13 && reco_beam_true_byE_matched && reco_beam_true_byE_PDG == 211", "colz")
 hpi = gDirectory.Get("hpi")
 
-tree.Draw("dEdX:resRange>>hmu(200,0,200,50,0,25)", "type == 13 && reco_beam_good && reco_beam_truth_PDG == -13", "colz")
+tree.Draw("reco_beam_calibrated_dEdX:reco_beam_resRange>>hmu(200,0,200,50,0,25)", "reco_beam_type == 13 && reco_beam_true_byE_matched && reco_beam_true_byE_PDG == -13", "colz")
 hmu = gDirectory.Get("hmu")
 
-tree.Draw("dEdX:resRange>>hpro(200,0,200,50,0,25)", "type == 13 && reco_beam_good && reco_beam_truth_PDG == 2212", "colz")
+tree.Draw("reco_beam_calibrated_dEdX:reco_beam_resRange>>hpro(200,0,200,50,0,25)", "reco_beam_type == 13 && reco_beam_true_byE_matched && reco_beam_true_byE_PDG == 2212", "colz")
 hpro = gDirectory.Get("hpro")
 
 c1 = TCanvas("c1","c1",500,400)

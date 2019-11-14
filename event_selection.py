@@ -3,9 +3,11 @@ import sys
 from array import array
 from vertex_type import vertex_type as vt
 from vertex_type import centroid_vertex_type
+from defcuts import ang_pos_test_cut
 
 gROOT.SetBatch(1)
 
+'''
 def ang_pos_test_cut(e):
   if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
 
@@ -18,8 +20,9 @@ def ang_pos_test_cut(e):
   if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) > 2. ): return 0
 
   if( e.startZ < 28. or e.startZ > 32. ): return 0
+'''
 
-  '''  if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
+'''  if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
 
   if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) < -4. ): return 0
 
@@ -29,13 +32,14 @@ def ang_pos_test_cut(e):
 
   if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) > 8. ): return 0
 
-  if( e.startZ < 16. or e.startZ > 20. ): return 0'''
+  if( e.startZ < 16. or e.startZ > 20. ): return 0
 
   return 1
+'''
 
 def test_good_reco(e):
-  if (e.view_2_wire_backtrack > 15. or e.view_1_wire_backtrack > 15. or e.view_0_wire_backtrack > 15.): return 0
-  elif (e.view_2_max_segment > 15. or e.view_1_max_segment > 15. or e.view_0_max_segment > 15.): return 0
+  if (e.quality_reco_view_2_wire_backtrack > 15. or e.quality_reco_view_1_wire_backtrack > 15. or e.quality_reco_view_0_wire_backtrack > 15.): return 0
+  elif (e.quality_reco_view_2_max_segment > 15. or e.quality_reco_view_1_max_segment > 15. or e.quality_reco_view_0_max_segment > 15.): return 0
 
   return 1
 
@@ -83,9 +87,9 @@ n_bg_as_bg = 0
 n_bg_as_signal = 0
 
 for e in tree:
-  if not ( e.reco_beam_good and e.true_beam_PDG == 211 and e.type == 13 ): continue
+  if not ( e.reco_beam_true_byE_matched and e.true_beam_PDG == 211 and e.reco_beam_type == 13 ): continue
   if not ang_pos_test_cut( e ): continue
-  if e.endZ > 229.: continue
+  if e.reco_beam_endZ > 229.: continue
 
   good_reco[0] = test_good_reco(e)
 
@@ -102,9 +106,9 @@ for e in tree:
   if vertex[0] == 1 :
     #Define Abs+Cex as signal
     # and e.nPi0_truth < 2
-    if ( e.nPiPlus_truth + e.nPiMinus_truth ) == 0 and e.nPi0_truth < 2:
+    if ( e.true_daughter_nPiPlus + e.true_daughter_nPiMinus ) == 0 and e.true_daughter_nPi0 < 2:
       true_signal[0] = True
-      if e.nPi0_truth == 0: AbsCex_type[0] = 1
+      if e.true_daughter_nPi0 == 0: AbsCex_type[0] = 1
       else: AbsCex_type[0] = 2
     else:
       true_signal[0] = False
@@ -122,19 +126,19 @@ for e in tree:
   dR_skipped_pion[0] = False
   chi2_surv_pion[0] = False
   cnn_skipped_pion[0] = False
-  for i in range( 0, e.nTrackDaughters ):
+  for i in range( 0, e.reco_beam_nTrackDaughters ):
     
     #Skip far daughters
     if e.reco_daughter_to_vertex[i] > 6.: 
-      if abs(e.alt_reco_daughter_truth_PDG[i]) == 211 and (e.alt_reco_daughter_truth_ID[i] in [j for j in e.true_beam_daughter_IDs]):
+      if abs(e.reco_daughter_true_byHits_PDG[i]) == 211 and (e.reco_daughter_true_byHits_ID[i] in [j for j in e.true_beam_daughter_ID]):
         dR_skipped_pion[0] = True
       continue
 
     #if (e.vertex_slice - e.reco_daughter_slice[i]) > 10.: continue
 
     #Skip shower-like daughters
-    if e.reco_daughter_track_score[i] < .3: 
-      if abs(e.alt_reco_daughter_truth_PDG[i]) == 211 and (e.alt_reco_daughter_truth_ID[i] in [j for j in e.true_beam_daughter_IDs]):
+    if e.reco_daughter_trackScore[i] < .3: 
+      if abs(e.reco_daughter_true_byHits_PDG[i]) == 211 and (e.reco_daughter_true_byHits_ID[i] in [j for j in e.true_beam_daughter_ID]):
         cnn_skipped_pion[0] = True
         continue
 
@@ -143,23 +147,23 @@ for e in tree:
     if chi2 > 50.:
       has_mip = True
     else:
-      if abs(e.alt_reco_daughter_truth_PDG[i]) == 211 and e.alt_reco_daughter_truth_ID[i] in [j for j in e.true_beam_daughter_IDs]:
+      if abs(e.reco_daughter_true_byHits_PDG[i]) == 211 and e.reco_daughter_true_byHits_ID[i] in [j for j in e.true_beam_daughter_ID]:
         chi2_surv_pion[0] = True
 
 
-  true_beam_daughter_PDGs = [j for j in e.true_beam_daughter_PDGs]
-  true_beam_daughter_IDs = [j for j in e.true_beam_daughter_IDs]
+  true_beam_daughter_PDGs = [j for j in e.true_beam_daughter_PDG]
+  true_beam_daughter_IDs = [j for j in e.true_beam_daughter_ID]
   missed_pion_daughter[0] = False
   for i in range(0, len(true_beam_daughter_PDGs)):
     if abs(true_beam_daughter_PDGs[i]) == 211: 
-      if true_beam_daughter_IDs[i] not in [j for j in e.alt_reco_daughter_truth_ID] and true_beam_daughter_IDs[i] not in [j for j in e.alt_reco_daughter_shower_truth_ID]: 
+      if true_beam_daughter_IDs[i] not in [j for j in e.reco_daughter_true_byHits_ID] and true_beam_daughter_IDs[i] not in [j for j in e.reco_daughter_shower_true_byHits_ID]: 
 
         missed_pion_daughter[0] = True
         #missed_pion_E[i] = true_beam_daughter_
 
   has_pion_shower[0] = False
-  for i in range( 0, e.nShowerDaughters ):
-    if abs( e.alt_reco_daughter_shower_truth_PDG[i] ) == 211 and e.alt_reco_daughter_shower_truth_ID[i] in true_beam_daughter_IDs:
+  for i in range( 0, e.reco_beam_nShowerDaughters ):
+    if abs( e.reco_daughter_shower_true_byHits_PDG[i] ) == 211 and e.reco_daughter_shower_true_byHits_ID[i] in true_beam_daughter_IDs:
       has_pion_shower[0] = True
 
   if has_mip: signal_selection[0] = False

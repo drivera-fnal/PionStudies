@@ -2,7 +2,9 @@ from ROOT import *
 import sys
 from array import array
 from vertex_type import vertex_type as vt
+from defcuts import ang_pos_test_cut
 
+'''
 def ang_pos_test_cut(e):
   if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
 
@@ -16,7 +18,7 @@ def ang_pos_test_cut(e):
 
   if( e.startZ < 28. or e.startZ > 32. ): return 0
 
-  '''  if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
+    if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
 
   if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) < -4. ): return 0
 
@@ -26,9 +28,10 @@ def ang_pos_test_cut(e):
 
   if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) > 8. ): return 0
 
-  if( e.startZ < 16. or e.startZ > 20. ): return 0'''
+  if( e.startZ < 16. or e.startZ > 20. ): return 0
 
   return 1
+'''
 
 
 f = TFile( sys.argv[1] )
@@ -90,101 +93,101 @@ gROOT.SetBatch(1)
 print "Entries:", tree.GetEntries()
 
 for e in tree:
-  if not ( e.reco_beam_good and e.true_beam_PDG == 211 and e.type == 13 ): continue
+  if not ( e.reco_beam_true_byE_matched and e.true_beam_PDG == 211 and e.reco_beam_type == 13 ): continue
 
   if( len(sys.argv) > 3 ):
     if( int(sys.argv[3]) ):
-      if not ( ang_pos_test_cut(e) ): continue
+      if not ( ang_pos_test_cut( e, xlow=-3, xhigh=0., ylow=-1., yhigh=2., zlow=28., zhigh=32. ) ): continue
 
 
   vertex_type[0] = vt(e, 5.)
   event[0] = e.event
   subrun[0] = e.subrun
   run[0] = e.run
-  beamTrackID[0] = e.beamTrackID  
+  beamTrackID[0] = e.reco_beam_trackID  
 
-  vertex_slice[0] = e.vertex_slice
+  vertex_slice[0] = e.reco_beam_vertex_slice
 
-  pi0_decay_IDs = [i for i in e.true_beam_Pi0_decay_IDs]
+  pi0_decay_IDs = [i for i in e.true_beam_Pi0_decay_ID]
 
-  for i in range(0, e.nTrackDaughters):
+  for i in range(0, e.reco_beam_nTrackDaughters):
 
     is_track[0] = 1
 
     daughterTrackID[0] = e.reco_daughter_trackID[i]
 
-    is_cosmic[0] = int( e.alt_reco_daughter_truth_Origin[i] == 2 )
+    is_cosmic[0] = int( e.reco_daughter_true_byHits_origin[i] == 2 )
 
-    is_self[0] = int( e.alt_reco_daughter_truth_ID[i] == e.true_beam_ID )
+    is_self[0] = int( e.reco_daughter_true_byHits_ID[i] == e.true_beam_ID )
       
     #dR[0] = e.reco_daughter_dR[i]
     dR[0] = e.reco_daughter_to_vertex[i]
     daughter_slice[0] = e.reco_daughter_slice[i]
 
-    pdg[0] = e.alt_reco_daughter_truth_PDG[i]
+    pdg[0] = e.reco_daughter_true_byHits_PDG[i]
     chi2[0] = e.reco_daughter_Chi2_proton[i] / e.reco_daughter_Chi2_ndof[i]
-    cnn[0] = e.reco_daughter_track_score[i] 
+    cnn[0] = e.reco_daughter_trackScore[i] 
 
     pi0_gamma[0] = 0
     #check if this is a pi0 gamma:
     if( pdg[0] == 22 ):
-      if 111 in [j for j in e.true_beam_daughter_PDGs]:
-        if e.alt_reco_daughter_truth_ID[i] in pi0_decay_IDs:
+      if 111 in [j for j in e.true_beam_daughter_PDG]:
+        if e.reco_daughter_true_byHits_ID[i] in pi0_decay_IDs:
           pi0_gamma[0] = 1
 
-    true_daughter[0] = int( e.alt_reco_daughter_truth_ParID[i] == e.true_beam_ID )
-    true_grand_daughter[0] = int( e.alt_reco_daughter_truth_ID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
-    true_great_grand_daughter[0] = int( e.alt_reco_daughter_truth_ParID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
+    true_daughter[0] = int( e.reco_daughter_true_byHits_parID[i] == e.true_beam_ID )
+    true_grand_daughter[0] = int( e.reco_daughter_true_byHits_ID[i] in [j for j in e.true_beam_grand_daughter_ID] )
+    true_great_grand_daughter[0] = int( e.reco_daughter_true_byHits_parID[i] in [j for j in e.true_beam_grand_daughter_ID] )
 
     if true_grand_daughter[0]:
-      true_gd_IDs = [j for j in e.true_beam_grand_daughter_IDs]
-      true_gd_ParIDs = [j for j in e.true_beam_grand_daughter_ParIDs]
+      true_gd_IDs = [j for j in e.true_beam_grand_daughter_ID]
+      true_gd_ParIDs = [j for j in e.true_beam_grand_daughter_parID]
 
       for gd_ID, gd_ParID in zip(true_gd_IDs, true_gd_ParIDs):
-        if e.alt_reco_daughter_truth_ID[i] == gd_ID:
-          for d_ID, d_PDG in zip([j for j in e.true_beam_daughter_IDs], [j for j in e.true_beam_daughter_PDGs]):
+        if e.reco_daughter_true_byHits_ID[i] == gd_ID:
+          for d_ID, d_PDG in zip([j for j in e.true_beam_daughter_ID], [j for j in e.true_beam_daughter_PDG]):
             if gd_ParID == d_ID:
               true_gd_ParPDG[0] = d_PDG
 
     outtree.Fill()
 
-  for i in range(0, e.nShowerDaughters):
+  for i in range(0, e.reco_beam_nShowerDaughters):
 
     is_track[0] = 0
 
     daughterTrackID[0] = e.reco_daughter_showerID[i]
 
-    is_cosmic[0] = int( e.alt_reco_daughter_shower_truth_Origin[i] == 2 )
+    is_cosmic[0] = int( e.reco_daughter_shower_true_byHits_origin[i] == 2 )
 
-    is_self[0] = int( e.alt_reco_daughter_shower_truth_ID[i] == e.true_beam_ID )
+    is_self[0] = int( e.reco_daughter_shower_true_byHits_ID[i] == e.true_beam_ID )
       
     #dR[0] = e.reco_daughter_dR[i]
     dR[0] = e.reco_daughter_shower_to_vertex[i]
     #print dR[0]
     daughter_slice[0] = 0 
 
-    pdg[0] = e.alt_reco_daughter_shower_truth_PDG[i]
+    pdg[0] = e.reco_daughter_shower_true_byHits_PDG[i]
     chi2[0] = e.reco_daughter_shower_Chi2_proton[i] / e.reco_daughter_shower_Chi2_ndof[i]
-    cnn[0] = e.reco_daughter_shower_track_score[i] 
+    cnn[0] = e.reco_daughter_shower_trackScore[i] 
 
     pi0_gamma[0] = 0
     #check if this is a pi0 gamma:
     if( pdg[0] == 22 ):
-      if 111 in [j for j in e.true_beam_daughter_PDGs]:
-        if e.alt_reco_daughter_shower_truth_ID[i] in pi0_decay_IDs:
+      if 111 in [j for j in e.true_beam_daughter_PDG]:
+        if e.reco_daughter_shower_true_byHits_ID[i] in pi0_decay_IDs:
           pi0_gamma[0] = 1
 
-    true_daughter[0] = int( e.alt_reco_daughter_shower_truth_ParID[i] == e.true_beam_ID )
-    true_grand_daughter[0] = int( e.alt_reco_daughter_shower_truth_ID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
-    true_great_grand_daughter[0] = int( e.alt_reco_daughter_shower_truth_ParID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
+    true_daughter[0] = int( e.reco_daughter_shower_true_byHits_parID[i] == e.true_beam_ID )
+    true_grand_daughter[0] = int( e.reco_daughter_shower_true_byHits_ID[i] in [j for j in e.true_beam_grand_daughter_ID] )
+    true_great_grand_daughter[0] = int( e.reco_daughter_shower_true_byHits_parID[i] in [j for j in e.true_beam_grand_daughter_ID] )
 
     if true_grand_daughter[0]:
-      true_gd_IDs = [j for j in e.true_beam_grand_daughter_IDs]
-      true_gd_ParIDs = [j for j in e.true_beam_grand_daughter_ParIDs]
+      true_gd_IDs = [j for j in e.true_beam_grand_daughter_ID]
+      true_gd_ParIDs = [j for j in e.true_beam_grand_daughter_parID]
 
       for gd_ID, gd_ParID in zip(true_gd_IDs, true_gd_ParIDs):
-        if e.alt_reco_daughter_shower_truth_ID[i] == gd_ID:
-          for d_ID, d_PDG in zip([j for j in e.true_beam_daughter_IDs], [j for j in e.true_beam_daughter_PDGs]):
+        if e.reco_daughter_shower_true_byHits_ID[i] == gd_ID:
+          for d_ID, d_PDG in zip([j for j in e.true_beam_daughter_ID], [j for j in e.true_beam_daughter_PDG]):
             if gd_ParID == d_ID:
               true_gd_ParPDG[0] = d_PDG
 

@@ -1,7 +1,6 @@
 from ROOT import * 
 import sys
-#from defcuts import defcuts, testcuts, testcuts_FS
-from new_defcuts import defcuts, testcuts, testcuts_FS, ang_pos_test_cut
+from defcuts import defcuts, testcuts, testcuts_FS, ang_pos_test_cut
 from array import array
 
 
@@ -12,7 +11,7 @@ f = TFile( sys.argv[1] )
 
 tree = f.Get("pionana/beamana")
 
-base_cut = " && type == 13 && (true_beam_PDG == -13 || true_beam_PDG == 211)"
+base_cut = " && reco_beam_type == 13 && (true_beam_PDG == -13 || true_beam_PDG == 211)"
 
 fout = TFile( sys.argv[2], "RECREATE" )
 
