@@ -79,6 +79,7 @@ set_style( vertex_stack, "", "" )
 vertex_stack.GetXaxis().SetBinLabel(1, "Unmatched")
 vertex_stack.GetXaxis().SetBinLabel(2, "Inelastic")
 vertex_stack.GetXaxis().SetBinLabel(3, "Elastic")
+vertex_stack.GetXaxis().SetBinLabel(4, "Mixed")
 
 print [i for i in vertex_stack.GetStack()][-1].GetBinContent(1),
 print [i for i in vertex_stack.GetStack()][-1].GetBinContent(2),

@@ -58,6 +58,8 @@ pion_len = array("d", [0.]*50)
 missed_pion = array("i", [0]*50)
 missed_pion_track = array("i", [0]*50)
 good_reco = array("i", [0])
+vertex_res = array("d", [0.])
+true_endZ = array("d", [0.])
 
 #Abs = 1; Cex = 2
 AbsCex_type = array("i", [0])
@@ -84,6 +86,8 @@ outtree.Branch("pion_len", pion_len, "pion_len[50]/D")
 outtree.Branch("missed_pion", missed_pion, "missed_pion[50]/I")
 outtree.Branch("missed_pion_track", missed_pion_track, "missed_pion_track[50]/I")
 outtree.Branch("good_reco", good_reco, "good_reco/I")
+outtree.Branch("vertex_res", vertex_res, "vertex_res/D")
+outtree.Branch("true_endZ", true_endZ, "true_endZ/D")
 
 nTrueSignal = 0
 nTrueBG = 0
@@ -263,6 +267,9 @@ for e in tree:
   elif not true_signal[0] and not signal_selection[0]: 
     n_bg_as_bg = n_bg_as_bg + 1
 
+
+  vertex_res[0] = sqrt( (e.endZ - e.true_beam_EndVertex_Z)**2 + (e.endX - e.true_beam_EndVertex_X)**2 + (e.endY - e.true_beam_EndVertex_Y)**2 )
+  true_endZ[0] = e.true_beam_EndVertex_Z
   outtree.Fill()
 
 print "Signal:", nTrueSignal, n_signal_as_signal, n_signal_as_bg
