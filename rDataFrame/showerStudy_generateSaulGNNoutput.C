@@ -126,7 +126,7 @@ int showerStudy_generateSaulGNNoutput(const string path = inputFile){
       .Define("numberOfHits_Y",count_hits, {"reco_daughter_hitsY", "reco_daughter_shower_hitsY"})
       .Define("numberOfHits_Z",count_hits, {"reco_daughter_hitsZ", "reco_daughter_shower_hitsZ"});
 
-   auto snap = defineHits_trueChExAbsProcess.Snapshot("pionana", "output_hits.root",{
+   auto snap = defineHits_trueChExAbsProcess.Snapshot("pionana", "previous_output_hits.root",{
          "run", "subrun", "event","daughterPDG","daughterHit_X", "daughterHit_Y", "daughterHit_Z",
          "numberOfHits_X", "numberOfHits_Y", "numberOfHits_Z",
          "trueBG", "trueChEx", "trueAbs","nTrackDaughters", "nShowerDaughters", 

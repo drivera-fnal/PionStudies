@@ -16,6 +16,7 @@
 #include <vector>
 //using RDataFrame to cut and analyse PionTtrr
 
+using namespace std;
 using namespace ROOT::VecOps;
 //lambda.h includes the definitions used for the pionAnalysis 
 //
@@ -80,41 +81,88 @@ auto pdg_electron = [](){return 11;};
 auto pdg_positron = [](){return -11;};
 auto pdg_nucleus = [](){return 9999;}; //watchout for nucleuss in comparing function
 
+//COUNT particle Type in Daughters
+auto count_type = [](int pdg, const std::vector<int> &pdg_vec){
+   int cnt = 0;
+   for(std::string::size_type pos = 0; pos < pdg_vec.size(); pos++){
+      if(pdg == pdg_vec.at(pos)) cnt++;
+   };
+   return cnt;
+};
+
+
 //Find properties (stored in vector) of a specific daughter particle, special for nucleus daughters
-auto daughter_property = [](int pdg, const ROOT::RVec<int> &reco_beam_truth_daughter_true_PDGs, const ROOT::RVec<double> &daughter_property){
-   ROOT::RVec<double> return_vec; 
-   for (std::string::size_type pos =0; pos < reco_beam_truth_daughter_true_PDGs.size(); pos++){ 
-      if(pdg!= 9999 && reco_beam_truth_daughter_true_PDGs.at(pos) == pdg && daughter_property.size()> pos){
+auto daughter_property = [](int pdg, const std::vector<int> &pdg_vec, const std::vector<double> &daughter_property){
+   std::vector<double> return_vec; 
+   for (std::string::size_type pos =0; pos < pdg_vec.size(); pos++){ 
+      if(pdg!= 9999 && pdg_vec.at(pos) == pdg && daughter_property.size()> pos){
          return_vec.push_back(daughter_property.at(pos));}
-      else if(pdg == 9999 && reco_beam_truth_daughter_true_PDGs.at(pos) > 3000 && daughter_property.size() > pos) {
+      else if(pdg == 9999 && pdg_vec.at(pos) > 3000 && daughter_property.size() > pos) {
          return_vec.push_back(daughter_property.at(pos));};
    };
    return return_vec;
 };
 
-//Indepentend of shower or track tag from Pandora, find the property for both Tags for a certain particle and fill a vector
-auto daugh_trkANDshow_property = [](int pdg, const ROOT::RVec<int> &reco_beam_truth_daughter_true_PDGs, const ROOT::RVec<int> &reco_beam_truth_daughter_shower_true_PDGs, const ROOT::RVec<double> &daugh_track_property, const ROOT::RVec<double> &daugh_show_property){
-   ROOT::RVec<double> return_vec; 
+auto daughter_property_int = [](int pdg, const std::vector<int> &pdg_vec, const std::vector<int> &daughter_property){
+   std::vector<int> return_vec; 
+   for (std::string::size_type pos =0; pos < pdg_vec.size(); pos++){ 
+      if(pdg!= 9999 && pdg_vec.at(pos) == pdg && daughter_property.size()> pos){
+         return_vec.push_back(daughter_property.at(pos));}
+      else if(pdg == 9999 && pdg_vec.at(pos) > 3000 && daughter_property.size() > pos) {
+         return_vec.push_back(daughter_property.at(pos));};
+   };
+   return return_vec;
+};
 
-   for (std::string::size_type pos =0; pos < reco_beam_truth_daughter_true_PDGs.size(); pos++){ 
-      if(pdg!= 9999 && reco_beam_truth_daughter_true_PDGs.at(pos) == pdg && daugh_track_property.size()> pos){
+auto daughter_property_ul = [](int pdg, const std::vector<int> &pdg_vec, const std::vector<unsigned long> &daughter_property){
+   std::vector<unsigned long> return_vec; 
+   for (std::string::size_type pos =0; pos < pdg_vec.size(); pos++){ 
+      if(pdg!= 9999 && pdg_vec.at(pos) == pdg && daughter_property.size()> pos){
+         return_vec.push_back(daughter_property.at(pos));}
+      else if(pdg == 9999 && pdg_vec.at(pos) > 3000 && daughter_property.size() > pos) {
+         return_vec.push_back(daughter_property.at(pos));};
+   };
+   return return_vec;
+};
+
+//Find properties of an event if one of the daughters is a specific particle
+auto event_property = [](int pdg, const std::vector<int> &pdg_vec, int ev_property){
+   int return_value; 
+   for (std::string::size_type pos =0; pos < pdg_vec.size(); pos++){ 
+      if(pdg!= 9999 && pdg_vec.at(pos) == pdg ){
+         return_value = ev_property;
+         break;}
+      else if(pdg == 9999 && pdg_vec.at(pos) > 3000 ) {
+         return_value = ev_property;
+         break;};
+   };
+   return return_value;
+};
+
+
+//Indepentend of shower or track tag from Pandora, find the property for both Tags for a certain particle and fill a vector
+auto daugh_trkANDshow_property = [](int pdg, const std::vector<int> &trk_pdg_vec, const std::vector<int> &show_pdg_vec, const std::vector<double> &daugh_track_property, const std::vector<double> &daugh_show_property){
+   std::vector<double> return_vec; 
+
+   for (std::string::size_type pos =0; pos < trk_pdg_vec.size(); pos++){ 
+      if(pdg!= 9999 && trk_pdg_vec.at(pos) == pdg && daugh_track_property.size()> pos){
          return_vec.push_back(daugh_track_property.at(pos));}
-      else if(pdg == 9999 && reco_beam_truth_daughter_true_PDGs.at(pos) > 3000 && daugh_track_property.size() > pos) {
+      else if(pdg == 9999 && trk_pdg_vec.at(pos) > 3000 && daugh_track_property.size() > pos) {
          return_vec.push_back(daugh_track_property.at(pos));};
    };
 
-   for (std::string::size_type pos =0; pos < reco_beam_truth_daughter_shower_true_PDGs.size(); pos++){ 
-      if(pdg!= 9999 && reco_beam_truth_daughter_shower_true_PDGs.at(pos) == pdg && daugh_show_property.size()> pos){
+   for (std::string::size_type pos =0; pos < show_pdg_vec.size(); pos++){ 
+      if(pdg!= 9999 && show_pdg_vec.at(pos) == pdg && daugh_show_property.size()> pos){
          return_vec.push_back(daugh_show_property.at(pos));}
-      else if(pdg == 9999 && reco_beam_truth_daughter_shower_true_PDGs.at(pos) > 3000 && daugh_show_property.size() > pos) {
+      else if(pdg == 9999 && show_pdg_vec.at(pos) > 3000 && daugh_show_property.size() > pos) {
          return_vec.push_back(daugh_show_property.at(pos));};
    };
 
    return return_vec;
 };
 
-auto merge_trk_show_property = [](const ROOT::RVec<double> &daughter_trk_property, const ROOT::RVec<double> &daughter_shower_property){
-   ROOT::RVec<double> merge_vec;
+auto merge_trk_show_property = [](const std::vector<double> &daughter_trk_property, const std::vector<double> &daughter_shower_property){
+   std::vector<double> merge_vec;
    for(std::string::size_type pos = 0; pos < daughter_trk_property.size(); pos++){
       merge_vec.push_back(daughter_trk_property.at(pos));
    };
@@ -127,7 +175,7 @@ auto merge_trk_show_property = [](const ROOT::RVec<double> &daughter_trk_propert
 
 //Means of dEdX Vector<Vector<double>> for the Daughter Particles
 auto meanDaughterdEdX = [](const ROOT::RVec<std::vector<double>> &vecs){
-   ROOT::RVec<double> means; 
+   std::vector<double> means; 
    for (auto &&vec : vecs) means.push_back(accumulate(vec.begin(),vec.end(),0.0)/vec.size()); 
    return means;
 };
