@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "showerStudy_cnn_vs_pandora_count.C": "cpp",
+        "showerStudy_generateSaulGNNoutput.C": "cpp"
+    }
+}

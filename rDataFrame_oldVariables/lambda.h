@@ -29,7 +29,6 @@ const std::string inputFile = "inputFile/dummyInput.root";
 //**********************************************************
 //
 
-
 int compString(std::string s1, std::string s2){
 
    if(s1 != s2) return 0;
@@ -40,42 +39,33 @@ Int_t palette[] = {kRed, kOrange+7, kBlue+2, kRed+3, kGreen+2, kViolet-5, kCyan-
 
 
 //good Reco primary Pions (true MC) with pi+inelastic interaction in the end
-//
-auto good_reco = [](double quality_backtrack_0, double quality_backtrack_1, double quality_backtrack_2, double quality_maxseg_0, double quality_maxseg_1, double quality_maxseg_2){
-   if(quality_backtrack_0 > 15. || quality_backtrack_1 > 15. || quality_backtrack_2 > 15. ) return 0;
-   else if (quality_maxseg_0 > 15. || quality_maxseg_1 > 15. || quality_maxseg_2 > 15.) return 0;
-
-   return 1;
-};
-
-
-auto truePrimaryPionInel = [](int reco_beam_true_byHits_PDG, int reco_beam_true_byHits_origin, int good_reco, std::string reco_beam_true_byHits_process, std::string reco_beam_true_byHits_endProcess)
+auto truePrimaryPionInel = [](int reco_beam_truth_PDG, int reco_beam_truth_origin, bool reco_beam_good, std::string reco_beam_truth_Process, std::string true_beam_EndProcess)
 {
 
    std::string pionInel("pi+Inelastic");
    std::string prim ("primary");
 
-   return good_reco == 1 && reco_beam_true_byHits_PDG == 211 && reco_beam_true_byHits_origin ==4 &&
-      compString(reco_beam_true_byHits_process, prim) == 1 && compString(reco_beam_true_byHits_endProcess,pionInel) == 1;
+   return reco_beam_good && reco_beam_truth_PDG == 211 && reco_beam_truth_origin ==4 &&
+      compString(reco_beam_truth_Process, prim) == 1 && compString(true_beam_EndProcess,pionInel) == 1;
 };
 
 //True Charge Exchange + Absorption Signal, has no piPlus or piMinus as daughters
-auto trueChExAbsProcess = [](const int true_daughter_nPiPlus, const int true_daughter_nPiMinus,const int true_daughter_nPi0)
+auto trueChExAbsProcess = [](const int nPiPlus_truth, const int nPiMinus_truth,const int nPi0_truth)
 {
-   return true_daughter_nPiPlus + true_daughter_nPiMinus == 0 && true_daughter_nPi0 < 2;
+   return nPiPlus_truth + nPiMinus_truth == 0 && nPi0_truth < 2;
 };
 
 //True Charge Exchange Signal first filter for ChEx + Absoprtion signal, then ask for a pi0
-auto trueChExProcess = [](int true_daughter_nPi0) {return true_daughter_nPi0 == 1;};
+auto trueChExProcess = [](int nPi0_truth) {return nPi0_truth == 1;};
 
 //True Absorption Signal, first filter for ChEx + Abs Signal, then ask for at least one proton Daughter
 //
-auto trueAbsProcess = [](int true_daughter_nPi0) { return true_daughter_nPi0 == 0;};
+auto trueAbsProcess = [](int nPi0_truth) { return nPi0_truth == 0;};
 
 //True Background Signal, NOT Charge Exchange and NOT Absorption
 //
-auto trueBackGround = [](int true_daughter_nPiPlus, int true_daughter_nPiMinus, int true_daughter_nPi0){
-   return !(true_daughter_nPiPlus + true_daughter_nPiMinus == 0 && true_daughter_nPi0 <2);
+auto trueBackGround = [](int nPiPlus_truth, int nPiMinus_truth, int nPi0_truth){
+   return !(nPiPlus_truth + nPiMinus_truth == 0 && nPi0_truth <2);
 };
 
 //Define all particle types
@@ -100,21 +90,8 @@ auto count_type = [](int pdg, const std::vector<int> &pdg_vec){
    return cnt;
 };
 
-template <class T>
-T daughter_property(int pdg, const std::vector<int> &pdg_vec, const T &daughter_property){
-   T return_vec; 
-   for (std::string::size_type pos =0; pos < pdg_vec.size(); pos++){ 
-      if(pdg!= 9999 && pdg_vec.at(pos) == pdg && daughter_property.size()> pos){
-         return_vec.push_back(daughter_property.at(pos));}
-      else if(pdg == 9999 && pdg_vec.at(pos) > 3000 && daughter_property.size() > pos) {
-         return_vec.push_back(daughter_property.at(pos));};
-   };
-   return return_vec;
-};
-
 
 //Find properties (stored in vector) of a specific daughter particle, special for nucleus daughters
-/*
 auto daughter_property = [](int pdg, const std::vector<int> &pdg_vec, const std::vector<double> &daughter_property){
    std::vector<double> return_vec; 
    for (std::string::size_type pos =0; pos < pdg_vec.size(); pos++){ 
@@ -147,11 +124,10 @@ auto daughter_property_ul = [](int pdg, const std::vector<int> &pdg_vec, const s
    };
    return return_vec;
 };
-*/
 
 //Find properties of an event if one of the daughters is a specific particle
 auto event_property = [](int pdg, const std::vector<int> &pdg_vec, int ev_property){
-   int return_value = 0; 
+   int return_value; 
    for (std::string::size_type pos =0; pos < pdg_vec.size(); pos++){ 
       if(pdg!= 9999 && pdg_vec.at(pos) == pdg ){
          return_value = ev_property;
