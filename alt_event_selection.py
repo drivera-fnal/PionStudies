@@ -4,9 +4,11 @@ from array import array
 from vertex_type import vertex_type as vt
 from vertex_type import centroid_vertex_type
 from math import sqrt
+from defcuts import ang_pos_test_cut
 
 gROOT.SetBatch(1)
 
+'''
 def ang_pos_test_cut(e):
   if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
 
@@ -20,11 +22,12 @@ def ang_pos_test_cut(e):
 
   if( e.startZ < 28. or e.startZ > 32. ): return 0
   return 1
+'''
 
 
 def test_good_reco(e):
-  if (e.view_2_wire_backtrack > 15. or e.view_1_wire_backtrack > 15. or e.view_0_wire_backtrack > 15.): return 0
-  elif (e.view_2_max_segment > 15. or e.view_1_max_segment > 15. or e.view_0_max_segment > 15.): return 0
+  if (e.quality_reco_view_2_wire_backtrack > 15. or e.quality_reco_view_1_wire_backtrack > 15. or e.quality_reco_view_0_wire_backtrack > 15.): return 0
+  elif (e.quality_reco_view_2_max_segment > 15. or e.quality_reco_view_1_max_segment > 15. or e.quality_reco_view_0_max_segment > 15.): return 0
 
   return 1
 
@@ -34,7 +37,6 @@ tree = f.Get("pionana/beamana")
 fout = TFile( sys.argv[2], "RECREATE" )
 outtree = TTree("tree","")
 
-use_pma = int( sys.argv[3] )
 
 vertex = array("i", [0])
 true_signal = array("i", [0])
@@ -104,17 +106,17 @@ n_el = 0
 n_mixed = 0
 
 for e in tree:
-  if not ( e.reco_beam_good and e.true_beam_PDG == 211 and e.type == 13 ): continue
+  if not ( e.reco_beam_true_byE_matched and e.true_beam_PDG == 211 and e.reco_beam_type == 13 ): continue
 
-  if not ang_pos_test_cut( e ): continue
+  if not ang_pos_test_cut( e, xlow=-3, xhigh=0., ylow=-1., yhigh=2., zlow=28., zhigh=32. ): continue
   #if not e.passes_beam_cuts: continue
 
-  if e.endZ > 229.: continue
+  if e.reco_beam_endZ > 229.: continue
 
   good_reco[0] = test_good_reco(e)
 
   #Determine if this is our true signal 
-  vertex[0] = vt(e, float(sys.argv[4]))
+  vertex[0] = vt(e, float(sys.argv[3]))
   
   event[0] = e.event
   run[0] = e.run
@@ -124,14 +126,14 @@ for e in tree:
   if vertex[0] == 1 :
     n_inel = n_inel + 1
     #Define Abs+Cex as signal
-    # and e.nPi0_truth < 2
-    if ( e.nPiPlus_truth + e.nPiMinus_truth ) == 0 and e.nPi0_truth < 2:
+    # and e.true_daughter_nPi0 < 2
+    if ( e.true_daughter_nPiPlus + e.true_daughter_nPiMinus ) == 0 and e.true_daughter_nPi0 < 2:
       true_signal[0] = True
-      if e.nPi0_truth == 0: AbsCex_type[0] = 1
+      if e.true_daughter_nPi0 == 0: AbsCex_type[0] = 1
       else: AbsCex_type[0] = 2
     else:
       true_signal[0] = False
-      if( (e.nPiPlus_truth + e.nPiMinus_truth) == 0 and e.nPi0_truth > 1 ): 
+      if( (e.true_daughter_nPiPlus + e.true_daughter_nPiMinus) == 0 and e.true_daughter_nPi0 > 1 ): 
         multiple_pi0[0] = True
         true_signal[0] = True
   elif vertex[0] == 2:
@@ -168,47 +170,26 @@ for e in tree:
     if e.reco_daughter_PFP_track_score[i] > .3:
       #treat it like a track
       
-      #PMA or Pandora
-      if( use_pma ): 
-        if( e.reco_daughter_PMA_ID[i] != -1 ):
+      #'Forced' reco 
+      if( e.reco_daughter_allTrack_ID[i] != -1 ):
 
-          if e.reco_daughter_PMA_to_vertex[i] > .6: 
-            if abs( e.alt_reco_daughter_PFP_truth_PDG[i] ) == 211: dR_skipped_pion[0] = True
-            #continue
+        #if e.reco_daughter_allTrack_to_vertex[i] > .6: 
+        #  if abs( e.reco_daughter_PFP_true_byHits_PDG[i] ) == 211: dR_skipped_pion[0] = True
+        #  #continue
 
-          chi2 = e.reco_daughter_PMA_Chi2_proton[i] / e.reco_daughter_PMA_Chi2_ndof[i]
-          if e.alt_reco_daughter_PFP_truth_PDG[i] == 22 and e.alt_reco_daughter_PFP_truth_ID[i] in [j for j in e.true_beam_Pi0_decay_IDs]:
-            pi0_gamma_as_track[0] = True
+        chi2 = e.reco_daughter_allTrack_Chi2_proton[i] / e.reco_daughter_allTrack_Chi2_ndof[i]
+        if e.reco_daughter_PFP_true_byHits_PDG[i] == 22 and e.reco_daughter_PFP_true_byHits_ID[i] in [j for j in e.true_beam_Pi0_decay_ID]:
+          pi0_gamma_as_track[0] = True
 
-          if chi2 > 50.:
-            has_mip = True
-          elif abs(e.alt_reco_daughter_PFP_truth_PDG[i]) == 211:
-            chi2_surv_pion[0] = True
+        if chi2 > 50.:
+          has_mip = True
+        elif abs(e.reco_daughter_PFP_true_byHits_PDG[i]) == 211:
+          chi2_surv_pion[0] = True
 
-        else: 
-          print "Warning: no PMA Track associated"
+    #  else: 
+        #print "Warning: no allTrack Track associated"
 
-
-      else:
-        if( e.reco_daughter_pandora2_ID[i] != -1 ):
-
-          if e.reco_daughter_pandora2_to_vertex[i] > .6: 
-            if abs( e.alt_reco_daughter_PFP_truth_PDG[i] ) == 211: dR_skipped_pion[0] = True
-            #continue
-
-          chi2 = e.reco_daughter_pandora2_Chi2_proton[i] / e.reco_daughter_pandora2_Chi2_ndof[i]
-          if e.alt_reco_daughter_PFP_truth_PDG[i] == 22 and e.alt_reco_daughter_PFP_truth_ID[i] in [j for j in e.true_beam_Pi0_decay_IDs]:
-            pi0_gamma_as_track[0] = True
-
-          if chi2 > 50.:
-            has_mip = True
-          elif abs(e.alt_reco_daughter_PFP_truth_PDG[i]) == 211:
-            chi2_surv_pion[0] = True
-
-    #    else: 
-          #print "Warning: no pandora2 Track associated"
-
-    elif abs(e.alt_reco_daughter_PFP_truth_PDG[i]) == 211:
+    elif abs(e.reco_daughter_PFP_true_byHits_PDG[i]) == 211:
       has_pion_shower[0] = True
       
 
@@ -226,31 +207,25 @@ for e in tree:
 
   a = 0
   #print len([i for i in e.true_beam_daughter_IDs]), len([i for i in e.true_beam_daughter_PDGs]), len([i for i in e.true_beam_daughter_startP])
-  for tID, tPDG in zip([i for i in e.true_beam_daughter_IDs],[i for i in e.true_beam_daughter_PDGs]):
+  for tID, tPDG in zip([i for i in e.true_beam_daughter_ID],[i for i in e.true_beam_daughter_PDG]):
     if abs(tPDG) == 211:
       pion_P[a] = e.true_beam_daughter_startP[a]*1.e3
-      pion_Px[a] = e.true_beam_daughter_startPX[a]*1.e3
-      pion_Py[a] = e.true_beam_daughter_startPY[a]*1.e3
-      pion_Pz[a] = e.true_beam_daughter_startPZ[a]*1.e3
-      pion_len[a] = e.true_beam_daughter_lens[a]
+      pion_Px[a] = e.true_beam_daughter_startPx[a]*1.e3
+      pion_Py[a] = e.true_beam_daughter_startPy[a]*1.e3
+      pion_Pz[a] = e.true_beam_daughter_startPz[a]*1.e3
+      pion_len[a] = e.true_beam_daughter_len[a]
 
-      if tID not in [i for i in e.alt_reco_daughter_PFP_truth_ID]: 
+      if tID not in [i for i in e.reco_daughter_PFP_true_byHits_ID]: 
         missed_pion_daughter_PFP[0] = True
         missed_pion_P[a] = 1.e3*e.true_beam_daughter_startP[a]
         missed_pion[a] = 1
         missed_pion_track[a] = 1
         #print missed_pion_P[a]
       else:
-        if( use_pma ):
-          for pfp_truthID,trackID in zip([i for i in e.alt_reco_daughter_PFP_truth_ID],[i for i in e.reco_daughter_PMA_ID]): 
-            if pfp_truthID == tID and trackID == -1:
-              missed_pion_daughter_track[0] = True
-              missed_pion_track[a] = 1
-        else:
-          for pfp_truthID,trackID in zip([i for i in e.alt_reco_daughter_PFP_truth_ID],[i for i in e.reco_daughter_pandora2_ID]): 
-            if pfp_truthID == tID and trackID == -1:
-              missed_pion_daughter_track[0] = True
-              missed_pion_track[a] = 1
+        for pfp_truthID,trackID in zip([i for i in e.reco_daughter_PFP_true_byHits_ID],[i for i in e.reco_daughter_pandora2_ID]): 
+          if pfp_truthID == tID and trackID == -1:
+            missed_pion_daughter_track[0] = True
+            missed_pion_track[a] = 1
     a = a + 1      
 
 

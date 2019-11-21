@@ -2,7 +2,9 @@ from ROOT import *
 import sys
 from array import array
 from vertex_type import vertex_type as vt
+from defcuts import ang_pos_test_cut
 
+'''
 def ang_pos_test_cut(e):
   if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
 
@@ -17,7 +19,7 @@ def ang_pos_test_cut(e):
   if( e.startZ < 28. or e.startZ > 32. ): return 0
 
   return 1
-
+'''
 
 f = TFile( sys.argv[1] )
 tree = f.Get("pionana/beamana")
@@ -80,7 +82,7 @@ gROOT.SetBatch(1)
 print "Entries:", tree.GetEntries()
 
 for e in tree:
-  if not ( e.reco_beam_good and e.true_beam_PDG == 211 and e.type == 13 ): continue
+  if not ( e.reco_beam_true_byE_matched and e.true_beam_PDG == 211 and e.reco_beam_type == 13 ): continue
 
   if not ( ang_pos_test_cut(e) ): continue
 
@@ -89,52 +91,48 @@ for e in tree:
   event[0] = e.event
   subrun[0] = e.subrun
   run[0] = e.run
-  beamTrackID[0] = e.beamTrackID  
+  beamTrackID[0] = e.reco_beam_trackID  
 
-  vertex_slice[0] = e.vertex_slice
+  vertex_slice[0] = e.reco_beam_vertex_slice
 
-  pi0_decay_IDs = [i for i in e.true_beam_Pi0_decay_IDs]
+  pi0_decay_IDs = [i for i in e.true_beam_Pi0_decay_ID]
 
   pfp_ids = [i for i in e.reco_daughter_PFP_ID]
   for i in range(0, len(pfp_ids)):
 
     daughterTrackID[0] = pfp_ids[i]
-    is_cosmic[0] = int( e.alt_reco_daughter_PFP_truth_Origin[i] == 2 )
+    is_cosmic[0] = int( e.reco_daughter_PFP_true_byHits_origin[i] == 2 )
 
-    is_self[0] = int( e.alt_reco_daughter_PFP_truth_ID[i] == e.true_beam_ID )
+    is_self[0] = int( e.reco_daughter_PFP_true_byHits_ID[i] == e.true_beam_ID )
       
     #dR[0] = e.reco_daughter_dR[i]
 
-    pdg[0] = e.alt_reco_daughter_PFP_truth_PDG[i]
-    cnn[0] = e.reco_daughter_PFP_track_score[i] 
+    pdg[0] = e.reco_daughter_PFP_true_byHits_PDG[i]
+    cnn[0] = e.reco_daughter_PFP_trackScore[i] 
 
-    if( use_pma and not e.reco_daughter_PMA_ID[i] == -1 and e.reco_daughter_PMA_Chi2_ndof[i] > 0):
-      dR[0] = e.reco_daughter_PMA_to_vertex[i]
-      #daughter_slice[0] = e.reco_daughter_PMA_slice[i]
-      chi2[0] = e.reco_daughter_PMA_Chi2_proton[i] / e.reco_daughter_PMA_Chi2_ndof[i]
-    elif( not e.reco_daughter_pandora2_ID[i] == -1 and e.reco_daughter_pandora2_Chi2_ndof[i] > 0):
-      dR[0] = e.reco_daughter_pandora2_to_vertex[i]
-      #daughter_slice[0] = e.reco_daughter_pandora2_slice[i]
-      chi2[0] = e.reco_daughter_pandora2_Chi2_proton[i] / e.reco_daughter_pandora2_Chi2_ndof[i]
+    if( not e.reco_daughter_allTrack_ID[i] == -1 and e.reco_daughter_allTrack_Chi2_ndof[i] > 0):
+      dR[0] = e.reco_daughter_allTrack_to_vertex[i]
+      #daughter_slice[0] = e.reco_daughter_allTrack_slice[i]
+      chi2[0] = e.reco_daughter_allTrack_Chi2_proton[i] / e.reco_daughter_allTrack_Chi2_ndof[i]
 
     pi0_gamma[0] = 0
     #check if this is a pi0 gamma:
     if( pdg[0] == 22 ):
-      if 111 in [j for j in e.true_beam_daughter_PDGs]:
-        if e.alt_reco_daughter_PFP_truth_ID[i] in pi0_decay_IDs:
+      if 111 in [j for j in e.true_beam_daughter_PDG]:
+        if e.reco_daughter_PFP_true_ID[i] in pi0_decay_IDs:
           pi0_gamma[0] = 1
 
-    true_daughter[0] = int( e.alt_reco_daughter_PFP_truth_ParID[i] == e.true_beam_ID )
-    true_grand_daughter[0] = int( e.alt_reco_daughter_PFP_truth_ID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
-    true_great_grand_daughter[0] = int( e.alt_reco_daughter_PFP_truth_ParID[i] in [j for j in e.true_beam_grand_daughter_IDs] )
+    true_daughter[0] = int( e.reco_daughter_PFP_true_parID[i] == e.true_beam_ID )
+    true_grand_daughter[0] = int( e.reco_daughter_PFP_true_ID[i] in [j for j in e.true_beam_grand_daughter_ID] )
+    true_great_grand_daughter[0] = int( e.reco_daughter_PFP_true_parID[i] in [j for j in e.true_beam_grand_daughter_ID] )
 
     if true_grand_daughter[0]:
-      true_gd_IDs = [j for j in e.true_beam_grand_daughter_IDs]
-      true_gd_ParIDs = [j for j in e.true_beam_grand_daughter_ParIDs]
+      true_gd_IDs = [j for j in e.true_beam_grand_daughter_ID]
+      true_gd_ParIDs = [j for j in e.true_beam_grand_daughter_ParID]
 
       for gd_ID, gd_ParID in zip(true_gd_IDs, true_gd_ParIDs):
-        if e.alt_reco_daughter_PFP_truth_ID[i] == gd_ID:
-          for d_ID, d_PDG in zip([j for j in e.true_beam_daughter_IDs], [j for j in e.true_beam_daughter_PDGs]):
+        if e.reco_daughter_PFP_true_byHits_ID[i] == gd_ID:
+          for d_ID, d_PDG in zip([j for j in e.true_beam_daughter_ID], [j for j in e.true_beam_daughter_PDG]):
             if gd_ParID == d_ID:
               true_gd_ParPDG[0] = d_PDG
 
