@@ -13,6 +13,11 @@ base_cut = " && reco_beam_type == 13 && (true_beam_PDG == -13 || true_beam_PDG =
 
 fout = TFile( sys.argv[2], "RECREATE" )
 
+extra_cut = ""
+if len(sys.argv) > 3:
+  print "Adding extra cut:", sys.argv[3]
+  extra_cut = sys.argv[3]
+
 cuts = defcuts()
 
 leg = TLegend(.6,.6,.85,.85)
@@ -114,8 +119,8 @@ for name,title in zip(names,titles):
   true_posX = "true_beam_startX + (true_beam_startDirX/true_beam_startDirZ)*(-1.*true_beam_startZ)"
   true_posY = "true_beam_startY + (true_beam_startDirY/true_beam_startDirZ)*(-1.*true_beam_startZ)"
 
-  tree.Draw( true_posX + (">>posX_" + name + "(30,-80,10)"), cut + base_cut )
-  tree.Draw( true_posY + (">>posY_" + name + "(40,380,500)"),cut + base_cut )
+  tree.Draw( true_posX + (">>posX_" + name + "(30,-80,10)"), cut + base_cut + extra_cut )
+  tree.Draw( true_posY + (">>posY_" + name + "(40,380,500)"),cut + base_cut + extra_cut )
   pos_hists["posX"+name] = gDirectory.Get("posX_" + name)
   pos_hists["posY"+name] = gDirectory.Get("posY_" + name)
 
@@ -129,9 +134,9 @@ for name,title in zip(names,titles):
 
 
   ##Reco position
-  tree.Draw( "reco_beam_startX>>recoX_" + name + "(30,-80, 10)", cut + base_cut )
-  tree.Draw( "reco_beam_startY>>recoY_" + name + "(40,380,500)", cut + base_cut )
-  tree.Draw( "reco_beam_startZ>>recoZ_" + name + "(25,0,50)",    cut + base_cut )
+  tree.Draw( "reco_beam_startX>>recoX_" + name + "(30,-80, 10)", cut + base_cut + extra_cut )
+  tree.Draw( "reco_beam_startY>>recoY_" + name + "(40,380,500)", cut + base_cut + extra_cut )
+  tree.Draw( "reco_beam_startZ>>recoZ_" + name + "(25,0,50)",    cut + base_cut + extra_cut )
   reco_pos_hists["recoX_" + name] = gDirectory.Get("recoX_" + name)
   reco_pos_hists["recoY_" + name] = gDirectory.Get("recoY_" + name)
   reco_pos_hists["recoZ_" + name] = gDirectory.Get("recoZ_" + name)
@@ -148,21 +153,22 @@ for name,title in zip(names,titles):
   reco_pos_stackZ.Add(reco_pos_hists["recoZ_" + name])
 
   ##Position Differences
-  tree.Draw( true_posX + " - reco_beam_startX>>diffX_" + name + "(60,-20,40)", cut + base_cut )
+  tree.Draw( true_posX + " - reco_beam_startX>>diffX_" + name + "(60,-20,40)", cut + extra_cut )
   pos_diff_hists["diffX_"+name] = gDirectory.Get("diffX_"+name)
   pos_diff_hists["diffX_"+name].SetFillColor(colors[name])
   pos_diff_hists["diffX_"+name].SetLineColor(colors[name])
   pos_diff_stackX.Add(pos_diff_hists["diffX_"+name])
 
-  tree.Draw( true_posY + " - reco_beam_startY>>diffY_" + name + "(60,-20,40)", cut + base_cut )
+  tree.Draw( true_posY + " - reco_beam_startY>>diffY_" + name + "(60,-20,40)", cut + extra_cut )
   pos_diff_hists["diffY_"+name] = gDirectory.Get("diffY_"+name)
   pos_diff_hists["diffY_"+name].SetFillColor(colors[name])
   pos_diff_hists["diffY_"+name].SetLineColor(colors[name])
   pos_diff_stackY.Add(pos_diff_hists["diffY_"+name])
 
   ##Angle diffs
-  cos_theta = "(true_beam_startDirX*reco_beam_trackDirX + true_beam_startDirY*reco_beam_trackDirY + true_beam_startDirZ*reco_beam_trackDirZ)"
-  tree.Draw( cos_theta + ">>cos_" + name + " (500,0.,1.)", cut + base_cut )
+  #cos_theta = "(true_beam_startDirX*reco_beam_trackDirX + true_beam_startDirY*reco_beam_trackDirY + true_beam_startDirZ*reco_beam_trackDirZ)"
+  cos_theta = "(-0.183638062571*reco_beam_trackDirX + -0.198218481834*reco_beam_trackDirY + 0.962801379016*reco_beam_trackDirZ)"
+  tree.Draw( cos_theta + ">>cos_" + name + " (500,0.,1.)", cut + extra_cut )
   cos_hists[ "cos_" + name ] = gDirectory.Get( "cos_" + name )
   cos_hists[ "cos_" + name ].SetFillColor(colors[name])
   cos_hists[ "cos_" + name ].SetLineColor(colors[name])
