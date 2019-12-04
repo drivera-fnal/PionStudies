@@ -90,16 +90,19 @@ auto pdg_gamma = [](){return 22;};
 auto pdg_electron = [](){return 11;};
 auto pdg_positron = [](){return -11;};
 auto pdg_nucleus = [](){return 9999;}; //watchout for nucleuss in comparing function
+auto pdg_neutron = [](){return 2112;};
 
 //COUNT particle Type in Daughters
 auto count_type = [](int pdg, const std::vector<int> &pdg_vec){
    int cnt = 0;
    for(std::string::size_type pos = 0; pos < pdg_vec.size(); pos++){
-      if(pdg == pdg_vec.at(pos)) cnt++;
+      if( pdg != 9999 && pdg == pdg_vec.at(pos)) cnt++;
+      else if (pdg == 9999 && pdg_vec.at(pos) > 3000) cnt++;
    };
    return cnt;
 };
 
+//Find properties (stored in vector) of a specific daughter particle, special for nucleus daughters
 template <class T>
 T daughter_property(int pdg, const std::vector<int> &pdg_vec, const T &daughter_property){
    T return_vec; 
@@ -113,41 +116,6 @@ T daughter_property(int pdg, const std::vector<int> &pdg_vec, const T &daughter_
 };
 
 
-//Find properties (stored in vector) of a specific daughter particle, special for nucleus daughters
-/*
-auto daughter_property = [](int pdg, const std::vector<int> &pdg_vec, const std::vector<double> &daughter_property){
-   std::vector<double> return_vec; 
-   for (std::string::size_type pos =0; pos < pdg_vec.size(); pos++){ 
-      if(pdg!= 9999 && pdg_vec.at(pos) == pdg && daughter_property.size()> pos){
-         return_vec.push_back(daughter_property.at(pos));}
-      else if(pdg == 9999 && pdg_vec.at(pos) > 3000 && daughter_property.size() > pos) {
-         return_vec.push_back(daughter_property.at(pos));};
-   };
-   return return_vec;
-};
-
-auto daughter_property_int = [](int pdg, const std::vector<int> &pdg_vec, const std::vector<int> &daughter_property){
-   std::vector<int> return_vec; 
-   for (std::string::size_type pos =0; pos < pdg_vec.size(); pos++){ 
-      if(pdg!= 9999 && pdg_vec.at(pos) == pdg && daughter_property.size()> pos){
-         return_vec.push_back(daughter_property.at(pos));}
-      else if(pdg == 9999 && pdg_vec.at(pos) > 3000 && daughter_property.size() > pos) {
-         return_vec.push_back(daughter_property.at(pos));};
-   };
-   return return_vec;
-};
-
-auto daughter_property_ul = [](int pdg, const std::vector<int> &pdg_vec, const std::vector<unsigned long> &daughter_property){
-   std::vector<unsigned long> return_vec; 
-   for (std::string::size_type pos =0; pos < pdg_vec.size(); pos++){ 
-      if(pdg!= 9999 && pdg_vec.at(pos) == pdg && daughter_property.size()> pos){
-         return_vec.push_back(daughter_property.at(pos));}
-      else if(pdg == 9999 && pdg_vec.at(pos) > 3000 && daughter_property.size() > pos) {
-         return_vec.push_back(daughter_property.at(pos));};
-   };
-   return return_vec;
-};
-*/
 
 //Find properties of an event if one of the daughters is a specific particle
 auto event_property = [](int pdg, const std::vector<int> &pdg_vec, int ev_property){
@@ -205,4 +173,21 @@ auto meanDaughterdEdX = [](const ROOT::RVec<std::vector<double>> &vecs){
 };
 
 
+auto recoLength = [](const std::vector<double> &sX, const std::vector<double> &sY, const std::vector<double> &sZ, const std::vector<double> &eX, const std::vector<double> &eY, const std::vector<double> &eZ){
+   std::vector<double> length;
+   double dX = 0, dY = 0, dZ = 0;
+
+   if( sX.size() == eZ.size()){
+
+      for(std::string::size_type pos = 0; pos < sX.size(); pos++){
+         dX = sX.at(pos) - eX.at(pos);
+         dY = sY.at(pos) - eY.at(pos);
+         dZ = sZ.at(pos) - eZ.at(pos);
+         length.push_back(sqrt(dX*dX + dY*dY + dZ*dZ));
+      };
+
+   }
+   else length.push_back(-999);
+   return length;
+};
 
