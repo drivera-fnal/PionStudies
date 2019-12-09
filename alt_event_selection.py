@@ -2,7 +2,6 @@ from ROOT import *
 import sys
 from array import array
 from vertex_type import vertex_type as vt
-from vertex_type import centroid_vertex_type
 from math import sqrt
 from defcuts import ang_pos_test_cut
 
@@ -136,6 +135,13 @@ for e in tree:
       if( (e.true_daughter_nPiPlus + e.true_daughter_nPiMinus) == 0 and e.true_daughter_nPi0 > 1 ): 
         multiple_pi0[0] = True
         true_signal[0] = True
+      else:
+        all_under_threshold = True 
+        for pdg, mom in zip([i for i in e.true_beam_daughter_PDG], [i for i in e.true_beam_daughter_startP]):
+          if abs(pdg) == 211 and mom > float(sys.argv[4]):
+            all_under_threshold = False
+        true_signal[0] = all_under_threshold
+           
   elif vertex[0] == 2:
     n_el = n_el + 1
     true_signal[0] = False
@@ -167,7 +173,7 @@ for e in tree:
   for i in range( 0, len(pfp_ids) ):
 
     #check if the PFP daughter looks shower like or track like
-    if e.reco_daughter_PFP_track_score[i] > .3:
+    if e.reco_daughter_PFP_trackScore[i] > .3:
       #treat it like a track
       
       #'Forced' reco 
@@ -222,7 +228,7 @@ for e in tree:
         missed_pion_track[a] = 1
         #print missed_pion_P[a]
       else:
-        for pfp_truthID,trackID in zip([i for i in e.reco_daughter_PFP_true_byHits_ID],[i for i in e.reco_daughter_pandora2_ID]): 
+        for pfp_truthID,trackID in zip([i for i in e.reco_daughter_PFP_true_byHits_ID],[i for i in e.reco_daughter_allTrack_ID]): 
           if pfp_truthID == tID and trackID == -1:
             missed_pion_daughter_track[0] = True
             missed_pion_track[a] = 1
@@ -243,8 +249,8 @@ for e in tree:
     n_bg_as_bg = n_bg_as_bg + 1
 
 
-  vertex_res[0] = sqrt( (e.endZ - e.true_beam_EndVertex_Z)**2 + (e.endX - e.true_beam_EndVertex_X)**2 + (e.endY - e.true_beam_EndVertex_Y)**2 )
-  true_endZ[0] = e.true_beam_EndVertex_Z
+  vertex_res[0] = sqrt( (e.reco_beam_endZ - e.true_beam_endZ)**2 + (e.reco_beam_endX - e.true_beam_endX)**2 + (e.reco_beam_endY - e.true_beam_endY)**2 )
+  true_endZ[0] = e.true_beam_endZ
   outtree.Fill()
 
 print "Signal:", nTrueSignal, n_signal_as_signal, n_signal_as_bg

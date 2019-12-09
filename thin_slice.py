@@ -14,6 +14,9 @@ do_data = int(sys.argv[3])
 
 outfile = TFile(sys.argv[2], "RECREATE")
 
+min_wire = int(sys.argv[4])
+max_wire = int(sys.argv[5])
+
 bTrueDeltaE  = array("d", [0.]) ## From IDEs
 bRecoDeltaE  = array("d", [0.]) ## From hits
 bInitE       = array("d", [0.]) ## Either true MC E or data BI E
@@ -24,6 +27,9 @@ bCosmicXer   = array("i", [0])
 bNCalos      = array("i", [0])
 bIncident    = array("d", [0.]*500)
 bInteracting = array("i", [0]*500)
+
+bSingleIncident = array("d", [0.])
+bSingleInteracting = array("i", [0])
 
 outtree = TTree("tree","")
 outtree.Branch("TrueDeltaE", bTrueDeltaE, "TrueDeltaE/D")
@@ -36,6 +42,9 @@ outtree.Branch("CosmicXer", bCosmicXer, "CosmicXer/I")
 outtree.Branch("NCalos", bNCalos, "NCalos/I")
 outtree.Branch("Incident", bIncident, "Incident[500]/D")
 outtree.Branch("Interacting", bInteracting, "Interacting[500]/I")
+
+outtree.Branch("SingleIncident", bSingleIncident, "SingleIncident/D")
+outtree.Branch("SingleInteracting", bSingleInteracting, "SingleInteracting/I")
 
 hIncident    = TH1D( "hIncident", "", 300, 0, 3000 )
 hInteracting = TH1D( "hInteracting", "", 300, 0, 3000 )
@@ -74,8 +83,10 @@ for e in t:
   dEdXs = [i for i in e.reco_beam_calibrated_dEdX]
   xs    = [i for i in e.reco_beam_TrkPitch]
 
-  if not ( len( wires ) == len(dEdXs) and len( xs ) == len(wires) ): continue
-  if len(wires) == 0: continue
+  if not ( len( wires ) == len(dEdXs) and len( xs ) == len(wires) ): 
+    continue
+  if len(wires) == 0: 
+    continue
 
   if not do_data:
     bVertex[0] = vt(e,5.)
@@ -89,6 +100,8 @@ for e in t:
   
   #Remove the back, we don't consider this is the 'start' of thin-slice experiment
   sorted_calos.pop()
+
+  if len(sorted_calos) > 497: continue
 
   if do_data:
     init_E = sqrt( 1.e6 * e.data_BI_P**2 + masses[211]**2 )
@@ -110,9 +123,26 @@ for e in t:
     bIncident[i] = 0.
     bInteracting[i] = 0
 
+
+  ## Single slice: add up energy until the slice
+  ##               this is the deltaE from the original 
+  ##               incident E. 
+  ##               
+  ##               If the max wire < min slice wire
+  ##               it doesn't enter the sample. 
+  ##
+  ##               If the max wire > max slice wire  it
+  ##               survives.
+  ##    
+  ##               Else, it interacts
+
+  bSingleInteracting[0] = -1
+  bSingleIncident[0] =  0.
+
   reco_delta_E = 0.
   a = 0
   for calo in sorted_calos:     
+    if a > 498: break
     hIncident.Fill( energies[-1] )
 
 
@@ -123,6 +153,26 @@ for e in t:
 
     a += 1
 
+    ## Check the wire
+    ## 
+    ## The value set to SingleIncident won't be updated after
+    ## the min wire
+    ## 
+    ## The value set to SingleInteracting will be overwritten
+    ## once it gets to the min wire, and then again if it 
+    ## passes the max wire
+    ##
+    
+    this_wire = calo[0]
+    if this_wire < min_wire: #150:
+      bSingleIncident[0] = energies[-1] 
+
+    if this_wire >= min_wire and this_wire <= max_wire: #if this_wire >= 150 and this_wire < 153:
+      bSingleInteracting[0] = 1
+
+    if this_wire > max_wire: #152: 
+      bSingleInteracting[0] = 0
+
   bIncident[a] = energies[-1]
   bInteracting[a] = 1 
 
@@ -131,14 +181,15 @@ for e in t:
   hTrueEnergy.Fill(true_delta_E)
   hRecoEnergy.Fill(reco_delta_E)
 
-  ls = [i for i in e.reco_beam_cosmic_candidate_lower_hits]
-  us = [i for i in e.reco_beam_cosmic_candidate_upper_hits]  
+  if not do_data:
+    ls = [i for i in e.reco_beam_cosmic_candidate_lower_hits]
+    us = [i for i in e.reco_beam_cosmic_candidate_upper_hits]  
 
-  bCosmicXer[0] = 0
-  for l,u in zip(ls, us):
-    if is_cosmic( u, l, upperLimit = 1, lowerLimit = 1):       
-      bCosmicXer[0] = 1
-      break
+    bCosmicXer[0] = 0
+    for l,u in zip(ls, us):
+      if is_cosmic( u, l, upperLimit = 1, lowerLimit = 1):       
+        bCosmicXer[0] = 1
+        break
 
   if(true_delta_E > 0 ): hEnergyRatio.Fill( reco_delta_E / true_delta_E )
   bRecoDeltaE[0] = reco_delta_E
