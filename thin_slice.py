@@ -27,6 +27,7 @@ bCosmicXer   = array("i", [0])
 bNCalos      = array("i", [0])
 bIncident    = array("d", [0.]*500)
 bInteracting = array("i", [0]*500)
+bEndInteract = array("i", [0])
 
 bSingleIncident = array("d", [0.])
 bSingleInteracting = array("i", [0])
@@ -45,6 +46,8 @@ outtree.Branch("Interacting", bInteracting, "Interacting[500]/I")
 
 outtree.Branch("SingleIncident", bSingleIncident, "SingleIncident/D")
 outtree.Branch("SingleInteracting", bSingleInteracting, "SingleInteracting/I")
+
+outtree.Branch("EndInteract", bEndInteract, "EndInteract/I")
 
 hIncident    = TH1D( "hIncident", "", 300, 0, 3000 )
 hInteracting = TH1D( "hInteracting", "", 300, 0, 3000 )
@@ -114,6 +117,10 @@ for e in t:
     true_delta_E = e.true_beam_IDE_totalDep
     final_E = 0.
     if init_E < 1.e-5: continue
+
+    if "Inelastic" in str(e.true_beam_endProcess): 
+      bEndInteract[0] = 1
+    else: bEndInteract[0] = 0
   
   #true_delta_E = init_E - final_E
   energies = [init_E]

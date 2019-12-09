@@ -4,6 +4,7 @@ from array import array
 from vertex_type import vertex_type as vt
 from math import sqrt
 from defcuts import ang_pos_test_cut
+from check_event_selection import abs_cex
 
 gROOT.SetBatch(1)
 
@@ -41,6 +42,7 @@ vertex = array("i", [0])
 true_signal = array("i", [0])
 multiple_pi0 = array("i", [0])
 signal_selection = array("i", [0])
+new_signal_selection = array("i", [0])
 has_pion_shower = array("i", [0])
 pi0_gamma_as_track = array("i", [0])
 dR_skipped_pion = array("i", [0])
@@ -71,6 +73,7 @@ outtree.Branch("run", run, "run/I")
 outtree.Branch("true_signal", true_signal, "true_signal/I")
 outtree.Branch("multiple_pi0", multiple_pi0, "multiple_pi0/I")
 outtree.Branch("signal_selection", signal_selection, "signal_selection/I")
+outtree.Branch("new_signal_selection", new_signal_selection, "new_signal_selection/I")
 outtree.Branch("AbsCex_type", AbsCex_type, "AbsCex_type/I")
 outtree.Branch("has_pion_shower", has_pion_shower, "has_pion_shower/I")
 outtree.Branch("pi0_gamma_as_track", pi0_gamma_as_track, "pi0_gamma_as_track/I")
@@ -161,6 +164,7 @@ for e in tree:
     
   #Determine if this passes our event selection
   signal_selection[0] = True
+  new_signal_selection[0] = True
   has_mip = False    
   dR_skipped_pion[0] = False
   chi2_surv_pion[0] = False
@@ -236,6 +240,7 @@ for e in tree:
 
 
   if has_mip: signal_selection[0] = False
+  new_signal_selection[0] = abs_cex(e, dR_cut = 999.)
 
   if true_signal[0] and signal_selection[0]: 
     n_signal_as_signal = n_signal_as_signal + 1
