@@ -36,7 +36,7 @@ int compString(std::string s1, std::string s2){
    if(s1 == s2) return 1;
 };
 
-Int_t palette[] = {kRed, kOrange+7, kBlue+2, kRed+3, kGreen+2, kViolet-5, kCyan-7, kCyan+3, kPink+9 };
+Int_t palette[] = {kRed, kOrange+7, kBlue+2, kRed+3, kGreen+2, kViolet-5, kCyan-7, kCyan+3, kPink+9, kOrange-2 };
 
 
 //good Reco primary Pions (true MC) with pi+inelastic interaction in the end
@@ -102,6 +102,20 @@ auto count_type = [](int pdg, const std::vector<int> &pdg_vec){
    return cnt;
 };
 
+auto count_pi0_gamma = [](const std::vector<int> &pi0_gamma_ID, const std::vector<int> &reco_true_ID){
+   int cnt_gamma = 0;
+   if(pi0_gamma_ID.size() != 0){
+      for(std::string::size_type pos = 0; pos < pi0_gamma_ID.size(); pos++){
+         if(pos < reco_true_ID.size()){
+            for(std::string::size_type cnt = 0; cnt < reco_true_ID.size(); cnt++){
+               if(pi0_gamma_ID.at(pos) == reco_true_ID.at(cnt)) cnt_gamma++;
+            };
+         }
+      };
+   }
+   return cnt_gamma;
+};
+
 //Find properties (stored in vector) of a specific daughter particle, special for nucleus daughters
 template <class T>
 T daughter_property(int pdg, const std::vector<int> &pdg_vec, const T &daughter_property){
@@ -115,6 +129,42 @@ T daughter_property(int pdg, const std::vector<int> &pdg_vec, const T &daughter_
    return return_vec;
 };
 
+template <class S>
+S pi0_gamma_property (const std::vector<int> &pi0_gamma_ID, const std::vector<int> &reco_daugh_ID, const S &daughter_property){
+   S return_vec;
+   if(pi0_gamma_ID.size() != 0){
+
+      for(std::string::size_type pos = 0; pos < pi0_gamma_ID.size(); pos++){
+         if(pos < reco_daugh_ID.size()){
+            for(std::string::size_type cnt = 0; cnt < reco_daugh_ID.size(); cnt++){
+               if(pi0_gamma_ID.at(pos) == reco_daugh_ID.at(cnt) && cnt < daughter_property.size() ) return_vec.push_back(daughter_property.at(cnt));
+            };
+         }
+      };
+   }
+   return return_vec;
+};
+
+template <class B>
+B nuclear_gamma_property (const std::vector<int> &pi0_gamma_ID, const std::vector<int> &reco_daugh_PDG, const std::vector<int> &reco_daugh_ID, const B &daughter_property){
+   B return_vec;
+   if(pi0_gamma_ID.size() != 0){
+
+      for(std::string::size_type pos = 0; pos < pi0_gamma_ID.size(); pos++){
+         if(pos < reco_daugh_ID.size()){
+            for(std::string::size_type cnt = 0; cnt < reco_daugh_ID.size(); cnt++){
+               if(pi0_gamma_ID.at(pos) != reco_daugh_ID.at(cnt) && reco_daugh_PDG.at(cnt) == 22 && cnt < daughter_property.size()) return_vec.push_back(daughter_property.at(cnt));
+            };
+         }
+      };
+   }
+   else {
+      for(std::string::size_type cnt = 0; cnt < reco_daugh_PDG.size(); cnt++){
+         if(reco_daugh_PDG.at(cnt) == 22 && cnt < daughter_property.size()) return_vec.push_back(daughter_property.at(cnt));
+      };
+   }
+   return return_vec;
+};
 
 
 //Find properties of an event if one of the daughters is a specific particle
