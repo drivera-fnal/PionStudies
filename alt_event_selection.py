@@ -58,11 +58,15 @@ pion_Px = array("d", [0.]*50)
 pion_Py = array("d", [0.]*50)
 pion_Pz = array("d", [0.]*50)
 pion_len = array("d", [0.]*50)
+pion_end = array("i", [0]*50)
 missed_pion = array("i", [0]*50)
 missed_pion_track = array("i", [0]*50)
+pion_nReco = array("i", [0]*50)
 good_reco = array("i", [0])
 vertex_res = array("d", [0.])
 true_endZ = array("d", [0.])
+pi0_decay_nReco = array("i", [0]*50)
+missed_pi0_decay = array("i", [0]*50)
 
 #Abs = 1; Cex = 2
 AbsCex_type = array("i", [0])
@@ -87,8 +91,12 @@ outtree.Branch("pion_Px", pion_Px, "pion_Px[50]/D")
 outtree.Branch("pion_Py", pion_Py, "pion_Py[50]/D")
 outtree.Branch("pion_Pz", pion_Pz, "pion_Pz[50]/D")
 outtree.Branch("pion_len", pion_len, "pion_len[50]/D")
+outtree.Branch("pion_end", pion_end, "pion_end[50]/I")
 outtree.Branch("missed_pion", missed_pion, "missed_pion[50]/I")
 outtree.Branch("missed_pion_track", missed_pion_track, "missed_pion_track[50]/I")
+outtree.Branch("pion_nReco", pion_nReco, "pion_nReco[50]/I")
+outtree.Branch("pi0_decay_nReco", pi0_decay_nReco, "pi0_decay_nReco[50]/I")
+outtree.Branch("missed_pi0_decay", missed_pi0_decay, "missed_pi0_decay[50]/I")
 outtree.Branch("good_reco", good_reco, "good_reco/I")
 outtree.Branch("vertex_res", vertex_res, "vertex_res/D")
 outtree.Branch("true_endZ", true_endZ, "true_endZ/D")
@@ -138,13 +146,14 @@ for e in tree:
       if( (e.true_daughter_nPiPlus + e.true_daughter_nPiMinus) == 0 and e.true_daughter_nPi0 > 1 ): 
         multiple_pi0[0] = True
         true_signal[0] = True
-      else:
-        all_under_threshold = True 
-        for pdg, mom in zip([i for i in e.true_beam_daughter_PDG], [i for i in e.true_beam_daughter_startP]):
-          if abs(pdg) == 211 and mom > float(sys.argv[4]):
-            all_under_threshold = False
-        true_signal[0] = all_under_threshold
-           
+        AbsCex_type[0] = 3
+      #else:
+      #  all_under_threshold = True 
+      #  for pdg, mom in zip([i for i in e.true_beam_daughter_PDG], [i for i in e.true_beam_daughter_startP]):
+      #    if abs(pdg) == 211 and mom > float(sys.argv[4]):
+      #      all_under_threshold = False
+      #  true_signal[0] = all_under_threshold
+      #     
   elif vertex[0] == 2:
     n_el = n_el + 1
     true_signal[0] = False
@@ -199,8 +208,9 @@ for e in tree:
     #  else: 
         #print "Warning: no allTrack Track associated"
 
-    elif abs(e.reco_daughter_PFP_true_byHits_PDG[i]) == 211:
-      has_pion_shower[0] = True
+    else:
+      if abs(e.reco_daughter_PFP_true_byHits_PDG[i]) == 211:
+        has_pion_shower[0] = True
       
 
   missed_pion_daughter_PFP[0] = False
@@ -212,8 +222,12 @@ for e in tree:
     pion_Py[i] = 0.
     pion_Pz[i] = 0.
     pion_len[i] = 0.
+    pion_end[i] = -1
     missed_pion[i] = 0
     missed_pion_track[i] = 0
+    pion_nReco[i] = 0
+    pi0_decay_nReco[i] = -1
+    missed_pi0_decay[i] = 0 
 
   a = 0
   #print len([i for i in e.true_beam_daughter_IDs]), len([i for i in e.true_beam_daughter_PDGs]), len([i for i in e.true_beam_daughter_startP])
@@ -224,6 +238,18 @@ for e in tree:
       pion_Py[a] = e.true_beam_daughter_startPy[a]*1.e3
       pion_Pz[a] = e.true_beam_daughter_startPz[a]*1.e3
       pion_len[a] = e.true_beam_daughter_len[a]
+
+      if "Inelastic" in str( e.true_beam_daughter_endProcess[a]):
+        pion_end[a] = 0
+      elif "Decay" in str( e.true_beam_daughter_endProcess[a]):
+        pion_end[a] = 1
+      else: 
+        pion_end[a] = 2
+
+
+      reco_pfp_ids = [ i for i in e.true_beam_daughter_reco_byHits_PFP_ID[a] ]
+      pion_nReco[a] = len(reco_pfp_ids)
+
 
       if tID not in [i for i in e.reco_daughter_PFP_true_byHits_ID]: 
         missed_pion_daughter_PFP[0] = True
@@ -238,8 +264,19 @@ for e in tree:
             missed_pion_track[a] = 1
     a = a + 1      
 
+  a = 0
+  for tID, tPDG in zip([i for i in e.true_beam_Pi0_decay_ID],[i for i in e.true_beam_Pi0_decay_PDG]):
+    if abs(tPDG) == 22:
+      pi0_decay_nReco[a] = len([i for i in e.true_beam_Pi0_decay_reco_byHits_PFP_ID[a]])
+
+      if tID not in [i for i in e.reco_daughter_PFP_true_byHits_ID]:
+        missed_pi0_decay[a] = 1
+    a += 1
+
 
   if has_mip: signal_selection[0] = False
+  else:
+    1    
   new_signal_selection[0] = abs_cex(e, dR_cut = 999.)
 
   if true_signal[0] and signal_selection[0]: 
