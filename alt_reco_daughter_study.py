@@ -52,6 +52,8 @@ run = array("i", [0])
 beamTrackID = array("i", [0])
 daughterTrackID = array("i", [0])
 
+nHits = array("i", [0])
+
 is_track = array("i", [0])
 vertex_type = array("i", [0])
 
@@ -81,6 +83,8 @@ outtree.Branch("shower_dR", shower_dR, "shower_dR/D")
 outtree.Branch("is_track", is_track, "is_track/I")
 
 outtree.Branch("vertex_type", vertex_type, "vertex_type/I")
+
+outtree.Branch("nHits", nHits, "nHits/I")
 
 gROOT.SetBatch(1)
 
@@ -118,6 +122,9 @@ for e in tree:
 
     dR[0] = -1.
     shower_dR[0] = -1.
+
+    nHits[0] = e.reco_daughter_PFP_nHits[i]
+
     if( not e.reco_daughter_allTrack_ID[i] == -1 and e.reco_daughter_allTrack_Chi2_ndof[i] > 0):
       dR[0] = e.reco_daughter_allTrack_to_vertex[i]
       #daughter_slice[0] = e.reco_daughter_allTrack_slice[i]
@@ -216,6 +223,10 @@ shower_dR_hists = dict()
 slice_hists = dict()
 chi2_hists = dict()
 cnn_hists = dict()
+cnn_michel_hists = dict()
+
+track_nHits_hists = dict()
+shower_nHits_hists = dict()
 
 leg = TLegend(.6,.6,.85,.85)
 
@@ -259,12 +270,32 @@ for i in range(0, 5):
     cnn_hists[cat + str(i)] = gDirectory.Get("hCNN"+cat + str(i))
     cnn_hists[cat + str(i)].SetLineColor(colors[cat])
     cnn_hists[cat + str(i)].SetFillColor(colors[cat])
+
+    outtree.Draw( "cnn_michel>>hCNN_michel" + cat + str(i) + "(100,0,1)", chi2_cut  )
+    cnn_michel_hists[cat + str(i)] = gDirectory.Get("hCNN_michel"+cat + str(i))
+    cnn_michel_hists[cat + str(i)].SetLineColor(colors[cat])
+    cnn_michel_hists[cat + str(i)].SetFillColor(colors[cat])
+
+    outtree.Draw("nHits>>h_shower_nHits" + cat + str(i) + "(500,0,2000)", cuts[cat] + " && vertex_type == " + str(i) + " && cnn < .3")
+    shower_nHits_hists[cat + str(i)] = gDirectory.Get("h_shower_nHits"+cat + str(i))
+    shower_nHits_hists[cat + str(i)].SetLineColor(colors[cat])
+    shower_nHits_hists[cat + str(i)].SetFillColor(colors[cat])
+
+    outtree.Draw("nHits>>h_track_nHits" + cat + str(i) + "(100,0,2000)", cuts[cat] + " && vertex_type == " + str(i) + " && cnn > .3")
+    track_nHits_hists[cat + str(i)] = gDirectory.Get("h_track_nHits"+cat + str(i))
+    track_nHits_hists[cat + str(i)].SetLineColor(colors[cat])
+    track_nHits_hists[cat + str(i)].SetFillColor(colors[cat])
+
   
   dR_stack = THStack("dR_stack" + str(i), "")
   shower_dR_stack = THStack("shower_dR_stack" + str(i), "")
   slice_stack = THStack("slice_stack" + str(i), "")
   chi2_stack = THStack("chi2_stack" + str(i), "")
   cnn_stack = THStack("cnn_stack" + str(i), "") 
+  cnn_michel_stack = THStack("cnn_michel_stack" + str(i), "") 
+  shower_nHits_stack = THStack("shower_nHits_stack" + str(i), "")
+  track_nHits_stack  = THStack("track_nHits_stack" + str(i), "")
+
   for cat in cats:
     dR_stack.Add(dR_hists[cat + str(i)])
     if i == 0: 
@@ -273,14 +304,20 @@ for i in range(0, 5):
     slice_stack.Add(slice_hists[cat + str(i)])
     chi2_stack.Add(chi2_hists[cat + str(i)])
     cnn_stack.Add(cnn_hists[cat + str(i)])
+    cnn_michel_stack.Add(cnn_michel_hists[cat + str(i)])
     shower_dR_stack.Add(shower_dR_hists[cat + str(i)])
+    shower_nHits_stack.Add(shower_nHits_hists[cat + str(i)])
+    track_nHits_stack.Add(track_nHits_hists[cat + str(i)])
   
   dR_stack.SetTitle(";dR (cm);")
   dR_stack.Write("dR_stack" + str(i))
   shower_dR_stack.Write("shower_dR_stack" + str(i))
+  shower_nHits_stack.Write("shower_nHits_stack" + str(i))
+  track_nHits_stack.Write("track_nHits_stack" + str(i))
   slice_stack.Write("slice_stack" + str(i))
   chi2_stack.Write("chi2_stack" + str(i))
   cnn_stack.Write("cnn_stack" + str(i))
+  cnn_michel_stack.Write("cnn_michel_stack" + str(i))
 leg.Write("leg")
 
 fout.cd()

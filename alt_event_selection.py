@@ -70,6 +70,7 @@ missed_pi0_decay = array("i", [0]*50)
 
 #Abs = 1; Cex = 2
 AbsCex_type = array("i", [0])
+has_pi0_shower = array("i", [0])
 
 outtree.Branch("vertex", vertex, "vertex/I")
 outtree.Branch("event", event, "event/I")
@@ -79,6 +80,7 @@ outtree.Branch("multiple_pi0", multiple_pi0, "multiple_pi0/I")
 outtree.Branch("signal_selection", signal_selection, "signal_selection/I")
 outtree.Branch("new_signal_selection", new_signal_selection, "new_signal_selection/I")
 outtree.Branch("AbsCex_type", AbsCex_type, "AbsCex_type/I")
+outtree.Branch("has_pi0_shower", has_pi0_shower, "has_pi0_shower/I")
 outtree.Branch("has_pion_shower", has_pion_shower, "has_pion_shower/I")
 outtree.Branch("pi0_gamma_as_track", pi0_gamma_as_track, "pi0_gamma_as_track/I")
 outtree.Branch("cnn_skipped_pion", cnn_skipped_pion, "cnn_skipped_pion/I")
@@ -175,6 +177,7 @@ for e in tree:
   signal_selection[0] = True
   new_signal_selection[0] = True
   has_mip = False    
+  has_pi0_shower[0] = 0
   dR_skipped_pion[0] = False
   chi2_surv_pion[0] = False
   cnn_skipped_pion[0] = False
@@ -211,6 +214,23 @@ for e in tree:
     else:
       if abs(e.reco_daughter_PFP_true_byHits_PDG[i]) == 211:
         has_pion_shower[0] = True
+
+      if not e.reco_daughter_allShower_ID[i] == -1:
+        dX = e.reco_daughter_allShower_startX[i]
+        dY = e.reco_daughter_allShower_startY[i]
+        dZ = e.reco_daughter_allShower_startZ[i]
+  
+        bX = e.reco_beam_endX
+        bY = e.reco_beam_endY
+        bZ = e.reco_beam_endZ
+  
+        shower_dR = sqrt( (dX - bX)**2 + (dY - bY)**2 + (dZ - bZ)**2 )
+        if( e.reco_daughter_PFP_nHits[i] > 12 and e.reco_daughter_PFP_nHits[i] < 1000 and
+            shower_dR > 2 and shower_dR < 100 ):
+          has_pi0_shower[0] = 1
+
+        
+         
       
 
   missed_pion_daughter_PFP[0] = False

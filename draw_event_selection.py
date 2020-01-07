@@ -24,27 +24,45 @@ t.Draw("vertex>>hInelasticBG",     extra_cut + "vertex == 1 && !true_signal && !
 hInelasticSignal = gDirectory.Get("hInelasticSignal")
 hInelasticBG = gDirectory.Get("hInelasticBG")
 
+### Abs+Cex
 t.Draw("vertex>>hAbsCexSignal", extra_cut + "vertex == 1 && true_signal && signal_selection")
 t.Draw("vertex>>hAbsCexBG",     extra_cut + "vertex == 1 && true_signal && !signal_selection")
-
 hAbsCexSignal = gDirectory.Get("hAbsCexSignal")
 hAbsCexBG = gDirectory.Get("hAbsCexBG")
 
+### Separate
+t.Draw("vertex>>hAbsSignal", extra_cut + "vertex == 1 && true_signal && signal_selection && AbsCex_type == 1")
+t.Draw("vertex>>hAbsBG",     extra_cut + "vertex == 1 && true_signal && !signal_selection && AbsCex_type == 1")
+t.Draw("vertex>>hCexSignal", extra_cut + "vertex == 1 && true_signal && signal_selection && AbsCex_type == 2")
+t.Draw("vertex>>hCexBG",     extra_cut + "vertex == 1 && true_signal && !signal_selection && AbsCex_type == 2")
+hAbsSignal = gDirectory.Get("hAbsSignal")
+hAbsBG = gDirectory.Get("hAbsBG")
+hCexSignal = gDirectory.Get("hCexSignal")
+hCexBG = gDirectory.Get("hCexBG")
+
+hAbsSignal.SetLineColor(kCyan+1)
+hAbsSignal.SetFillColor(kCyan+1)
+hAbsBG.SetLineColor(kMagenta)
+hAbsBG.SetFillColor(kMagenta)
+
+hCexSignal.SetLineColor(kGreen+2)
+hCexSignal.SetFillColor(kGreen+2)
+hCexBG.SetLineColor(kOrange+10)
+hCexBG.SetFillColor(kOrange+10)
 
 hOtherSignal.SetLineColor(kBlue+1)
 hInelasticSignal.SetLineColor(kBlue+1)
 hOtherBG.SetLineColor(kRed+1)
 hInelasticBG.SetLineColor(kRed+1)
 
-hAbsCexSignal.SetLineColor(kCyan+1)
-hAbsCexBG.SetLineColor(kMagenta)
-
 hOtherSignal.SetFillColor(kBlue+1)
 hInelasticSignal.SetFillColor(kBlue+1)
 hOtherBG.SetFillColor(kRed+1)
 hInelasticBG.SetFillColor(kRed+1)
 
+hAbsCexSignal.SetLineColor(kCyan+1)
 hAbsCexSignal.SetFillColor(kCyan+1)
+hAbsCexBG.SetLineColor(kMagenta)
 hAbsCexBG.SetFillColor(kMagenta)
 
 
@@ -90,32 +108,158 @@ leg.Draw()
 c1.SaveAs("vertex_try.png")
 c1.SaveAs("vertex_try.pdf")
 
+## Abs, Cex Separate -- Same Plot
+leg = TLegend(.65, .65, .85, .85)
+leg.AddEntry( hAbsSignal, "Abs Selected", "lf")
+leg.AddEntry( hAbsBG, "Abs Rejected", "lf")
+leg.AddEntry( hCexSignal, "Cex Selected", "lf")
+leg.AddEntry( hCexBG, "Cex Rejected", "lf")
+leg.AddEntry( hOtherSignal, "BG Selected", "lf" )
+leg.AddEntry( hOtherBG, "BG Rejected", "lf" )
+
+vertex_stack = THStack("separate_stack", "")
+vertex_stack.Add(hOtherSignal)
+vertex_stack.Add(hOtherBG)
+vertex_stack.Add( hAbsSignal )
+vertex_stack.Add( hCexSignal )
+vertex_stack.Add( hInelasticSignal )
+
+vertex_stack.Add( hAbsBG )
+vertex_stack.Add( hCexBG )
+vertex_stack.Add( hInelasticBG )
 
 
-# This is to look at the inelastic vertex and to see how much of the errors come from pion daughters associated as showers  
-tree.Draw("vertex>>hShowerPion", extra_cut + "vertex == 1 && !true_signal && has_pion_shower && signal_selection" )
-tree.Draw("vertex>>hNoShowerPion", extra_cut + "vertex == 1 && !true_signal && !has_pion_shower && signal_selection" )
 
-hShowerPion = gDirectory.Get( "hShowerPion" )
-hShowerPion.SetFillColor(kOrange)
-hShowerPion.SetLineColor(kOrange)
+vertex_stack.Draw()
 
-hNoShowerPion = gDirectory.Get( "hNoShowerPion" )
-hNoShowerPion.SetFillColor(kGreen+2)
-hNoShowerPion.SetLineColor(kGreen+2)
+set_style( vertex_stack, "", "" )
+vertex_stack.GetXaxis().SetBinLabel(1, "Unmatched")
+vertex_stack.GetXaxis().SetBinLabel(2, "Inelastic")
+vertex_stack.GetXaxis().SetBinLabel(3, "Elastic")
+vertex_stack.GetXaxis().SetBinLabel(4, "Mixed")
 
-leg2 = TLegend(.65, .65, .85, .85)
-leg2.AddEntry( hNoShowerPion, "No #pi^{#pm} Shower", "lf" )
-leg2.AddEntry( hShowerPion, "#pi^{#pm} Shower", "lf" )
+vertex_stack.Draw()
+leg.Draw()
+c1.SaveAs("separate_try.png")
+c1.SaveAs("separate_try.pdf")
 
-shower_stack = THStack("shower_stack", "")
-shower_stack.Add( hShowerPion ) 
-shower_stack.Add( hNoShowerPion ) 
 
-shower_stack.Draw()
-set_style( shower_stack, "", "" )
-shower_stack.Draw()
-leg2.Draw()
-c1.SaveAs("shower_try.png")
-c1.SaveAs("shower_try.pdf")
+## Abs, Cex Separate -- Individual Plots
 
+t.Draw("vertex>>hAbsExcAbs", extra_cut + "vertex == 1 && true_signal && signal_selection && AbsCex_type == 1 && !has_pi0_shower")
+t.Draw("vertex>>hAbsExcCex", extra_cut + "vertex == 1 && true_signal && signal_selection && AbsCex_type == 1 && has_pi0_shower")
+
+t.Draw("vertex>>hCexExcAbs", extra_cut + "vertex == 1 && true_signal && signal_selection && AbsCex_type == 2 && !has_pi0_shower")
+t.Draw("vertex>>hCexExcCex", extra_cut + "vertex == 1 && true_signal && signal_selection && AbsCex_type == 2 && has_pi0_shower")
+hAbsExcAbs = gDirectory.Get("hAbsExcAbs")
+hAbsExcCex = gDirectory.Get("hAbsExcCex")
+hCexExcAbs = gDirectory.Get("hCexExcAbs")
+hCexExcCex = gDirectory.Get("hCexExcCex")
+
+t.Draw("vertex>>hOtherExcAbs", extra_cut + "vertex != 1 && signal_selection && !has_pi0_shower")
+t.Draw("vertex>>hOtherExcCex", extra_cut + "vertex != 1 && signal_selection && has_pi0_shower")
+
+hOtherExcAbs = gDirectory.Get("hOtherExcAbs")
+hOtherExcCex = gDirectory.Get("hOtherExcCex")
+
+t.Draw("vertex>>hInelasticExcAbs", extra_cut + "vertex == 1 && !true_signal && signal_selection && !has_pi0_shower")
+t.Draw("vertex>>hInelasticExcCex", extra_cut + "vertex == 1 && !true_signal && signal_selection && has_pi0_shower")
+
+hInelasticExcAbs = gDirectory.Get("hInelasticExcAbs")
+hInelasticExcCex = gDirectory.Get("hInelasticExcCex")
+
+hInelasticExcAbs.SetLineColor(kBlue+1)
+hInelasticExcAbs.SetFillColor(kBlue+1)
+hInelasticExcCex.SetLineColor(kBlue+1)
+hInelasticExcCex.SetFillColor(kBlue+1)
+
+hOtherExcAbs.SetLineColor(kBlue+1)
+hOtherExcAbs.SetFillColor(kBlue+1)
+hOtherExcCex.SetLineColor(kBlue+1)
+hOtherExcCex.SetFillColor(kBlue+1)
+
+
+#### First: Abs is signal
+hAbsExcAbs.SetLineColor(kCyan+1)
+hAbsExcAbs.SetFillColor(kCyan+1)
+
+hAbsExcCex.SetLineColor(kOrange+10)
+hAbsExcCex.SetFillColor(kOrange+10)
+hAbsBG.SetLineColor(kMagenta)
+hAbsBG.SetFillColor(kMagenta)
+
+hCexExcAbs.SetLineColor(kGreen+2)
+hCexExcAbs.SetFillColor(kGreen+2)
+
+
+leg = TLegend(.65, .65, .85, .85)
+leg.AddEntry( hAbsExcAbs, "Abs Selected", "lf")
+leg.AddEntry( hCexExcAbs, "Cex Selected", "lf")
+leg.AddEntry( hOtherExcAbs, "BG Selected", "lf" )
+leg.AddEntry( hAbsExcAbs, "Abs As Cex", "lf")
+leg.AddEntry( hAbsBG, "Abs Rejected", "lf")
+
+vertex_stack = THStack("exc_abs_stack", "")
+vertex_stack.Add( hOtherExcAbs )
+vertex_stack.Add( hAbsExcAbs )
+vertex_stack.Add( hCexExcAbs )
+vertex_stack.Add( hInelasticExcAbs )
+
+vertex_stack.Add( hAbsExcCex )
+vertex_stack.Add( hAbsBG )
+
+vertex_stack.Draw()
+
+set_style( vertex_stack, "", "" )
+vertex_stack.GetXaxis().SetBinLabel(1, "Unmatched")
+vertex_stack.GetXaxis().SetBinLabel(2, "Inelastic")
+vertex_stack.GetXaxis().SetBinLabel(3, "Elastic")
+vertex_stack.GetXaxis().SetBinLabel(4, "Mixed")
+
+vertex_stack.Draw()
+leg.Draw()
+c1.SaveAs("abs_try.png")
+c1.SaveAs("abs_try.pdf")
+
+
+#### Next: Cex is signal
+hCexExcCex.SetLineColor(kCyan+1)
+hCexExcCex.SetFillColor(kCyan+1)
+
+hCexExcAbs.SetLineColor(kOrange+10)
+hCexExcAbs.SetFillColor(kOrange+10)
+hCexBG.SetLineColor(kMagenta)
+hCexBG.SetFillColor(kMagenta)
+
+hAbsExcCex.SetLineColor(kGreen+2)
+hAbsExcCex.SetFillColor(kGreen+2)
+
+
+leg = TLegend(.65, .65, .85, .85)
+leg.AddEntry( hCexExcCex, "Cex Selected", "lf")
+leg.AddEntry( hAbsExcCex, "Abs Selected", "lf")
+leg.AddEntry( hOtherExcCex, "BG Selected", "lf" )
+leg.AddEntry( hCexExcAbs, "Cex As Abs", "lf")
+leg.AddEntry( hCexBG, "Cex Rejected", "lf")
+
+vertex_stack = THStack("exc_abs_stack", "")
+vertex_stack.Add( hOtherExcCex )
+vertex_stack.Add( hCexExcCex )
+vertex_stack.Add( hAbsExcCex )
+vertex_stack.Add( hInelasticExcCex )
+
+vertex_stack.Add( hCexExcAbs )
+vertex_stack.Add( hCexBG )
+
+vertex_stack.Draw()
+
+set_style( vertex_stack, "", "" )
+vertex_stack.GetXaxis().SetBinLabel(1, "Unmatched")
+vertex_stack.GetXaxis().SetBinLabel(2, "Inelastic")
+vertex_stack.GetXaxis().SetBinLabel(3, "Elastic")
+vertex_stack.GetXaxis().SetBinLabel(4, "Mixed")
+
+vertex_stack.Draw()
+leg.Draw()
+c1.SaveAs("cex_try.png")
+c1.SaveAs("cex_try.pdf")
