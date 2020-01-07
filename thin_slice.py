@@ -6,6 +6,7 @@ from math import sqrt
 from vertex_type import vertex_type as vt
 from defcuts import *
 from is_cosmic import is_cosmic
+from check_event_selection import abs_cex
 
 f = TFile(sys.argv[1])
 t = f.Get("pionana/beamana")
@@ -28,6 +29,7 @@ bNCalos      = array("i", [0])
 bIncident    = array("d", [0.]*500)
 bInteracting = array("i", [0]*500)
 bEndInteract = array("i", [0])
+bSignalSelection = array("i", [0])
 
 bSingleIncident = array("d", [0.])
 bSingleInteracting = array("i", [0])
@@ -68,6 +70,8 @@ masses = {
 def check_PDGs_data(pdgs, branch):
   return bool( set(pdgs) & set([i for i in branch]) )
 
+nDiff = 0
+nSame = 0
 for e in t:
 
   if do_data:
@@ -82,12 +86,20 @@ for e in t:
   if not do_data: bPDG[0] = e.true_beam_PDG
   bEndZ[0] = e.reco_beam_endZ
 
+  bSignalSelection[0] = abs_cex(e, dR_cut = 999.)
+
   wires = [i for i in e.reco_beam_calo_wire]
   dEdXs = [i for i in e.reco_beam_calibrated_dEdX]
   xs    = [i for i in e.reco_beam_TrkPitch]
 
+  
   if not ( len( wires ) == len(dEdXs) and len( xs ) == len(wires) ): 
+    print "diff", len(wires), len(dEdXs), len(xs)
+    nDiff += 1
     continue
+  elif len(wires) > 0:
+    nSame += 1
+
   if len(wires) == 0: 
     continue
 
@@ -203,6 +215,9 @@ for e in t:
   bTrueDeltaE[0] = true_delta_E
   bInitE[0] = init_E
   outtree.Fill()
+
+print "Same:", nSame
+print "Diff:", nDiff
 
 outfile.cd()
 hInteracting.Write()
