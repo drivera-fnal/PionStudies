@@ -173,4 +173,21 @@ def ang_pos_test_cut(e, coslow=.93, xlow=-4., xhigh=4., ylow=-7., yhigh=8., zlow
 
   return 1
 
+def data_ang_pos_test_cut(e, coslow=.93, xlow=-4., xhigh=4., ylow=-7., yhigh=8., zlow=30., zhigh=35.):
+  
+  if (e.data_BI_nMomenta != 1 or e.data_BI_nTracks != 1 ): return 0
+
+  if (e.data_BI_dirX*e.reco_beam_trackDirX + e.data_BI_dirY*e.reco_beam_trackDirY + e.data_BI_dirZ*e.reco_beam_trackDirZ < coslow): return 0
+
+  if ( (e.reco_beam_startX - e.data_BI_X ) < xlow ): return 0
+
+  if ( (e.reco_beam_startX - e.data_BI_X ) > xhigh ): return 0
+
+  if ( (e.reco_beam_startY - e.data_BI_Y ) < ylow ): return 0
+
+  if ( (e.reco_beam_startY - e.data_BI_Y ) > yhigh ): return 0
+
+  if( e.reco_beam_startZ < zlow or e.reco_beam_startZ > zhigh ): return 0
+
+  return 1
 

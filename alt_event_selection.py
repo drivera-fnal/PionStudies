@@ -3,7 +3,7 @@ import sys
 from array import array
 from vertex_type import vertex_type as vt
 from math import sqrt
-from defcuts import ang_pos_test_cut
+from defcuts import ang_pos_test_cut, data_ang_pos_test_cut
 from check_event_selection import abs_cex
 
 gROOT.SetBatch(1)
@@ -118,9 +118,15 @@ n_el = 0
 n_mixed = 0
 
 for e in tree:
-  if not ( e.reco_beam_true_byE_matched and e.true_beam_PDG == 211 and e.reco_beam_type == 13 ): continue
+  if( e.MC ):
+    if not ( e.reco_beam_true_byE_matched and e.true_beam_PDG == 211 and e.reco_beam_type == 13 ): continue
+  else:
+    if not ( e.reco_beam_type == 13 and (211 in [i for i in e.data_BI_PDG_candidates]) ): continue
 
-  if not ang_pos_test_cut( e, xlow=-3, xhigh=0., ylow=-1., yhigh=2., zlow=28., zhigh=32. ): continue
+  if( e.MC ):
+    if not ang_pos_test_cut( e, xlow=-3, xhigh=0., ylow=-1., yhigh=2., zlow=28., zhigh=32. ): continue
+  else:
+    if not data_ang_pos_test_cut(e): continue 
   #if not e.passes_beam_cuts: continue
 
   if e.reco_beam_endZ > 229.: continue
@@ -128,7 +134,7 @@ for e in tree:
   good_reco[0] = test_good_reco(e)
 
   #Determine if this is our true signal 
-  vertex[0] = vt(e, float(sys.argv[3]))
+  if( e.MC ): vertex[0] = vt(e, float(sys.argv[3]))
   
   event[0] = e.event
   run[0] = e.run
@@ -200,19 +206,20 @@ for e in tree:
         #  #continue
 
         chi2 = e.reco_daughter_allTrack_Chi2_proton[i] / e.reco_daughter_allTrack_Chi2_ndof[i]
-        if e.reco_daughter_PFP_true_byHits_PDG[i] == 22 and e.reco_daughter_PFP_true_byHits_ID[i] in [j for j in e.true_beam_Pi0_decay_ID]:
-          pi0_gamma_as_track[0] = True
+        if( e.MC ):
+          if e.reco_daughter_PFP_true_byHits_PDG[i] == 22 and e.reco_daughter_PFP_true_byHits_ID[i] in [j for j in e.true_beam_Pi0_decay_ID]:
+            pi0_gamma_as_track[0] = True
 
         if chi2 > 50.:
           has_mip = True
-        elif abs(e.reco_daughter_PFP_true_byHits_PDG[i]) == 211:
+        elif(e.MC and abs(e.reco_daughter_PFP_true_byHits_PDG[i]) == 211):
           chi2_surv_pion[0] = True
 
     #  else: 
         #print "Warning: no allTrack Track associated"
 
     else:
-      if abs(e.reco_daughter_PFP_true_byHits_PDG[i]) == 211:
+      if( e.MC and abs(e.reco_daughter_PFP_true_byHits_PDG[i]) == 211):
         has_pion_shower[0] = True
 
       if not e.reco_daughter_allShower_ID[i] == -1:
@@ -232,66 +239,66 @@ for e in tree:
         
          
       
+  if e.MC:
+    missed_pion_daughter_PFP[0] = False
+    missed_pion_daughter_track[0] = False
+    for i in range(0, len(missed_pion_P)): 
+      missed_pion_P[i] = 0.
+      pion_P[i] = 0.
+      pion_Px[i] = 0.
+      pion_Py[i] = 0.
+      pion_Pz[i] = 0.
+      pion_len[i] = 0.
+      pion_end[i] = -1
+      missed_pion[i] = 0
+      missed_pion_track[i] = 0
+      pion_nReco[i] = 0
+      pi0_decay_nReco[i] = -1
+      missed_pi0_decay[i] = 0 
 
-  missed_pion_daughter_PFP[0] = False
-  missed_pion_daughter_track[0] = False
-  for i in range(0, len(missed_pion_P)): 
-    missed_pion_P[i] = 0.
-    pion_P[i] = 0.
-    pion_Px[i] = 0.
-    pion_Py[i] = 0.
-    pion_Pz[i] = 0.
-    pion_len[i] = 0.
-    pion_end[i] = -1
-    missed_pion[i] = 0
-    missed_pion_track[i] = 0
-    pion_nReco[i] = 0
-    pi0_decay_nReco[i] = -1
-    missed_pi0_decay[i] = 0 
+    a = 0
+    #print len([i for i in e.true_beam_daughter_IDs]), len([i for i in e.true_beam_daughter_PDGs]), len([i for i in e.true_beam_daughter_startP])
+    for tID, tPDG in zip([i for i in e.true_beam_daughter_ID],[i for i in e.true_beam_daughter_PDG]):
+      if abs(tPDG) == 211:
+        pion_P[a] = e.true_beam_daughter_startP[a]*1.e3
+        pion_Px[a] = e.true_beam_daughter_startPx[a]*1.e3
+        pion_Py[a] = e.true_beam_daughter_startPy[a]*1.e3
+        pion_Pz[a] = e.true_beam_daughter_startPz[a]*1.e3
+        pion_len[a] = e.true_beam_daughter_len[a]
 
-  a = 0
-  #print len([i for i in e.true_beam_daughter_IDs]), len([i for i in e.true_beam_daughter_PDGs]), len([i for i in e.true_beam_daughter_startP])
-  for tID, tPDG in zip([i for i in e.true_beam_daughter_ID],[i for i in e.true_beam_daughter_PDG]):
-    if abs(tPDG) == 211:
-      pion_P[a] = e.true_beam_daughter_startP[a]*1.e3
-      pion_Px[a] = e.true_beam_daughter_startPx[a]*1.e3
-      pion_Py[a] = e.true_beam_daughter_startPy[a]*1.e3
-      pion_Pz[a] = e.true_beam_daughter_startPz[a]*1.e3
-      pion_len[a] = e.true_beam_daughter_len[a]
-
-      if "Inelastic" in str( e.true_beam_daughter_endProcess[a]):
-        pion_end[a] = 0
-      elif "Decay" in str( e.true_beam_daughter_endProcess[a]):
-        pion_end[a] = 1
-      else: 
-        pion_end[a] = 2
-
-
-      reco_pfp_ids = [ i for i in e.true_beam_daughter_reco_byHits_PFP_ID[a] ]
-      pion_nReco[a] = len(reco_pfp_ids)
+        if "Inelastic" in str( e.true_beam_daughter_endProcess[a]):
+          pion_end[a] = 0
+        elif "Decay" in str( e.true_beam_daughter_endProcess[a]):
+          pion_end[a] = 1
+        else: 
+          pion_end[a] = 2
 
 
-      if tID not in [i for i in e.reco_daughter_PFP_true_byHits_ID]: 
-        missed_pion_daughter_PFP[0] = True
-        missed_pion_P[a] = 1.e3*e.true_beam_daughter_startP[a]
-        missed_pion[a] = 1
-        missed_pion_track[a] = 1
-        #print missed_pion_P[a]
-      else:
-        for pfp_truthID,trackID in zip([i for i in e.reco_daughter_PFP_true_byHits_ID],[i for i in e.reco_daughter_allTrack_ID]): 
-          if pfp_truthID == tID and trackID == -1:
-            missed_pion_daughter_track[0] = True
-            missed_pion_track[a] = 1
-    a = a + 1      
+        reco_pfp_ids = [ i for i in e.true_beam_daughter_reco_byHits_PFP_ID[a] ]
+        pion_nReco[a] = len(reco_pfp_ids)
 
-  a = 0
-  for tID, tPDG in zip([i for i in e.true_beam_Pi0_decay_ID],[i for i in e.true_beam_Pi0_decay_PDG]):
-    if abs(tPDG) == 22:
-      pi0_decay_nReco[a] = len([i for i in e.true_beam_Pi0_decay_reco_byHits_PFP_ID[a]])
 
-      if tID not in [i for i in e.reco_daughter_PFP_true_byHits_ID]:
-        missed_pi0_decay[a] = 1
-    a += 1
+        if tID not in [i for i in e.reco_daughter_PFP_true_byHits_ID]: 
+          missed_pion_daughter_PFP[0] = True
+          missed_pion_P[a] = 1.e3*e.true_beam_daughter_startP[a]
+          missed_pion[a] = 1
+          missed_pion_track[a] = 1
+          #print missed_pion_P[a]
+        else:
+          for pfp_truthID,trackID in zip([i for i in e.reco_daughter_PFP_true_byHits_ID],[i for i in e.reco_daughter_allTrack_ID]): 
+            if pfp_truthID == tID and trackID == -1:
+              missed_pion_daughter_track[0] = True
+              missed_pion_track[a] = 1
+      a = a + 1      
+
+      a = 0
+      for tID, tPDG in zip([i for i in e.true_beam_Pi0_decay_ID],[i for i in e.true_beam_Pi0_decay_PDG]):
+        if abs(tPDG) == 22:
+          pi0_decay_nReco[a] = len([i for i in e.true_beam_Pi0_decay_reco_byHits_PFP_ID[a]])
+
+          if tID not in [i for i in e.reco_daughter_PFP_true_byHits_ID]:
+            missed_pi0_decay[a] = 1
+        a += 1
 
 
   if has_mip: signal_selection[0] = False
@@ -311,8 +318,9 @@ for e in tree:
     n_bg_as_bg = n_bg_as_bg + 1
 
 
-  vertex_res[0] = sqrt( (e.reco_beam_endZ - e.true_beam_endZ)**2 + (e.reco_beam_endX - e.true_beam_endX)**2 + (e.reco_beam_endY - e.true_beam_endY)**2 )
-  true_endZ[0] = e.true_beam_endZ
+  if(e.MC): 
+    vertex_res[0] = sqrt( (e.reco_beam_endZ - e.true_beam_endZ)**2 + (e.reco_beam_endX - e.true_beam_endX)**2 + (e.reco_beam_endY - e.true_beam_endY)**2 )
+    true_endZ[0] = e.true_beam_endZ
   outtree.Fill()
 
 print "Signal:", nTrueSignal, n_signal_as_signal, n_signal_as_bg
@@ -320,7 +328,8 @@ print "BG:", nTrueBG, n_bg_as_signal, n_bg_as_bg
 
 if nTrueSignal > 0:
   print "Efficiency:", float( n_signal_as_signal ) / float( nTrueSignal )
-print "Purity:", float( n_signal_as_signal ) / float( n_signal_as_signal + n_bg_as_signal )
+if( n_signal_as_signal + n_bg_as_signal > 0):
+  print "Purity:", float( n_signal_as_signal ) / float( n_signal_as_signal + n_bg_as_signal )
 
 print "Mixed vt:", n_mixed
 print "Other vt:", n_other
