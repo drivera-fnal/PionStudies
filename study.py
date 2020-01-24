@@ -1,6 +1,6 @@
 from ROOT import * 
 import sys
-from defcuts import defcuts, testcuts, testcuts_FS, ang_pos_test_cut
+from defcuts import defcuts, testcuts, testcuts_FS, ang_pos_test_cut, ang_cut_str, pos_cut_str
 from array import array
 
 
@@ -22,6 +22,8 @@ endZhists = dict()
 startZhists = dict()
 startXhists = dict()
 startYhists = dict()
+deltaXhists = dict()
+deltaYhists = dict()
 
 names = [
   "PrimaryPion",
@@ -73,6 +75,13 @@ for name in names:
   tree.Draw( "reco_beam_startZ>>startZ"+name+"(40,0.,100.)", cut  + base_cut )
   startZhists[name] = gDirectory.Get("startZ"+name)
 
+  tree.Draw( "reco_beam_startX - (true_beam_startX + -1.*true_beam_startZ*(true_beam_startDirX/true_beam_startDirZ))>>deltaX"+name+"(50,-100.,100.)", cut  + base_cut )
+  deltaXhists[name] = gDirectory.Get("deltaX"+name)
+
+  tree.Draw( "reco_beam_startY - (true_beam_startY + -1.*true_beam_startZ*(true_beam_startDirY/true_beam_startDirZ))>>deltaY"+name+"(50,-100.,100.)", cut  + base_cut )
+  deltaYhists[name] = gDirectory.Get("deltaY"+name)
+
+
   fout.cd()
   #lenhists[name].Write()
   #print
@@ -110,6 +119,8 @@ endZstack = THStack("endZstack","")
 startXstack = THStack("startXstack","")
 startYstack = THStack("startYstack","")
 startZstack = THStack("startZstack","")
+deltaXstack = THStack("deltaXstack","")
+deltaYstack = THStack("deltaYstack","")
 for name in names:
 
 
@@ -139,6 +150,18 @@ for name in names:
   startZstack.Add(startZhist)
   leg.AddEntry( startZhist, name, "f")
 
+  deltaXhist = deltaXhists[name]
+  deltaXhist.SetFillColor(colors[name]) 
+  deltaXhist.SetLineColor(colors[name]) 
+  deltaXstack.Add(deltaXhist)
+
+  deltaYhist = deltaYhists[name]
+  deltaYhist.SetFillColor(colors[name]) 
+  deltaYhist.SetLineColor(colors[name]) 
+  deltaYstack.Add(deltaYhist)
+
+
+
 leg.Write("leg")
 
 lenstack.Write()
@@ -146,6 +169,8 @@ endZstack.Write()
 startZstack.Write()
 startYstack.Write()
 startXstack.Write()
+deltaYstack.Write()
+deltaXstack.Write()
 
 
 
@@ -153,9 +178,10 @@ startXstack.Write()
 
 
 colors = {
-  "PrimaryPionDecay": (kTeal+3),
-  "PrimaryPionFastScint": (kRed-4),
-  "PrimaryPionInteract": (kBlue-4),
+  #"PrimaryPionDecay": (kTeal+3),
+  #"PrimaryPionFastScint": (kRed-4),
+  #"PrimaryPionInteract": (kBlue-4),
+  "PrimaryPion": (kBlue-4),
   "PrimaryMuon": (kOrange+1),
   #"PrimaryProton": (kTeal+2),
   #"PrimaryElectron": (kViolet-7),
@@ -178,9 +204,10 @@ colors = {
 
 leg = TLegend(.6,.6,.85,.85)
 names = [
-  "PrimaryPionDecay",
-  "PrimaryPionFastScint",
-  "PrimaryPionInteract",
+  #"PrimaryPionDecay",
+  #"PrimaryPionFastScint",
+  #"PrimaryPionInteract",
+  "PrimaryPion",
   "PrimaryMuon",
   #"PrimaryProton",
   #"PrimaryElectron",
@@ -202,9 +229,10 @@ names = [
 ]
 
 titles = [
-  "Primary #pi^{+} Decay",
-  "Primary #pi^{+} Decay at Rest",
-  "Primary #pi^{+} Interacting",
+  #"Primary #pi^{+} Decay",
+  #"Primary #pi^{+} Decay at Rest",
+  #"Primary #pi^{+} Interacting",
+  "Primary #pi^{+}",
   "Primary #mu",
   #"PrimaryProton",
   #"PrimaryElectron",
@@ -242,7 +270,7 @@ for name in names:
   #lenhists[name].Write()
   print
 
-  tree.Draw( "reco_beam_reco_beam_truth_End_P>>endP_"+name+"(40,0.,1.2)", cut  + base_cut)
+  tree.Draw( "reco_beam_true_byHits_endP>>endP_"+name+"(40,0.,1.2)", cut  + base_cut)
   endP_hists[name] = gDirectory.Get("endP_"+name)
   #endP_hists[name].Write()
 
@@ -255,9 +283,6 @@ for name in names:
 
 
 endP_stack.Write()
-
-endP_total_signal = endP_hists["PrimaryPionInteract"].Clone("endP_total_signal")
-endP_total_signal.Sumw2()
 
 leg = TLegend(.6,.6,.85,.85)
 lenstack = THStack("lenstack_FS","")
@@ -288,7 +313,7 @@ for name in names:
   cut = cuts[name]
   print name, cut
 
-  tree.Draw( "true_beam_endZ:endZ>>reco_beam_endZ"+name+"(40,0.,500.,40,0.,500.)", cut  + base_cut, "colz" )
+  tree.Draw( "true_beam_endZ:reco_beam_endZ>>reco_beam_endZ"+name+"(40,0.,500.,40,0.,500.)", cut  + base_cut, "colz" )
   endhists[name] = gDirectory.Get("endZ"+name)
   fout.cd()
   #endhists[name].Write()
@@ -324,31 +349,33 @@ zstack.Write()
 
 
 ### Defining angular and position cuts ###
-ang_cut = " && (true_beam_Start_DirX*trackDirX + true_beam_Start_DirY*trackDirY + true_beam_Start_DirZ*trackDirZ > .93)"
+#ang_cut = " && (true_beam_Start_DirX*trackDirX + true_beam_Start_DirY*trackDirY + true_beam_Start_DirZ*trackDirZ > .93)"
+#
+#pos_cut = " && ( (true_beam_Start_X + -1.*true_beam_Start_Z*(true_beam_Start_DirX/true_beam_Start_DirZ) - startX) > -4. )"
+#pos_cut = pos_cut + " && ( (true_beam_Start_X + -1.*true_beam_Start_Z*(true_beam_Start_DirX/true_beam_Start_DirZ) - startX) < 4. )"
+#pos_cut = pos_cut + " && ( (true_beam_Start_Y + -1.*true_beam_Start_Z*(true_beam_Start_DirY/true_beam_Start_DirZ) - startY) > -7. )"
+#pos_cut = pos_cut + " && ( (true_beam_Start_Y + -1.*true_beam_Start_Z*(true_beam_Start_DirY/true_beam_Start_DirZ) - startY) < 8. )"
+#pos_cut = pos_cut + " && ( startZ > 16. && startZ < 20.)"
 
-pos_cut = " && ( (true_beam_Start_X + -1.*true_beam_Start_Z*(true_beam_Start_DirX/true_beam_Start_DirZ) - startX) > -4. )"
-pos_cut = pos_cut + " && ( (true_beam_Start_X + -1.*true_beam_Start_Z*(true_beam_Start_DirX/true_beam_Start_DirZ) - startX) < 4. )"
-pos_cut = pos_cut + " && ( (true_beam_Start_Y + -1.*true_beam_Start_Z*(true_beam_Start_DirY/true_beam_Start_DirZ) - startY) > -7. )"
-pos_cut = pos_cut + " && ( (true_beam_Start_Y + -1.*true_beam_Start_Z*(true_beam_Start_DirY/true_beam_Start_DirZ) - startY) < 8. )"
-pos_cut = pos_cut + " && ( startZ > 16. && startZ < 20.)"
+ang_cut = ang_cut_str()
+pos_cut = pos_cut_str()
 ##########################################
 
-'''
-def ang_pos_test_cut(e):
-  if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
 
-  if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) < -4. ): return 0
-
-  if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) > 4. ): return 0
-
-  if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) < -7. ): return 0
-
-  if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) > 8. ): return 0
-
-  if( e.startZ < 16. or e.startZ > 20. ): return 0
-
-  return 1
-'''
+#def ang_pos_test_cut(e):
+#  if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
+#
+#  if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) < -4. ): return 0
+#
+#  if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) > 4. ): return 0
+#
+#  if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) < -7. ): return 0
+#
+#  if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) > 8. ): return 0
+#
+#  if( e.startZ < 16. or e.startZ > 20. ): return 0
+#
+#  return 1
 
 
 
@@ -375,7 +402,7 @@ for name in names:
   lenhists[name].SetLineColor(colors[name]) 
   lenstack.Add(lenhists[name])
 
-  tree.Draw( "reco_beam_true_byE_endP>>endP_ang_pos_cut_"+name+"(40,0.,1.2)", cut  + base_cut + ang_cut + pos_cut)
+  tree.Draw( "reco_beam_true_byHits_endP>>endP_ang_pos_cut_"+name+"(40,0.,1.2)", cut  + base_cut + ang_cut + pos_cut)
   endP_hists[name] = gDirectory.Get("endP_ang_pos_cut_"+name)
   #endP_hists[name].Write()
 
@@ -388,11 +415,11 @@ for name in names:
 lenstack.Write()
 endP_stack.Write()
 
-endP_first_cut_signal = endP_hists["PrimaryPionInteract"].Clone("first_cut_signal")
-endP_first_cut_signal.Sumw2()
-endP_first_cut_signal.SetFillColor(0)
-endP_first_cut_signal.Divide(endP_total_signal)
-endP_first_cut_signal.Write("endP_first_cut_efficiency")
+#endP_first_cut_signal = endP_hists["PrimaryPionInteract"].Clone("first_cut_signal")
+#endP_first_cut_signal.Sumw2()
+#endP_first_cut_signal.SetFillColor(0)
+#endP_first_cut_signal.Divide(endP_total_signal)
+#endP_first_cut_signal.Write("endP_first_cut_efficiency")
 ###################################################
 
 
@@ -409,22 +436,22 @@ lenstack = THStack("lenstack_ang_pos_len","")
 endP_hists = dict()
 endP_stack = THStack("endPstack_ang_pos_len","")
 
-len_cut = " && len < 250."
+endZ_cut = " && reco_beam_endZ < 226."
 
 for name in names:
   cut = cuts[name]
   print name, cut
 
-  tree.Draw( "reco_beam_len>>len_ang_pos_len_cut_"+name+"(40,0.,500.)", cut  + base_cut + ang_cut + pos_cut + len_cut)
-  lenhists[name] = gDirectory.Get("len_ang_pos_len_cut_"+name)
+  tree.Draw( "reco_beam_len>>len_ang_pos_endZ_cut_"+name+"(40,0.,500.)", cut  + base_cut + ang_cut + pos_cut + endZ_cut)
+  lenhists[name] = gDirectory.Get("len_ang_pos_endZ_cut_"+name)
   #lenhists[name].Write()
 
   lenhists[name].SetFillColor(colors[name]) 
   lenhists[name].SetLineColor(colors[name]) 
   lenstack.Add(lenhists[name])
 
-  tree.Draw( "reco_beam_true_byE_endP>>endP_ang_pos_len_cut_"+name+"(40,0.,1.2)", cut  + base_cut + ang_cut + pos_cut + len_cut)
-  endP_hists[name] = gDirectory.Get("endP_ang_pos_len_cut_"+name)
+  tree.Draw( "reco_beam_true_byHits_endP>>endP_ang_pos_endZ_cut_"+name+"(40,0.,1.2)", cut  + base_cut + ang_cut + pos_cut + endZ_cut)
+  endP_hists[name] = gDirectory.Get("endP_ang_pos_endZ_cut_"+name)
   #endP_hists[name].Write()
 
   endP_hists[name].SetFillColor(colors[name]) 
@@ -436,14 +463,14 @@ for name in names:
 lenstack.Write()
 endP_stack.Write()
 
-endP_second_cut_signal = endP_hists["PrimaryPionInteract"].Clone("second_cut_signal")
-endP_second_cut_signal.Sumw2()
-endP_second_cut_signal.SetFillColor(0)
-endP_second_cut_signal.Divide(endP_total_signal)
-endP_second_cut_signal.Write("endP_second_cut_efficiency")
+#endP_second_cut_signal = endP_hists["PrimaryPionInteract"].Clone("second_cut_signal")
+#endP_second_cut_signal.Sumw2()
+#endP_second_cut_signal.SetFillColor(0)
+#endP_second_cut_signal.Divide(endP_total_signal)
+#endP_second_cut_signal.Write("endP_second_cut_efficiency")
 ###########################
 
-
+exit()
 
 
 ## Now with dedx cuts ###
@@ -498,60 +525,60 @@ endP_stack.Write()
 ###########################
 
 ### ###
-fourth_cut_dir = fout.mkdir( "fourth_cut_dir", "Cuts include start position and angular cuts and track length cut and dedx cut")
-fourth_cut_dir.cd()
-
-lenhists = dict()
-lenstack = THStack("lenstack_ang_pos_dedx_len","")
-
-endP_hists = dict()
-endP_stack = THStack("endPstack_ang_pos_dedx_len","")
-
-for name in names:
-  print name
-
-  lenhists[name] = TH1D("len_ang_pos_dedx_len_cut_"+name, "", 40, 0., 500.)
-  lenhists[name].SetFillColor(colors[name]) 
-  lenhists[name].SetLineColor(colors[name]) 
-
-  endP_hists[name] = TH1D("endP_ang_pos_dedx_len_cut_"+name, "", 40, 0., 1.2)
-  endP_hists[name].SetFillColor(colors[name]) 
-  endP_hists[name].SetLineColor(colors[name]) 
-
-  print
-
-for e in tree:
-
-  if len([i for i in e.reco_beam_dEdX]) < 1: continue
-  if not ang_pos_test_cut(e): continue
-  if e.reco_beam_len > 250.: continue
-
-  total_dedx = sum( [i for i in e.reco_beam_dEdX] )
-  avg_dedx =  total_dedx /  len( [i for i in e.reco_beam_dEdX] ) 
-  len_avg_dedx = total_dedx / e.reco_beam_len 
-
-  if( avg_dedx > 5. ): continue
-
-  cut = testcuts_FS(e)
-  if cut == "bad" or cut == "PrimaryElectron" or cut == "PrimaryProton" or cut == "NeutronInel" or cut == "ProtonInel" or cut == "Other": continue
-
-  lenhists[cut].Fill( e.reco_beam_len )
-  endP_hists[cut].Fill( e.reco_beam_true_byE_endP )
-
-for name in names:
-  lenstack.Add( lenhists[name] )
-  endP_stack.Add( endP_hists[name] )
-
-  #lenhists[name].Write()
-  #endP_hists[name].Write()
-
-lenstack.Write()
-endP_stack.Write()
-
-endP_fourth_cut_signal = endP_hists["PrimaryPionInteract"].Clone("fourth_cut_signal")
-endP_fourth_cut_signal.Sumw2()
-endP_fourth_cut_signal.SetFillColor(0)
-endP_fourth_cut_signal.Divide(endP_total_signal)
-endP_fourth_cut_signal.Write("endP_fourth_cut_efficiency")
-###########################
+#fourth_cut_dir = fout.mkdir( "fourth_cut_dir", "Cuts include start position and angular cuts and track length cut and dedx cut")
+#fourth_cut_dir.cd()
+#
+#lenhists = dict()
+#lenstack = THStack("lenstack_ang_pos_dedx_len","")
+#
+#endP_hists = dict()
+#endP_stack = THStack("endPstack_ang_pos_dedx_len","")
+#
+#for name in names:
+#  print name
+#
+#  lenhists[name] = TH1D("len_ang_pos_dedx_endZ_cut_"+name, "", 40, 0., 500.)
+#  lenhists[name].SetFillColor(colors[name]) 
+#  lenhists[name].SetLineColor(colors[name]) 
+#
+#  endP_hists[name] = TH1D("endP_ang_pos_dedx_endZ_cut_"+name, "", 40, 0., 1.2)
+#  endP_hists[name].SetFillColor(colors[name]) 
+#  endP_hists[name].SetLineColor(colors[name]) 
+#
+#  print
+#
+#for e in tree:
+#
+#  if len([i for i in e.reco_beam_dEdX]) < 1: continue
+#  if not ang_pos_test_cut(e): continue
+#  if e.reco_beam_len > 250.: continue
+#
+#  total_dedx = sum( [i for i in e.reco_beam_dEdX] )
+#  avg_dedx =  total_dedx /  len( [i for i in e.reco_beam_dEdX] ) 
+#  len_avg_dedx = total_dedx / e.reco_beam_len 
+#
+#  if( avg_dedx > 5. ): continue
+#
+#  cut = testcuts_FS(e)
+#  if cut == "bad" or cut == "PrimaryElectron" or cut == "PrimaryProton" or cut == "NeutronInel" or cut == "ProtonInel" or cut == "Other": continue
+#
+#  lenhists[cut].Fill( e.reco_beam_len )
+#  endP_hists[cut].Fill( e.reco_beam_true_byE_endP )
+#
+#for name in names:
+#  lenstack.Add( lenhists[name] )
+#  endP_stack.Add( endP_hists[name] )
+#
+#  #lenhists[name].Write()
+#  #endP_hists[name].Write()
+#
+#lenstack.Write()
+#endP_stack.Write()
+#
+#endP_fourth_cut_signal = endP_hists["PrimaryPionInteract"].Clone("fourth_cut_signal")
+#endP_fourth_cut_signal.Sumw2()
+#endP_fourth_cut_signal.SetFillColor(0)
+#endP_fourth_cut_signal.Divide(endP_total_signal)
+#endP_fourth_cut_signal.Write("endP_fourth_cut_efficiency")
+############################
 

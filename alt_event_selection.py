@@ -1,28 +1,29 @@
 from ROOT import *
-import sys
 from array import array
 from vertex_type import vertex_type as vt
 from math import sqrt
 from defcuts import ang_pos_test_cut, data_ang_pos_test_cut
 from check_event_selection import abs_cex
+from argparse import ArgumentParser as ap
 
 gROOT.SetBatch(1)
 
-'''
-def ang_pos_test_cut(e):
-  if (e.true_beam_Start_DirX*e.trackDirX + e.true_beam_Start_DirY*e.trackDirY + e.true_beam_Start_DirZ*e.trackDirZ < .93): return 0
+parser = ap()
 
-  if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) < -3. ): return 0
+parser.add_argument( "-i", type=str, help='Input file' )
+parser.add_argument( "-o", type=str, help='Output file' )
+parser.add_argument( "-v", type=float, help='Value for vertex', default=5. )
+parser.add_argument( "-c", type=float, help='CNN score for cut', default=.35 )
+parser.add_argument( "-x", type=float, help='Value for chi2', default=50.)
+parser.add_argument( "--dR", type=float, help='dR for cut', default=10. )
+parser.add_argument( "--showerLow", type=float, help='shower dR for cut', default=2. )
+parser.add_argument( "--showerHigh", type=float, help='shower dR for cut', default=100. )
+parser.add_argument( "--showerHitsLow", type=int, help='shower hits for cut', default=12 )
+parser.add_argument( "--showerHitsHigh", type=int, help='shower hits for cut', default=1000 )
 
-  if ( (e.true_beam_Start_X + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirX/e.true_beam_Start_DirZ) - e.startX) > 0. ): return 0
 
-  if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) < -1. ): return 0
+args = parser.parse_args()
 
-  if ( (e.true_beam_Start_Y + -1.*e.true_beam_Start_Z*(e.true_beam_Start_DirY/e.true_beam_Start_DirZ) - e.startY) > 2. ): return 0
-
-  if( e.startZ < 28. or e.startZ > 32. ): return 0
-  return 1
-'''
 
 
 def test_good_reco(e):
@@ -31,10 +32,11 @@ def test_good_reco(e):
 
   return 1
 
-f = TFile( sys.argv[1], "OPEN" )
+
+f = TFile( args.i, "OPEN" )
 tree = f.Get("pionana/beamana")
 
-fout = TFile( sys.argv[2], "RECREATE" )
+fout = TFile( args.o, "RECREATE" )
 outtree = TTree("tree","")
 
 
@@ -106,35 +108,53 @@ outtree.Branch("true_endZ", true_endZ, "true_endZ/D")
 nTrueSignal = 0
 nTrueBG = 0
 
-n_signal_as_bg = 0
-n_signal_as_signal = 0
-n_bg_as_bg = 0
-n_bg_as_signal = 0
-
 n_other = 0
 n_inel = 0
 n_un = 0
 n_el = 0
 n_mixed = 0
 
+n_mu_pi_incident = 0
+n_track_like = 0
+n_pass_beam_cuts = 0
+n_end_in_APA3 = 0
+n_selected_abscex = 0
+n_selected_cex = 0
+n_selected_abs = 0
+
 for e in tree:
   if( e.MC ):
-    if not ( e.reco_beam_true_byE_matched and e.true_beam_PDG == 211 and e.reco_beam_type == 13 ): continue
+    #if not ( e.reco_beam_true_byE_matched and e.true_beam_PDG == 211 and e.reco_beam_type == 13 ): continue
+    if not (e.true_beam_PDG in [211, -13, 13]):
+      continue
+    else: n_mu_pi_incident += 1
+
+    if e.reco_beam_type != 13 : continue
+    else: n_track_like += 1
   else:
-    if not ( e.reco_beam_type == 13 and (211 in [i for i in e.data_BI_PDG_candidates]) ): continue
+    if not (211 in [i for i in e.data_BI_PDG_candidates]): continue
+    else: n_mu_pi_incident += 1
+
+    if e.reco_beam_type != 13: continue
+    else: n_track_like += 1
 
   if( e.MC ):
-    if not ang_pos_test_cut( e, xlow=-3, xhigh=0., ylow=-1., yhigh=2., zlow=28., zhigh=32. ): continue
+    if not ang_pos_test_cut( e ): continue
+    else: n_pass_beam_cuts += 1
   else:
     if not data_ang_pos_test_cut(e): continue 
+    else: n_pass_beam_cuts += 1
   #if not e.passes_beam_cuts: continue
 
-  if e.reco_beam_endZ > 229.: continue
+  if e.reco_beam_endZ > 226.: continue
+  n_end_in_APA3 += 1
 
   good_reco[0] = test_good_reco(e)
 
   #Determine if this is our true signal 
-  if( e.MC ): vertex[0] = vt(e, float(sys.argv[3]))
+  if( e.MC ): 
+    vertex[0] = vt(e, args.v)
+    #vertex[0] = vt(e, float(sys.argv[3]))
   
   event[0] = e.event
   run[0] = e.run
@@ -195,22 +215,45 @@ for e in tree:
   for i in range( 0, len(pfp_ids) ):
 
     #check if the PFP daughter looks shower like or track like
-    if e.reco_daughter_PFP_trackScore[i] > .3:
+    if e.reco_daughter_PFP_trackScore[i] > args.c:
       #treat it like a track
       
       #'Forced' reco 
       if( e.reco_daughter_allTrack_ID[i] != -1 ):
 
+        
+        start_dX = e.reco_daughter_allTrack_startX[i]
+        start_dY = e.reco_daughter_allTrack_startY[i]
+        start_dZ = e.reco_daughter_allTrack_startZ[i]
+        end_dX = e.reco_daughter_allTrack_endX[i]
+        end_dY = e.reco_daughter_allTrack_endY[i]
+        end_dZ = e.reco_daughter_allTrack_endZ[i]
+
+        bX = e.reco_beam_endX
+        bY = e.reco_beam_endY
+        bZ = e.reco_beam_endZ
+
+
+        start_dR = sqrt( (start_dZ - bZ)**2 + (start_dX - bX)**2 + (start_dY - bY)**2 )
+        end_dR = sqrt( (end_dZ - bZ)**2 + (end_dX - bX)**2 + (end_dY - bY)**2 )
+
+        if start_dR < end_dR: 
+          if start_dR > args.dR: continue
+        else: 
+          if end_dR > args.dR: continue
+
         #if e.reco_daughter_allTrack_to_vertex[i] > .6: 
-        #  if abs( e.reco_daughter_PFP_true_byHits_PDG[i] ) == 211: dR_skipped_pion[0] = True
-        #  #continue
+          #if abs( e.reco_daughter_PFP_true_byHits_PDG[i] ) == 211: dR_skipped_pion[0] = True
+          #continue
 
         chi2 = e.reco_daughter_allTrack_Chi2_proton[i] / e.reco_daughter_allTrack_Chi2_ndof[i]
+        #chi2 = do_chi2( e, i, the_profile)
         if( e.MC ):
           if e.reco_daughter_PFP_true_byHits_PDG[i] == 22 and e.reco_daughter_PFP_true_byHits_ID[i] in [j for j in e.true_beam_Pi0_decay_ID]:
             pi0_gamma_as_track[0] = True
 
-        if chi2 > 50.:
+        #if chi2 > 50.:
+        if chi2 > args.x:
           has_mip = True
         elif(e.MC and abs(e.reco_daughter_PFP_true_byHits_PDG[i]) == 211):
           chi2_surv_pion[0] = True
@@ -222,7 +265,7 @@ for e in tree:
       if( e.MC and abs(e.reco_daughter_PFP_true_byHits_PDG[i]) == 211):
         has_pion_shower[0] = True
 
-      if not e.reco_daughter_allShower_ID[i] == -1:
+      if e.reco_daughter_allShower_ID[i] != -1:
         dX = e.reco_daughter_allShower_startX[i]
         dY = e.reco_daughter_allShower_startY[i]
         dZ = e.reco_daughter_allShower_startZ[i]
@@ -232,8 +275,8 @@ for e in tree:
         bZ = e.reco_beam_endZ
   
         shower_dR = sqrt( (dX - bX)**2 + (dY - bY)**2 + (dZ - bZ)**2 )
-        if( e.reco_daughter_PFP_nHits[i] > 12 and e.reco_daughter_PFP_nHits[i] < 1000 and
-            shower_dR > 2 and shower_dR < 100 ):
+        if( e.reco_daughter_PFP_nHits[i] > args.showerHitsLow and e.reco_daughter_PFP_nHits[i] < args.showerHitsHigh and
+            shower_dR > args.showerLow and shower_dR < args.showerHigh ):
           has_pi0_shower[0] = 1
 
         
@@ -244,7 +287,7 @@ for e in tree:
     missed_pion_daughter_track[0] = False
     for i in range(0, len(missed_pion_P)): 
       missed_pion_P[i] = 0.
-      pion_P[i] = 0.
+      #pion_P[i] = 0.
       pion_Px[i] = 0.
       pion_Py[i] = 0.
       pion_Pz[i] = 0.
@@ -260,7 +303,7 @@ for e in tree:
     #print len([i for i in e.true_beam_daughter_IDs]), len([i for i in e.true_beam_daughter_PDGs]), len([i for i in e.true_beam_daughter_startP])
     for tID, tPDG in zip([i for i in e.true_beam_daughter_ID],[i for i in e.true_beam_daughter_PDG]):
       if abs(tPDG) == 211:
-        pion_P[a] = e.true_beam_daughter_startP[a]*1.e3
+        #pion_P[a] = e.true_beam_daughter_startP[a]*1.e3
         pion_Px[a] = e.true_beam_daughter_startPx[a]*1.e3
         pion_Py[a] = e.true_beam_daughter_startPy[a]*1.e3
         pion_Pz[a] = e.true_beam_daughter_startPz[a]*1.e3
@@ -303,19 +346,10 @@ for e in tree:
 
   if has_mip: signal_selection[0] = False
   else:
-    1    
+    n_selected_abscex += 1    
+    if has_pi0_shower[0]: n_selected_cex += 1      
+    else: n_selected_abs += 1
   new_signal_selection[0] = abs_cex(e, dR_cut = 999.)
-
-  if true_signal[0] and signal_selection[0]: 
-    n_signal_as_signal = n_signal_as_signal + 1
-
-  elif true_signal[0] and not signal_selection[0]: 
-    n_signal_as_bg = n_signal_as_bg + 1
-
-  elif not true_signal[0] and signal_selection[0]: 
-    n_bg_as_signal = n_bg_as_signal + 1
-  elif not true_signal[0] and not signal_selection[0]: 
-    n_bg_as_bg = n_bg_as_bg + 1
 
 
   if(e.MC): 
@@ -323,13 +357,15 @@ for e in tree:
     true_endZ[0] = e.true_beam_endZ
   outtree.Fill()
 
-print "Signal:", nTrueSignal, n_signal_as_signal, n_signal_as_bg
-print "BG:", nTrueBG, n_bg_as_signal, n_bg_as_bg
 
-if nTrueSignal > 0:
-  print "Efficiency:", float( n_signal_as_signal ) / float( nTrueSignal )
-if( n_signal_as_signal + n_bg_as_signal > 0):
-  print "Purity:", float( n_signal_as_signal ) / float( n_signal_as_signal + n_bg_as_signal )
+print "Incident pi/mu\t\t", n_mu_pi_incident
+print "Track-like\t\t", n_track_like
+print "Pass beam cuts\t\t", n_pass_beam_cuts
+print "End in APA3\t\t", n_end_in_APA3
+print "Selected Abs Cex\t\t", n_selected_abscex
+print "Selected Cex\t\t", n_selected_cex
+print "Selected Abs\t\t", n_selected_abs
+
 
 print "Mixed vt:", n_mixed
 print "Other vt:", n_other

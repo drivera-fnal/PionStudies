@@ -20,3 +20,11 @@ def set_eff_style(hist, xtitle, ytitle, rebin=True):
     hist.Scale(.5)
   hist.SetMaximum(1.)
   hist.SetMinimum(0.)
+
+
+def markers(hist, color=1):
+  hist.SetMarkerStyle(20)
+  hist.SetMarkerSize(.5)
+  hist.SetMarkerColor(color)
+  hist.SetLineColor(color)
+
