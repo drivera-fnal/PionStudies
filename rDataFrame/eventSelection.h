@@ -46,12 +46,12 @@ double data_xlow = 0., data_xhigh = 10., data_ylow= -5., data_yhigh= 10., data_z
 
 //Tag PrimaryPion without elastic Scattering
 //
-auto tagPrimPionInel= [](int true_beam_PDG, std::string true_beam_endProcess, int true_beam_nElasticScatters)
+auto tagPrimPionInel= [](int true_beam_PDG, std::string true_beam_endProcess)
 {
 
    std::string pionInel("pi+Inelastic");
 
-   if(true_beam_PDG == 211 && compString(true_beam_endProcess, pionInel) == 1 && true_beam_nElasticScatters == 0) return 1;
+   if(true_beam_PDG == 211 && compString(true_beam_endProcess, pionInel) == 1) return 1;
 
    else return 0;
 
@@ -121,21 +121,23 @@ auto manual_beamPos_mc = [](double beam_startX, double beam_startY, double beam_
 
    if( beam_startX - (true_startX + -1*true_startZ*(true_dirX/true_dirZ) ) < xlow ) return manual_beam_pass = false;
    
-   else if ( beam_startX - (true_startX + -1*true_startZ*(true_dirX/true_dirZ) ) > xhigh ) return manual_beam_pass = false;
+   if ( beam_startX - (true_startX + -1*true_startZ*(true_dirX/true_dirZ) ) > xhigh ) return manual_beam_pass = false;
 
-   else if ( beam_startY - (true_startY + -1*true_startZ*(true_dirY/true_dirZ) ) < ylow ) return manual_beam_pass = false;
+   if ( beam_startY - (true_startY + -1*true_startZ*(true_dirY/true_dirZ) ) < ylow ) return manual_beam_pass = false;
 
-   else if ( beam_startY - (true_startY + -1*true_startZ*(true_dirY/true_dirZ)) > yhigh ) return manual_beam_pass = false;
+   if ( beam_startY - (true_startY + -1*true_startZ*(true_dirY/true_dirZ)) > yhigh ) return manual_beam_pass = false;
    
-   else if (beam_startZ < zlow || zhigh < beam_startZ) return manual_beam_pass = false;
+   if (beam_startZ < zlow || zhigh < beam_startZ) return manual_beam_pass = false;
    
-   else if ((true_dirX*beam_dirX + true_dirY*beam_dirY + true_dirZ*beam_dirZ) < 0.93) return manual_beam_pass = false;
+   if ((true_dirX*beam_dirX + true_dirY*beam_dirY + true_dirZ*beam_dirZ) < coslow) return manual_beam_pass = false;
 
    return manual_beam_pass = true;
 
 };
 
-auto data_beam_PID = [](const std::vector<int>& pidCandidates, int searchPDG=211){
+auto data_beam_PID = [](const std::vector<int>& pidCandidates){
+   int searchPDG=211;
+
   for(size_t i = 0; i < pidCandidates.size(); ++i ){
     if( pidCandidates[i] == searchPDG )
       return true;
@@ -143,19 +145,35 @@ auto data_beam_PID = [](const std::vector<int>& pidCandidates, int searchPDG=211
   return false;
 };
 
-auto manual_beamPos_data = [](double data_startX, double data_startY, double data_startZ, double data_dirX, double data_dirY, double data_dirZ, double data_BI_X, double data_BI_Y, double data_BI_dirX, double data_BI_dirY, double data_BI_dirZ,int data_BI_nMomenta,int data_BI_nTracks){
+auto manual_beamPos_data = [](int event, double data_startX, double data_startY, double data_startZ, double data_dirX, double data_dirY, double data_dirZ, double data_BI_X, double data_BI_Y, double data_BI_dirX, double data_BI_dirY, double data_BI_dirZ,int data_BI_nMomenta,int data_BI_nTracks){
 
    bool manual_data_pass = false;
 
-   if(data_BI_nMomenta != 1 || data_BI_nTracks != 1) return manual_data_pass = false;
+   if(data_BI_nMomenta != 1 || data_BI_nTracks != 1) {
+       //std::cout<< std::endl;
+       //std::cout<< event << " " <<  data_BI_nMomenta << " " << data_BI_nTracks << std::endl;
+      return manual_data_pass = false;}
 
-   else if( ((data_startX - data_BI_X) < data_xlow) || ((data_startX - data_BI_X) > data_xhigh) ) return manual_data_pass = false;
 
-   else if ( ((data_startY - data_BI_Y) < data_ylow) || ((data_startY - data_BI_Y) > data_yhigh) ) return manual_data_pass = false;
+   if( ((data_startX - data_BI_X) < data_xlow) || ((data_startX - data_BI_X) > data_xhigh) ) {
 
-   else if ((data_startZ < data_zlow) ||  (data_startZ > zhigh)) return manual_data_pass = false;
+       //std::cout<< "X "<< (data_startX - data_BI_X) << " " <<  (data_startX - data_BI_X) << std::endl;
+      return manual_data_pass = false;}
 
-   else if ((data_BI_dirX*data_dirX + data_BI_dirY*data_dirY + data_BI_dirZ*data_dirZ) < 0.93) return manual_data_pass = false;
+   if ( ((data_startY - data_BI_Y) < data_ylow) || ((data_startY - data_BI_Y) > data_yhigh) ){ 
+
+       //std::cout<< "Y "<< (data_startY - data_BI_Y) << " " <<  (data_startY - data_BI_Y) << std::endl;
+      return manual_data_pass = false;}
+
+   if ((data_startZ < data_zlow) ||  (data_startZ > data_zhigh)) {
+
+       //std::cout<< "Z "<< data_startZ  << " " <<  data_startZ << std::endl;
+      return manual_data_pass = false;}
+
+   if ((data_BI_dirX*data_dirX + data_BI_dirY*data_dirY + data_BI_dirZ*data_dirZ) < data_coslow) {
+
+       //std::cout<< "cos " << data_BI_dirX*data_dirX + data_BI_dirY*data_dirY + data_BI_dirZ*data_dirZ << std::endl;
+      return manual_data_pass = false;}
 
    return manual_data_pass = true;
 

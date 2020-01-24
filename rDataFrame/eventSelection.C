@@ -61,7 +61,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
 
       .Define("good_reco", good_reco, {"quality_reco_view_0_wire_backtrack", "quality_reco_view_1_wire_backtrack", 
             "quality_reco_view_2_wire_backtrack", "quality_reco_view_0_max_segment", "quality_reco_view_1_max_segment", "quality_reco_view_2_max_segment"})
-      .Define("true_primPionInel", tagPrimPionInel, {"true_beam_PDG", "true_beam_endProcess", "true_beam_nElasticScatters"})
+      .Define("true_primPionInel", tagPrimPionInel, {"true_beam_PDG", "true_beam_endProcess"})
       .Define("true_primPionInel_withElastic", tagPrimPionInel_withElastic, {"true_beam_PDG", "true_beam_endProcess", "true_beam_nElasticScatters"})
       //Filter for true primary Pion and Beam Muon
       .Filter("true_beam_PDG == 211 || true_beam_PDG == -13")
@@ -76,7 +76,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
    //prepare Branches for all the cuts with 1 or 0 if they pass the cut. This will allow for easy filtering and counting once cuts are applied.
    //all the cuts are in the eventSelection.h file
    //
-   auto mc_all_cutValues = mc_all
+   auto mc_all_cutValues = mc_all//.Range(0,200)
       .Define("primary_ends_inAPA3", endAPA3,{ "reco_beam_endZ"})
       .Define("primary_isBeamType", isBeamType, {"reco_beam_type"})
       //beam cuts somehow
@@ -114,14 +114,16 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
 
    // DATA
 
-   auto data_all_cutValues = data_frame
+   auto data_all_cutValues = data_frame//.Range(0,200)
       .Define("beamPID",data_beam_PID, {"data_BI_PDG_candidates"} )
+      .Filter("beamPID == true")
       .Define("primary_ends_inAPA3", endAPA3,{ "reco_beam_endZ"})
       .Define("primary_isBeamType", isBeamType, {"reco_beam_type"})
       //beam cuts
-      .Define("manual_passBeamCut", manual_beamPos_data, {"reco_beam_startX", "reco_beam_startY", 
+      .Define("manual_passBeamCut", manual_beamPos_data, {"event","reco_beam_startX", "reco_beam_startY", 
             "reco_beam_startZ", "reco_beam_trackDirX", "reco_beam_trackDirY", "reco_beam_trackDirZ","data_BI_X", 
             "data_BI_Y", "data_BI_dirX", "data_BI_dirY", "data_BI_dirZ", "data_BI_nMomenta", "data_BI_nTracks"})
+
       .Define("daughter_distance3D", compute_distanceVertex, { "reco_beam_endX", "reco_beam_endY", "reco_beam_endZ", 
             "reco_daughter_allTrack_startX","reco_daughter_allTrack_startY", 
             "reco_daughter_allTrack_startZ", "reco_daughter_allTrack_endX", 
@@ -153,7 +155,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
 
 
    //Count MC True Events
-   auto n_true_primPionInel = mc_all.Filter("true_primPionInel == 1").Count();
+   auto n_true_primPionInel = mc_all.Filter("true_primPionInel == 1 ").Count();
    auto n_true_primPionInel_withElastic = mc_all.Filter("true_primPionInel_withElastic == 1").Count();
 
    auto n_true_combinedSignal = mc_all.Filter("true_primPionInel == 1 && true_combinedSignal == 1").Count();
@@ -260,12 +262,12 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
    auto N_dataSIGNAL_abs = dataSIGNAL_abs.Count();
 
    //************** CUT Flow Histogram ************//
-   TH1I *h_mc_total = new TH1I("mc_total", "MC selected", 6 , 0., 6.);
-   TH1I *h_data_total = new TH1I("data_total", "Data selected", 6 , 0., 6.);
-   TH1I *h_true_abs = new TH1I("true_abs", "True Abs Signal", 6 , 0., 6.);
-   TH1I *h_true_cex = new TH1I("true_cex", "True Cex Signal", 6 , 0., 6.);
-   TH1I *h_true_nPi0 = new TH1I("true_nPi0", "True N-Pi0 Signal", 6 , 0., 6.);
-   TH1I *h_true_BG = new TH1I("true_BG", "Background", 6 , 0., 6.);
+   TH1I *h_mc_total = new TH1I("mc_total", "MC selected", 7 , 0., 7.);
+   TH1I *h_data_total = new TH1I("data_total", "Data selected", 7 , 0., 7.);
+   TH1I *h_true_abs = new TH1I("true_abs", "True Abs Signal", 7 , 0., 7.);
+   TH1I *h_true_cex = new TH1I("true_cex", "True Cex Signal", 7 , 0., 7.);
+   TH1I *h_true_nPi0 = new TH1I("true_nPi0", "True N-Pi0 Signal", 7 , 0., 7.);
+   TH1I *h_true_BG = new TH1I("true_BG", "Background", 7 , 0., 7.);
 
    h_mc_total->SetBinContent(1 , *n_mc_all );
    h_data_total->SetBinContent(1, *n_data_all );
@@ -299,21 +301,30 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
    h_true_BG->SetBinContent(4, h_mc_total->GetBinContent(4) - 
          ( h_true_abs->GetBinContent(4) + h_true_cex->GetBinContent(4) + h_true_nPi0->GetBinContent(4)) );
 
-   h_mc_total->SetBinContent(5 , *N_mcSIGNAL_cex );
-   h_data_total->SetBinContent(5, *N_dataSIGNAL_cex);
-   h_true_abs->SetBinContent(5, *mcSIGNAL_cex.Filter("true_absSignal == 1").Count() );
-   h_true_cex->SetBinContent(5, *mcSIGNAL_cex.Filter("true_chexSignal == 1").Count() );
-   h_true_nPi0->SetBinContent(5, *mcSIGNAL_cex.Filter("true_daughter_nPi0 > 1").Count() );
+   h_mc_total->SetBinContent(5 , *N_mcCUT_noPionDaughter );
+   h_data_total->SetBinContent(5, *N_dataCUT_noPionDaughter);
+   h_true_abs->SetBinContent(5, *mcCUT_noPionDaughter.Filter("true_absSignal == 1").Count() );
+   h_true_cex->SetBinContent(5, *mcCUT_noPionDaughter.Filter("true_chexSignal == 1").Count() );
+   h_true_nPi0->SetBinContent(5, *mcCUT_noPionDaughter.Filter("true_daughter_nPi0 > 1").Count() );
    h_true_BG->SetBinContent(5, h_mc_total->GetBinContent(5) - 
          ( h_true_abs->GetBinContent(5) + h_true_cex->GetBinContent(5) + h_true_nPi0->GetBinContent(5)) );
 
-   h_mc_total->SetBinContent(6 , *N_mcSIGNAL_abs );
-   h_data_total->SetBinContent(6, *N_dataSIGNAL_abs);
-   h_true_abs->SetBinContent(6, *mcSIGNAL_abs.Filter("true_absSignal == 1").Count() );
-   h_true_cex->SetBinContent(6, *mcSIGNAL_abs.Filter("true_chexSignal == 1").Count() );
-   h_true_nPi0->SetBinContent(6, *mcSIGNAL_abs.Filter("true_daughter_nPi0 > 1").Count() );
+
+   h_mc_total->SetBinContent(6 , *N_mcSIGNAL_cex );
+   h_data_total->SetBinContent(6, *N_dataSIGNAL_cex);
+   h_true_abs->SetBinContent(6, *mcSIGNAL_cex.Filter("true_absSignal == 1").Count() );
+   h_true_cex->SetBinContent(6, *mcSIGNAL_cex.Filter("true_chexSignal == 1").Count() );
+   h_true_nPi0->SetBinContent(6, *mcSIGNAL_cex.Filter("true_daughter_nPi0 > 1").Count() );
    h_true_BG->SetBinContent(6, h_mc_total->GetBinContent(6) - 
-         ( h_true_abs->GetBinContent(6) + h_true_abs->GetBinContent(6) + h_true_nPi0->GetBinContent(6)) );
+         ( h_true_abs->GetBinContent(6) + h_true_cex->GetBinContent(6) + h_true_nPi0->GetBinContent(6)) );
+
+   h_mc_total->SetBinContent(7 , *N_mcSIGNAL_abs );
+   h_data_total->SetBinContent(7, *N_dataSIGNAL_abs);
+   h_true_abs->SetBinContent(7, *mcSIGNAL_abs.Filter("true_absSignal == 1").Count() );
+   h_true_cex->SetBinContent(7, *mcSIGNAL_abs.Filter("true_chexSignal == 1").Count() );
+   h_true_nPi0->SetBinContent(7, *mcSIGNAL_abs.Filter("true_daughter_nPi0 > 1").Count() );
+   h_true_BG->SetBinContent(7, h_mc_total->GetBinContent(7) - 
+         ( h_true_abs->GetBinContent(7) + h_true_abs->GetBinContent(7) + h_true_nPi0->GetBinContent(7)) );
 
 
    h_mc_total->SetFillColor(kBlue - 9);
@@ -321,6 +332,8 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
    h_true_cex->SetFillColor(kMagenta);
    h_true_nPi0->SetFillColor(kTeal);
    h_true_BG->SetFillColor(kBlue);
+   h_true_BG->SetLineColor(kBlack);
+
     
    stack_cutFlow->Add(h_true_BG);
    stack_cutFlow->Add(h_true_abs);
@@ -340,6 +353,8 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
 
    auto c1 = new TCanvas("Event Selection Flow", "",1600,1200);
    stack_cutFlow->Draw();
+   //stack_cutFlow->GetHistogram()->SetLineColor(1);
+   //stack_cutFlow->Draw("same");
    h_data_total->Draw("PSAME");
    c1->BuildLegend();
 
