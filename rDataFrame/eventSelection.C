@@ -30,13 +30,14 @@ using namespace ROOT::VecOps;
 //***********************
 //Main Function
 
-int eventSelection(const string path = inputFile){
+int eventSelection(const string path = inputFile, const string dataFile = "../../../pionAnalyzerTree/pionana_5387_1GeV_1_16_20.root" ){
 
 
    //will need to be able to add different files dat vs MC
    //maybe chain?
    ROOT::RDataFrame frame(inputTree, path);
-   ROOT::RDataFrame data_frame(inputTree, "../../../pionAnalyzerTree/pionana_5387_1GeV_1_16_20.root");
+   //ROOT::RDataFrame data_frame(inputTree, );
+   ROOT::RDataFrame data_frame(inputTree, dataFile);
 
    TFile *output = new TFile ("output_eventSelection.root", "RECREATE");
    THStack *stack_cutFlow = new THStack("cutFlow", "Cut Flow MC and Data");
@@ -114,6 +115,7 @@ int eventSelection(const string path = inputFile){
    // DATA
 
    auto data_all_cutValues = data_frame
+      .Define("beamPID",data_beam_PID, {"data_BI_PDG_candidates"} )
       .Define("primary_ends_inAPA3", endAPA3,{ "reco_beam_endZ"})
       .Define("primary_isBeamType", isBeamType, {"reco_beam_type"})
       //beam cuts

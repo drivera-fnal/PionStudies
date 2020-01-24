@@ -135,6 +135,14 @@ auto manual_beamPos_mc = [](double beam_startX, double beam_startY, double beam_
 
 };
 
+auto data_beam_PID = [](const std::vector<int>& pidCandidates, int searchPDG=211){
+  for(size_t i = 0; i < pidCandidates.size(); ++i ){
+    if( pidCandidates[i] == searchPDG )
+      return true;
+  }
+  return false;
+};
+
 auto manual_beamPos_data = [](double data_startX, double data_startY, double data_startZ, double data_dirX, double data_dirY, double data_dirZ, double data_BI_X, double data_BI_Y, double data_BI_dirX, double data_BI_dirY, double data_BI_dirZ,int data_BI_nMomenta,int data_BI_nTracks){
 
    bool manual_data_pass = false;
