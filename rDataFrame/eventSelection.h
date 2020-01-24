@@ -70,9 +70,9 @@ auto tagPrimPionInel_withElastic = [](int true_beam_PDG, std::string true_beam_e
 
 
 //True Charge Exchange + Absorption Signal, has no piPlus or piMinus as daughters
-auto tagAbsChEx = [](int tagPrimPi, const int true_daughter_nPiPlus, const int true_daughter_nPiMinus,const int true_daughter_nPi0)
+auto tagAbsChEx = [](int tagPrimPi, const int true_daughter_nPiPlus, const int true_daughter_nPiMinus)
 {
-   if(tagPrimPi == 1 && true_daughter_nPiPlus + true_daughter_nPiMinus == 0 && true_daughter_nPi0 < 2) return 1;
+   if(tagPrimPi == 1 && true_daughter_nPiPlus + true_daughter_nPiMinus == 0) return 1;
 
    else return 0;
 
@@ -90,6 +90,13 @@ auto tagChEx = [](int tagAbsChEx, int true_daughter_nPi0) {
 auto tagAbs = [](int tagAbsChEx, int true_daughter_nPi0) { 
 
    if(tagAbsChEx == 1 && true_daughter_nPi0 == 0) return 1;
+
+   else return 0;
+};
+
+auto tagNpi0 = [](int tagAbsChEx, int true_daughter_nPi0){
+
+   if(tagAbsChEx == 1 && true_daughter_nPi0 > 1) return 1;
 
    else return 0;
 };
