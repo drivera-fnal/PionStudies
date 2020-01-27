@@ -101,6 +101,14 @@ auto tagNpi0 = [](int tagAbsChEx, int true_daughter_nPi0){
    else return 0;
 };
 
+auto tagBackGround = [](int tagPrimPi, int tagAbsChex ){
+
+   if(tagPrimPi == 1 && tagAbsChex == 1) return 0;
+   
+   else return 1;
+
+};
+
 //Beam Track ends in APA3
 auto endAPA3 = [](double reco_beam_endZ){
 
