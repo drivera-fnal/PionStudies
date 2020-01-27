@@ -32,7 +32,7 @@ using namespace ROOT::VecOps;
 
 int eventSelection(const string path = inputFile, const string dataFile = "../../../pionAnalyzerTree/pionana_5387_1GeV_1_16_20.root" ){
 
-
+   gInterpreter->GenerateDictionary("vector<vector<int>>", "vector");
    //MC in command line
    ROOT::RDataFrame frame(inputTree, path);
    //Data default or from command line
@@ -66,75 +66,68 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
       .Define("true_absSignal", tagAbs,  {"true_combinedSignal", "true_daughter_nPi0"})
       .Define("true_nPi0Signal", tagNpi0,  {"true_combinedSignal", "true_daughter_nPi0"})
       .Define("true_backGround", tagBackGround, {"true_primPionInel", "true_combinedSignal"})
-      .Define("true_pion_daughter", "true_daughter_nPiPlus + true_daughter_nPiMinus");
+      .Define("true_pion_daughter", "true_daughter_nPiPlus + true_daughter_nPiMinus")
+      //necessary Reco Values
+      .Define("daughter_distance3D", compute_distanceVertex, { "reco_beam_endX", "reco_beam_endY", "reco_beam_endZ", 
+            "reco_daughter_allTrack_startX","reco_daughter_allTrack_startY", 
+            "reco_daughter_allTrack_startZ", "reco_daughter_allTrack_endX", 
+            "reco_daughter_allTrack_endY", "reco_daughter_allTrack_endZ"})
 
+      .Define("daughter_distance3D_shower", compute_distanceVertex, { "reco_beam_endX", "reco_beam_endY", "reco_beam_endZ", 
+            "reco_daughter_allShower_startX","reco_daughter_allShower_startY", 
+            "reco_daughter_allShower_startZ", "reco_daughter_allShower_startX", 
+            "reco_daughter_allShower_startY", "reco_daughter_allShower_startZ"});
+
+
+   //Some Pre-Work and definitions on DATA
+   //
+   auto data_all = data_frame
+      .Define("beamPID",data_beam_PID, {"data_BI_PDG_candidates"} )
+      .Filter("beamPID == true")
+
+      .Define("daughter_distance3D", compute_distanceVertex, { "reco_beam_endX", "reco_beam_endY", "reco_beam_endZ", 
+            "reco_daughter_allTrack_startX","reco_daughter_allTrack_startY", 
+            "reco_daughter_allTrack_startZ", "reco_daughter_allTrack_endX", 
+            "reco_daughter_allTrack_endY", "reco_daughter_allTrack_endZ"})
+
+      .Define("daughter_distance3D_shower", compute_distanceVertex, { "reco_beam_endX", "reco_beam_endY", "reco_beam_endZ", 
+            "reco_daughter_allShower_startX","reco_daughter_allShower_startY", 
+            "reco_daughter_allShower_startZ", "reco_daughter_allShower_startX", 
+            "reco_daughter_allShower_startY", "reco_daughter_allShower_startZ"});
 
 
    //prepare Branches for all the cuts true/false. this allows to do easy filtering
    //all the cuts are in the eventSelection.h file
    //
    auto mc_all_cutValues = mc_all
-      .Define("primary_ends_inAPA3", endAPA3,{ "reco_beam_endZ"})
       .Define("primary_isBeamType", isBeamType, {"reco_beam_type"})
-      //beam cuts somehow
-      .Define("manual_passBeamCut", manual_beamPos_mc, {"reco_beam_startX", "reco_beam_startY", "reco_beam_startZ", 
+
+      .Define("passBeamCut", manual_beamPos_mc, {"reco_beam_startX", "reco_beam_startY", "reco_beam_startZ", 
             "reco_beam_trackDirX", "reco_beam_trackDirY", "reco_beam_trackDirZ", 
             "true_beam_startDirX", "true_beam_startDirY", "true_beam_startDirZ",
             "true_beam_startX", "true_beam_startY", "true_beam_startZ"})
-      .Define("daughter_distance3D", compute_distanceVertex, { "reco_beam_endX", "reco_beam_endY", "reco_beam_endZ", 
-            "reco_daughter_allTrack_startX","reco_daughter_allTrack_startY", 
-            "reco_daughter_allTrack_startZ", "reco_daughter_allTrack_endX", 
-            "reco_daughter_allTrack_endY", "reco_daughter_allTrack_endZ"})
-      .Define("daughter_distance3D_shower", compute_distanceVertex, { "reco_beam_endX", "reco_beam_endY", "reco_beam_endZ", 
-            "reco_daughter_allShower_startX","reco_daughter_allShower_startY", 
-            "reco_daughter_allShower_startZ", "reco_daughter_allShower_startX", 
-            "reco_daughter_allShower_startY", "reco_daughter_allShower_startZ"})
 
-      .Define("daughter_minDistance_track", secondary_minDistance_daughter_track, {"reco_daughter_PFP_trackScore" , "daughter_distance3D"})
-
-      .Define("daughter_minDeltaZ_track", daughter_deltaZ_track, {"reco_daughter_PFP_trackScore", 
-            "reco_beam_endZ", "reco_daughter_allTrack_endZ", "reco_daughter_allTrack_startZ"})
-
-      .Define("has_daughter_minDistance_track", has_daugh_track_inDistance, {"daughter_minDistance_track"})
-      .Define("has_daughter_deltaZ_track", has_deltaZ_track, {"daughter_minDeltaZ_track"})
+      .Define("primary_ends_inAPA3", endAPA3,{ "reco_beam_endZ"})
 
       .Define("has_noPion_daughter", secondary_noPion, {"reco_daughter_allTrack_Chi2_proton", 
             "reco_daughter_allTrack_Chi2_ndof" , "reco_daughter_PFP_trackScore", "daughter_distance3D", "reco_daughter_allTrack_ID"})
+
       .Define("has_shower_nHits_distance", has_shower_nHits_distance, {"reco_daughter_PFP_trackScore", 
             "reco_daughter_PFP_nHits", "daughter_distance3D_shower"});
 
 
    // DATA
 
-   auto data_all_cutValues = data_frame
-      .Define("beamPID",data_beam_PID, {"data_BI_PDG_candidates"} )
-      .Filter("beamPID == true")
+   auto data_all_cutValues = data_all
       .Define("primary_ends_inAPA3", endAPA3,{ "reco_beam_endZ"})
       .Define("primary_isBeamType", isBeamType, {"reco_beam_type"})
       //beam cuts
-      .Define("manual_passBeamCut", manual_beamPos_data, {"event","reco_beam_startX", "reco_beam_startY", 
+      .Define("passBeamCut", manual_beamPos_data, {"event","reco_beam_startX", "reco_beam_startY", 
             "reco_beam_startZ", "reco_beam_trackDirX", "reco_beam_trackDirY", "reco_beam_trackDirZ","data_BI_X", 
             "data_BI_Y", "data_BI_dirX", "data_BI_dirY", "data_BI_dirZ", "data_BI_nMomenta", "data_BI_nTracks"})
 
-      .Define("daughter_distance3D", compute_distanceVertex, { "reco_beam_endX", "reco_beam_endY", "reco_beam_endZ", 
-            "reco_daughter_allTrack_startX","reco_daughter_allTrack_startY", 
-            "reco_daughter_allTrack_startZ", "reco_daughter_allTrack_endX", 
-            "reco_daughter_allTrack_endY", "reco_daughter_allTrack_endZ"})
-
-      .Define("daughter_distance3D_shower", compute_distanceVertex, { "reco_beam_endX", "reco_beam_endY", "reco_beam_endZ", 
-            "reco_daughter_allShower_startX","reco_daughter_allShower_startY", 
-            "reco_daughter_allShower_startZ", "reco_daughter_allShower_startX", 
-            "reco_daughter_allShower_startY", "reco_daughter_allShower_startZ"})
-
-      .Define("daughter_minDistance_track", secondary_minDistance_daughter_track, {"reco_daughter_PFP_trackScore" , "daughter_distance3D"})
-
-      .Define("daughter_minDeltaZ_track", daughter_deltaZ_track, {"reco_daughter_PFP_trackScore", 
-            "reco_beam_endZ", "reco_daughter_allTrack_endZ", "reco_daughter_allTrack_startZ"})
-
-      .Define("has_daughter_minDistance_track", has_daugh_track_inDistance, {"daughter_minDistance_track"})
-      .Define("has_daughter_deltaZ_track", has_deltaZ_track, {"daughter_minDeltaZ_track"})
-
       .Define("has_noPion_daughter", secondary_noPion, {"reco_daughter_allTrack_Chi2_proton", "reco_daughter_allTrack_Chi2_ndof" , "reco_daughter_PFP_trackScore", "daughter_distance3D", "reco_daughter_allTrack_ID"})
+
       .Define("has_shower_nHits_distance", has_shower_nHits_distance, {"reco_daughter_PFP_trackScore", "reco_daughter_PFP_nHits", "daughter_distance3D_shower"});
 
 
@@ -152,6 +145,32 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
    auto n_mc_all = mc_all_cutValues.Count();
    auto n_data_all = data_all_cutValues.Count();
 
+   //Label within MC files who passed which CUT (this can help to see when what drops out)
+   auto mc_output_with_label = mc_all_cutValues
+      .Define("CUTflow_step1_passBeamType","return primary_isBeamType" )
+      .Define("CUTflow_step2_passBeamCut", cutFlow, {"CUTflow_step1_passBeamType","passBeamCut"})
+      .Define("CUTflow_step3_primEndAPA3", cutFlow, {"CUTflow_step2_passBeamCut","primary_ends_inAPA3"})
+      .Define("CUTflow_step4_hasNoPiDaughter", cutFlow, {"CUTflow_step3_primEndAPA3","has_noPion_daughter"})
+      .Define("reco_combinedSignal", "return CUTflow_step4_hasNoPiDaughter")
+      .Define("reco_cexSignal", cutFlow, {"reco_combinedSignal","has_shower_nHits_distance"})
+      .Define("reco_absSignal", "bool abs = false; if(reco_combinedSignal && !has_shower_nHits_distance) abs = true; return abs;");
+
+   auto mc_snap_label = mc_output_with_label.Snapshot("pionana/beamana", "pionana_mc_1GeV_eventSelection.root");
+
+   auto data_output_with_label = data_all_cutValues
+      .Define("CUTflow_step1_passBeamType","return primary_isBeamType" )
+      .Define("CUTflow_step2_passBeamCut", cutFlow, {"CUTflow_step1_passBeamType","passBeamCut"})
+      .Define("CUTflow_step3_primEndAPA3", cutFlow, {"CUTflow_step2_passBeamCut","primary_ends_inAPA3"})
+      .Define("CUTflow_step4_hasNoPiDaughter", cutFlow, {"CUTflow_step3_primEndAPA3","has_noPion_daughter"})
+      .Define("reco_combinedSignal", "return CUTflow_step4_hasNoPiDaughter")
+      .Define("reco_cexSignal", cutFlow, {"reco_combinedSignal","has_shower_nHits_distance"})
+      .Define("reco_absSignal", "bool abs = false; if(reco_combinedSignal && !has_shower_nHits_distance) abs = true; return abs;");
+
+   auto data_snap_label = data_output_with_label.Snapshot("pionana/beamana", "pionana_data_1GeV_eventSelection.root");
+
+
+
+
 
    //*******************
    //Start Cutting MC
@@ -165,7 +184,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
    auto N_mcCUT_beamType = mcCUT_beamType.Count();
 
    auto mcCUT_beamCut = mcCUT_beamType
-      .Filter("manual_passBeamCut == true");
+      .Filter("passBeamCut == true");
 
    auto N_mcCUT_beamCut = mcCUT_beamCut.Count();
 
@@ -185,20 +204,22 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
 
 
    auto mc_COMBINED_Signal = mcCUT_noPionDaughter;
+   auto mc_snap_combined = mc_COMBINED_Signal.Snapshot("pionana/beamana", "eventSelection_mc_COMBINED.root");
 
    //Find pi0 showers
 
    auto mcSIGNAL_cex = mc_COMBINED_Signal
       .Filter("has_shower_nHits_distance == true");
-   //.Filter("has_shower_daughter == true && has_daughter_minDistance_shower == true && has_daughter_deltaZ_shower == true && has_shower_nHits == true");
-
+   auto mc_snap_cex = mcSIGNAL_cex.Snapshot("pionana/beamana", "eventSelection_mc_CEX.root");
+   
    auto N_mcSIGNAL_cex = mcSIGNAL_cex.Count();
 
    //Define Absorption
    //
    auto mcSIGNAL_abs = mc_COMBINED_Signal
-      .Filter(" !(has_shower_nHits_distance == true)");
-
+      .Filter("!(has_shower_nHits_distance == true)");
+   auto mc_snap_abs = mcSIGNAL_abs.Snapshot("pionana/beamana", "eventSelection_mc_ABS.root");
+   
    auto N_mcSIGNAL_abs = mcSIGNAL_abs.Count();
 
 
@@ -213,7 +234,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
    auto N_dataCUT_beamType = dataCUT_beamType.Count();
 
    auto dataCUT_beamCut = dataCUT_beamType
-      .Filter("manual_passBeamCut == true");
+      .Filter("passBeamCut == true");
 
    auto N_dataCUT_beamCut = dataCUT_beamCut.Count();
 
@@ -233,18 +254,21 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
 
 
    auto data_COMBINED_Signal = dataCUT_noPionDaughter;
+   auto data_snap_combined = data_COMBINED_Signal.Snapshot("pionana/beamana", "eventSelection_data_COMBINED.root");
 
    //Find pi0 showers
 
    auto dataSIGNAL_cex = data_COMBINED_Signal
       .Filter("has_shower_nHits_distance == true");
-
+   auto data_snap_cex = dataSIGNAL_cex.Snapshot("pionana/beamana", "eventSelection_data_CEX.root");
+   
    auto N_dataSIGNAL_cex = dataSIGNAL_cex.Count();
 
    //Define Absorption
    //
    auto dataSIGNAL_abs = data_COMBINED_Signal
       .Filter(" !(has_shower_nHits_distance == true)");
+   auto data_snap_abs = dataSIGNAL_abs.Snapshot("pionana/beamana", "eventSelection_data_ABS.root");
 
    auto N_dataSIGNAL_abs = dataSIGNAL_abs.Count();
 
@@ -313,16 +337,16 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
    h_true_nPi0->SetFillColor(kTeal);
    h_true_BG->SetFillColor(kBlue);
 
-    
+
    stack_cutFlow->Add(h_true_BG);
    stack_cutFlow->Add(h_true_abs);
    stack_cutFlow->Add(h_true_cex);
    stack_cutFlow->Add(h_true_nPi0);   
-   
-   
+
+
    double total = h_true_abs->GetBinContent(1) + h_true_cex->GetBinContent(1) + h_true_nPi0->GetBinContent(1) + h_true_BG->GetBinContent(1);
    h_data_total->Scale(total / h_data_total->GetBinContent(1));
-   
+
    auto c1 = new TCanvas("Event Selection Flow", "",1600,1200);
    stack_cutFlow->Draw();
    h_data_total->Draw("PSAME");

@@ -194,6 +194,15 @@ auto manual_beamPos_data = [](int event, double data_startX, double data_startY,
 
 };
 
+//for marking cutflow in rows only needs condition before and tested
+auto cutFlow = [](bool a, bool b){
+   bool pass = false;
+
+   if(a && b) pass = true;
+
+   return pass;
+};
+
 //has daughter in delta Z
 auto daughter_deltaZ_track = [](std::vector<double> &trk_score, double beam_endZ, std::vector<double> &daughter_endZ, std::vector<double> &daughter_startZ){
 
@@ -346,22 +355,6 @@ auto secondary_noPion = [](const std::vector<double> &chi2, const std::vector<in
    return noPion;
 };
 
-//has Daughter that is shower like (ignore trackScore == -999.)
-/*
-auto secondary_hasShowerLike = [](const std::vector<double> &track_score){
-
-   bool hasShower = false;
-
-   for(auto &&it : track_score){
-      if(it != -999 && it < 0.35) {
-         hasShower = true; 
-         break;
-      }
-   };
-
-   return hasShower;
-};
-*/
 
 auto has_shower_nHits_distance= [](const std::vector<double> &track_score, const std::vector<int> &nHits, const std::vector<double> &distance){
 
@@ -386,35 +379,6 @@ auto has_shower_nHits_distance= [](const std::vector<double> &track_score, const
    return hasShowerNhits;
 };
 
-/*auto has_daugh_shower_inDistance = [](double minDistance){
-
-   bool has = false;
-   if(minDistance < cut_daughter_shower_distance_high && minDistance > cut_daughter_shower_distance_low) return has = true;
-   else return has;
-
-};
-
-auto secondary_minDistance_daughter_shower = [](std::vector<double> &trk_score, std::vector<double> &distance){
-
-   double minimum_distance = 200.;
-   if(distance.empty() || trk_score.empty() ) return minimum_distance = 0.;
-   double dummy = 0.;   
-
-   for(std::string::size_type cnt = 0; cnt < distance.size(); cnt++ ){
-
-      if(trk_score.at(cnt) < 0.35 && trk_score.at(cnt) != -999.){
-
-         dummy = distance.at(cnt);
-       if(dummy < minimum_distance) minimum_distance = dummy;
-      }
-      else continue;
-
-   };
-   if(minimum_distance == 200) return minimum_distance = 999.;
-
-   return minimum_distance;
-};
-*/
 
 //something about nHits of showers?
 
