@@ -70,9 +70,9 @@ auto tagPrimPionInel_withElastic = [](int true_beam_PDG, std::string true_beam_e
 
 
 //True Charge Exchange + Absorption Signal, has no piPlus or piMinus as daughters
-auto tagAbsChEx = [](int tagPrimPi, const int true_daughter_nPiPlus, const int true_daughter_nPiMinus,const int true_daughter_nPi0)
+auto tagAbsChEx = [](int tagPrimPi, const int true_daughter_nPiPlus, const int true_daughter_nPiMinus)
 {
-   if(tagPrimPi == 1 && true_daughter_nPiPlus + true_daughter_nPiMinus == 0 && true_daughter_nPi0 < 2) return 1;
+   if(tagPrimPi == 1 && true_daughter_nPiPlus + true_daughter_nPiMinus == 0) return 1;
 
    else return 0;
 
@@ -92,6 +92,21 @@ auto tagAbs = [](int tagAbsChEx, int true_daughter_nPi0) {
    if(tagAbsChEx == 1 && true_daughter_nPi0 == 0) return 1;
 
    else return 0;
+};
+
+auto tagNpi0 = [](int tagAbsChEx, int true_daughter_nPi0){
+
+   if(tagAbsChEx == 1 && true_daughter_nPi0 > 1) return 1;
+
+   else return 0;
+};
+
+auto tagBackGround = [](int tagPrimPi, int tagAbsChex ){
+
+   if(tagPrimPi == 1 && tagAbsChex == 1) return 0;
+   
+   else return 1;
+
 };
 
 //Beam Track ends in APA3
@@ -177,6 +192,15 @@ auto manual_beamPos_data = [](int event, double data_startX, double data_startY,
 
    return manual_data_pass = true;
 
+};
+
+//for marking cutflow in rows only needs condition before and tested
+auto cutFlow = [](bool a, bool b){
+   bool pass = false;
+
+   if(a && b) pass = true;
+
+   return pass;
 };
 
 //has daughter in delta Z
@@ -331,22 +355,6 @@ auto secondary_noPion = [](const std::vector<double> &chi2, const std::vector<in
    return noPion;
 };
 
-//has Daughter that is shower like (ignore trackScore == -999.)
-/*
-auto secondary_hasShowerLike = [](const std::vector<double> &track_score){
-
-   bool hasShower = false;
-
-   for(auto &&it : track_score){
-      if(it != -999 && it < 0.35) {
-         hasShower = true; 
-         break;
-      }
-   };
-
-   return hasShower;
-};
-*/
 
 auto has_shower_nHits_distance= [](const std::vector<double> &track_score, const std::vector<int> &nHits, const std::vector<double> &distance){
 
@@ -371,35 +379,6 @@ auto has_shower_nHits_distance= [](const std::vector<double> &track_score, const
    return hasShowerNhits;
 };
 
-/*auto has_daugh_shower_inDistance = [](double minDistance){
-
-   bool has = false;
-   if(minDistance < cut_daughter_shower_distance_high && minDistance > cut_daughter_shower_distance_low) return has = true;
-   else return has;
-
-};
-
-auto secondary_minDistance_daughter_shower = [](std::vector<double> &trk_score, std::vector<double> &distance){
-
-   double minimum_distance = 200.;
-   if(distance.empty() || trk_score.empty() ) return minimum_distance = 0.;
-   double dummy = 0.;   
-
-   for(std::string::size_type cnt = 0; cnt < distance.size(); cnt++ ){
-
-      if(trk_score.at(cnt) < 0.35 && trk_score.at(cnt) != -999.){
-
-         dummy = distance.at(cnt);
-       if(dummy < minimum_distance) minimum_distance = dummy;
-      }
-      else continue;
-
-   };
-   if(minimum_distance == 200) return minimum_distance = 999.;
-
-   return minimum_distance;
-};
-*/
 
 //something about nHits of showers?
 
