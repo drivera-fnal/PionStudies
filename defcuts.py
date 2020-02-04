@@ -173,7 +173,7 @@ def pos_cut_str(  xlow=-3., xhigh=7., ylow=-8., yhigh=7., zlow=27.5, zhigh=32.5)
   return cut
 
 def data_ang_cut_str(coslow=.93):
-  cut = " && ( data_BI_dirX*reco_beam_trackX + data_BI_dirY*reco_beam_trackY + data_BI_dirZ*reco_beam_trackZ > " + str(coslow) + " ) "
+  cut = " && ( data_BI_dirX*reco_beam_trackDirX + data_BI_dirY*reco_beam_trackDirY + data_BI_dirZ*reco_beam_trackDirZ > " + str(coslow) + " ) "
   return cut
 
 def data_pos_cut_str( xlow=0., xhigh=10., ylow=-5., yhigh=10., zlow=30., zhigh=35.):
@@ -206,19 +206,33 @@ def ang_pos_test_cut(e, coslow=.93, xlow=-3., xhigh=7., ylow=-8., yhigh=7., zlow
 
 def data_ang_pos_test_cut(e, coslow=.93, xlow=0., xhigh=10., ylow=-5., yhigh=10., zlow=30., zhigh=35.):
   
-  if (e.data_BI_nMomenta != 1 or e.data_BI_nTracks != 1 ): return 0
+  if (e.data_BI_nMomenta != 1 or e.data_BI_nTracks != 1 ): 
+    #print e.event, e.data_BI_nMomenta, e.data_BI_nTracks
+    return 0
 
-  if (e.data_BI_dirX*e.reco_beam_trackDirX + e.data_BI_dirY*e.reco_beam_trackDirY + e.data_BI_dirZ*e.reco_beam_trackDirZ < coslow): return 0
+  if ( (e.data_BI_dirX*e.reco_beam_trackDirX + e.data_BI_dirY*e.reco_beam_trackDirY + e.data_BI_dirZ*e.reco_beam_trackDirZ) < coslow): 
+    #print e.event, "cos", (e.data_BI_dirX*e.reco_beam_trackDirX + e.data_BI_dirY*e.reco_beam_trackDirY + e.data_BI_dirZ*e.reco_beam_trackDirZ) 
+    return 0
 
-  if ( (e.reco_beam_startX - e.data_BI_X ) < xlow ): return 0
+  if ( (e.reco_beam_startX - e.data_BI_X ) < xlow ): 
+    #print e.event, "X", (e.reco_beam_startX - e.data_BI_X ), e.reco_beam_startX, e.data_BI_X 
+    return 0
 
-  if ( (e.reco_beam_startX - e.data_BI_X ) > xhigh ): return 0
+  if ( (e.reco_beam_startX - e.data_BI_X ) > xhigh ): 
+    #print e.event, "X", (e.reco_beam_startX - e.data_BI_X ), e.reco_beam_startX, e.data_BI_X 
+    return 0
 
-  if ( (e.reco_beam_startY - e.data_BI_Y ) < ylow ): return 0
+  if ( (e.reco_beam_startY - e.data_BI_Y ) < ylow ): 
+    #print e.event, "Y", (e.reco_beam_startY - e.data_BI_Y ), e.reco_beam_startY, e.data_BI_Y 
+    return 0
 
-  if ( (e.reco_beam_startY - e.data_BI_Y ) > yhigh ): return 0
+  if ( (e.reco_beam_startY - e.data_BI_Y ) > yhigh ): 
+    #print e.event, "Y", (e.reco_beam_startY - e.data_BI_Y ), e.reco_beam_startY, e.data_BI_Y 
+    return 0
 
-  if( e.reco_beam_startZ < zlow or e.reco_beam_startZ > zhigh ): return 0
+  if( e.reco_beam_startZ < zlow or e.reco_beam_startZ > zhigh ): 
+    #print e.event, "Z",  e.reco_beam_startZ
+    return 0
 
   return 1
 

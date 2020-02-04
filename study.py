@@ -24,6 +24,9 @@ startXhists = dict()
 startYhists = dict()
 deltaXhists = dict()
 deltaYhists = dict()
+chi2hists   = dict()
+cnnhists   = dict()
+cnn_collectionhists = dict()
 
 names = [
   "PrimaryPion",
@@ -46,6 +49,19 @@ names = [
   "Decay",
   #"Other"
 ]
+
+title_map = {
+  "PrimaryPion": "Primary #pi^{+}",
+  "PrimaryMuon": "Primary #mu",
+  "Cosmic":"Cosmic",
+  "PrimaryBeamNotTrig": "Extra Primary",
+  "UpstreamIntToPiPlus": "#pi^{+} From Interaction",
+  "UpstreamIntToPiMinus": "#pi^{-} From Interaction",
+  "UpstreamIntToProton": "p From Interaction",
+  "UpstreamIntToKaon": "K From Interaction",
+  "UpstreamIntToNuc": "Nuc From Interaction",
+  "Decay":"Decay Product"
+}
 
 tree.Draw( "reco_beam_len>>lenhist(40,0,500.)", "1 " + base_cut )
 lenhist = gDirectory.Get("lenhist")
@@ -80,6 +96,15 @@ for name in names:
 
   tree.Draw( "reco_beam_startY - (true_beam_startY + -1.*true_beam_startZ*(true_beam_startDirY/true_beam_startDirZ))>>deltaY"+name+"(50,-100.,100.)", cut  + base_cut )
   deltaYhists[name] = gDirectory.Get("deltaY"+name)
+
+  tree.Draw( "reco_beam_Chi2_proton/reco_beam_Chi2_ndof>>chi2"+name+"(100,0,400)", cut + base_cut)
+  chi2hists[name] = gDirectory.Get("chi2"+name)
+
+  tree.Draw( "reco_beam_PFP_trackScore>>cnn"+name+"(100,0,1.)", cut + base_cut)
+  cnnhists[name] = gDirectory.Get("cnn"+name)
+
+  tree.Draw( "reco_beam_PFP_trackScore_collection>>cnn_collection"+name+"(100,0,1.)", cut + " && ( true_beam_PDG == 211 || true_beam_PDG == -13)")
+  cnn_collectionhists[name] = gDirectory.Get("cnn_collection"+name)
 
 
   fout.cd()
@@ -121,6 +146,9 @@ startYstack = THStack("startYstack","")
 startZstack = THStack("startZstack","")
 deltaXstack = THStack("deltaXstack","")
 deltaYstack = THStack("deltaYstack","")
+chi2stack   = THStack("chi2stack","")
+cnnstack   = THStack("cnnstack","")
+cnn_collectionstack   = THStack("cnn_collectionstack","")
 for name in names:
 
 
@@ -148,7 +176,7 @@ for name in names:
   startZhist.SetFillColor(colors[name]) 
   startZhist.SetLineColor(colors[name]) 
   startZstack.Add(startZhist)
-  leg.AddEntry( startZhist, name, "f")
+  leg.AddEntry( startZhist, title_map[name], "f")
 
   deltaXhist = deltaXhists[name]
   deltaXhist.SetFillColor(colors[name]) 
@@ -159,6 +187,21 @@ for name in names:
   deltaYhist.SetFillColor(colors[name]) 
   deltaYhist.SetLineColor(colors[name]) 
   deltaYstack.Add(deltaYhist)
+
+  chi2hist = chi2hists[name]
+  chi2hist.SetFillColor(colors[name]) 
+  chi2hist.SetLineColor(colors[name]) 
+  chi2stack.Add(chi2hist)
+
+  cnnhist = cnnhists[name]
+  cnnhist.SetFillColor(colors[name]) 
+  cnnhist.SetLineColor(colors[name]) 
+  cnnstack.Add(cnnhist)
+
+  cnn_collectionhist = cnn_collectionhists[name]
+  cnn_collectionhist.SetFillColor(colors[name]) 
+  cnn_collectionhist.SetLineColor(colors[name]) 
+  cnn_collectionstack.Add(cnn_collectionhist)
 
 
 
@@ -171,6 +214,9 @@ startYstack.Write()
 startXstack.Write()
 deltaYstack.Write()
 deltaXstack.Write()
+chi2stack.Write()
+cnn_collectionstack.Write()
+cnnstack.Write()
 
 
 
@@ -389,6 +435,13 @@ lenstack = THStack("lenstack_ang_pos","")
 endP_hists = dict()
 endP_stack = THStack("endPstack_ang_pos","")
 
+chi2hists = dict()
+chi2stack = THStack("chi2stack_ang_pos","")
+
+cnnhists = dict()
+cnnstack = THStack("cnnstack_ang_pos","")
+
+
 
 for name in names:
   cut = cuts[name]
@@ -410,11 +463,25 @@ for name in names:
   endP_hists[name].SetLineColor(colors[name]) 
   endP_stack.Add(endP_hists[name])
 
+  tree.Draw( "reco_beam_Chi2_proton/reco_beam_Chi2_ndof>>chi2_ang_pos_cut_"+name+"(100,0,400)", cut + base_cut + ang_cut + pos_cut)
+  chi2hists[name] = gDirectory.Get("chi2_ang_pos_cut_"+name)
+  chi2hists[name].SetFillColor(colors[name]) 
+  chi2hists[name].SetLineColor(colors[name]) 
+  chi2stack.Add(chi2hists[name])
+
+  tree.Draw( "reco_beam_PFP_trackScore>>cnn_ang_pos_cut_"+name+"(100,0,1.)", cut + base_cut + ang_cut + pos_cut)
+  cnnhists[name] = gDirectory.Get("cnn_ang_pos_cut_"+name)
+  cnnhists[name].SetFillColor(colors[name]) 
+  cnnhists[name].SetLineColor(colors[name]) 
+  cnnstack.Add(cnnhists[name])
+
+
   print
 
 lenstack.Write()
 endP_stack.Write()
-
+chi2stack.Write()
+cnnstack.Write()
 #endP_first_cut_signal = endP_hists["PrimaryPionInteract"].Clone("first_cut_signal")
 #endP_first_cut_signal.Sumw2()
 #endP_first_cut_signal.SetFillColor(0)
@@ -435,6 +502,12 @@ lenstack = THStack("lenstack_ang_pos_len","")
 
 endP_hists = dict()
 endP_stack = THStack("endPstack_ang_pos_len","")
+
+chi2hists = dict()
+chi2stack = THStack("chi2stack_ang_pos_len","")
+
+cnnhists = dict()
+cnnstack = THStack("cnnstack_ang_pos_len","")
 
 endZ_cut = " && reco_beam_endZ < 226."
 
@@ -458,17 +531,87 @@ for name in names:
   endP_hists[name].SetLineColor(colors[name]) 
   endP_stack.Add(endP_hists[name])
 
+  tree.Draw( "reco_beam_Chi2_proton/reco_beam_Chi2_ndof>>chi2_ang_pos_endZ_cut_"+name+"(100,0,400)", cut + base_cut + ang_cut + pos_cut + endZ_cut)
+  chi2hists[name] = gDirectory.Get("chi2_ang_pos_endZ_cut_"+name)
+  chi2hists[name].SetFillColor(colors[name]) 
+  chi2hists[name].SetLineColor(colors[name]) 
+  chi2stack.Add(chi2hists[name])
+
+  tree.Draw( "reco_beam_PFP_trackScore>>cnn_ang_pos_endZ_cut_"+name+"(100,0,1.)", cut + base_cut + ang_cut + pos_cut + endZ_cut)
+  cnnhists[name] = gDirectory.Get("cnn_ang_pos_endZ_cut_"+name)
+  cnnhists[name].SetFillColor(colors[name]) 
+  cnnhists[name].SetLineColor(colors[name]) 
+  cnnstack.Add(cnnhists[name])
+
+
   print
 
 lenstack.Write()
 endP_stack.Write()
+chi2stack.Write()
+cnnstack.Write()
 
-#endP_second_cut_signal = endP_hists["PrimaryPionInteract"].Clone("second_cut_signal")
-#endP_second_cut_signal.Sumw2()
-#endP_second_cut_signal.SetFillColor(0)
-#endP_second_cut_signal.Divide(endP_total_signal)
-#endP_second_cut_signal.Write("endP_second_cut_efficiency")
-###########################
+
+## Now with chi2 cuts ###
+third_cut_dir = fout.mkdir( "third_cut_dir", "Cuts include start position and angular cuts and track length cut and chi2 cut")
+third_cut_dir.cd()
+
+lenhists = dict()
+lenstack = THStack("lenstack_ang_pos_chi2","")
+
+endP_hists = dict()
+endP_stack = THStack("endPstack_ang_pos_chi2","")
+
+chi2hists = dict()
+chi2stack = THStack("chi2stack_ang_pos_chi2","")
+
+cnnhists = dict()
+cnnstack = THStack("cnnstack_ang_pos_chi2","")
+
+endZ_cut = " && reco_beam_endZ < 226."
+
+chi2_cut = " && reco_beam_Chi2_proton/reco_beam_Chi2_ndof > 140. "
+
+for name in names:
+  cut = cuts[name]
+  print name, cut
+
+  tree.Draw( "reco_beam_len>>len_ang_pos_endZ_chi2_cut_"+name+"(40,0.,500.)", cut  + base_cut + ang_cut + pos_cut + endZ_cut + chi2_cut)
+  lenhists[name] = gDirectory.Get("len_ang_pos_endZ_chi2_cut_"+name)
+  #lenhists[name].Write()
+
+  lenhists[name].SetFillColor(colors[name]) 
+  lenhists[name].SetLineColor(colors[name]) 
+  lenstack.Add(lenhists[name])
+
+  tree.Draw( "reco_beam_true_byHits_endP>>endP_ang_pos_endZ_chi2_cut_"+name+"(40,0.,1.2)", cut  + base_cut + ang_cut + pos_cut + endZ_cut + chi2_cut)
+  endP_hists[name] = gDirectory.Get("endP_ang_pos_endZ_chi2_cut_"+name)
+  #endP_hists[name].Write()
+
+  endP_hists[name].SetFillColor(colors[name]) 
+  endP_hists[name].SetLineColor(colors[name]) 
+  endP_stack.Add(endP_hists[name])
+
+  tree.Draw( "reco_beam_Chi2_proton/reco_beam_Chi2_ndof>>chi2_ang_pos_endZ_chi2_cut_"+name+"(100,0,400)", cut + base_cut + ang_cut + pos_cut + endZ_cut + chi2_cut)
+  chi2hists[name] = gDirectory.Get("chi2_ang_pos_endZ_chi2_cut_"+name)
+  chi2hists[name].SetFillColor(colors[name]) 
+  chi2hists[name].SetLineColor(colors[name]) 
+  chi2stack.Add(chi2hists[name])
+
+  tree.Draw( "reco_beam_PFP_trackScore>>cnn_ang_pos_endZ_chi2_cut_"+name+"(100,0,1.)", cut + base_cut + ang_cut + pos_cut + endZ_cut + chi2_cut)
+  cnnhists[name] = gDirectory.Get("cnn_ang_pos_endZ_chi2_cut_"+name)
+  cnnhists[name].SetFillColor(colors[name]) 
+  cnnhists[name].SetLineColor(colors[name]) 
+  cnnstack.Add(cnnhists[name])
+
+
+  print
+
+lenstack.Write()
+endP_stack.Write()
+chi2stack.Write()
+cnnstack.Write()
+
 
 exit()
 

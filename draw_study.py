@@ -92,6 +92,28 @@ elif args.l == 2:
     leg.SetY2( args.Ymax )
   leg.Draw("same")
   
+elif args.l == 3:
+  data_hist = fData.Get("third_cut_dir/" + args.t + "_ang_pos_endZ_chi2_cut")
+  mc_hist   = fMC.Get("third_cut_dir/" + args.t + "stack_ang_pos_chi2")
+
+  data_hist.Sumw2()
+
+
+  data_hist.Scale( add_stack(mc_hist) / data_hist.Integral() )
+  mc_hist.Draw()
+  set_style( mc_hist, data_hist.GetXaxis().GetTitle(), "")
+  data_hist.Draw("same Pe")
+  
+  leg = fMC.Get("leg")
+  leg.AddEntry(data_hist, "Data", "lp")
+
+  if( args.Xmin > -1. and args.Xmax > -1. and args.Ymin > -1. and args.Ymax > -1. ):
+    leg.SetX1( args.Xmin )
+    leg.SetX2( args.Xmax )
+    leg.SetY1( args.Ymin )
+    leg.SetY2( args.Ymax )
+  leg.Draw("same")
+ 
 
 else: exit() 
 
