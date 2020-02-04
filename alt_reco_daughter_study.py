@@ -13,10 +13,14 @@ parser.add_argument( "-i", type=str, help='Input file' )
 parser.add_argument( "-o", type=str, help='Output file' )
 parser.add_argument( "-v", type=int, help='Do Vertex type?', default=0 )
 parser.add_argument( "-c", type=float, help='CNN score for cut', default=.3 )
+parser.add_argument( "--ctype", type=str, help='Which CNN to use', default='full')
 parser.add_argument( "--dR", type=float, help='dR for cut', default=-1. )
+parser.add_argument( "--dtype", type=int, help='Which cuts to use', default=1)
+parser.add_argument( "--chi2", type=float, help='Which beam chi2 cut', default=-1.)
 
 
 args = parser.parse_args()
+
 
 def test_good_reco(e):
   if (e.quality_reco_view_2_wire_backtrack > 15. or e.quality_reco_view_1_wire_backtrack > 15. or e.quality_reco_view_0_wire_backtrack > 15.): return 0
@@ -46,6 +50,7 @@ matched = array("i", [0])
 chi2 = array("d", [0])
 new_chi2 = array("d", [0])
 cnn  = array("d", [0])
+cnn_collection  = array("d", [0])
 cnn_michel  = array("d", [0])
 pi0_gamma = array("i", [0])
 true_daughter = array("i", [0])
@@ -82,6 +87,7 @@ outtree.Branch("par_pdg", par_pdg, "par_pdg/I")
 outtree.Branch("chi2", chi2, "chi2/D")
 outtree.Branch("new_chi2", new_chi2, "new_chi2/D")
 outtree.Branch("cnn", cnn, "cnn/D")
+outtree.Branch("cnn_collection", cnn_collection, "cnn_collection/D")
 outtree.Branch("cnn_michel", cnn_michel, "cnn_michel/D")
 outtree.Branch("pi0_gamma", pi0_gamma, "pi0_gamma/I")
 outtree.Branch("true_daughter", true_daughter, "true_daughter/I")
@@ -128,6 +134,8 @@ for e in tree:
     #if not (e.reco_beam_Chi2_proton / e.reco_beam_Chi2_ndof > 50. and e.reco_beam_Chi2_proton / e.reco_beam_Chi2_ndof < 500 ): continue
 
   if( e.reco_beam_endZ > 226. ): continue
+  if( args.chi2 > 0. ):
+    if( e.reco_beam_Chi2_proton / e.reco_beam_Chi2_ndof < args.chi2): continue
   good_reco[0] = test_good_reco(e)
 
   if e.MC: vertex_type[0] = vt(e, 5., 3)
@@ -155,6 +163,7 @@ for e in tree:
       is_self[0] = int( e.reco_daughter_PFP_true_byHits_ID[i] == e.true_beam_ID )
 
     cnn[0] = e.reco_daughter_PFP_trackScore[i] 
+    cnn_collection[0] = e.reco_daughter_PFP_trackScore_collection[i] 
     cnn_michel[0] = e.reco_daughter_PFP_michelScore[i]  
 
     dR[0] = -1.
@@ -257,42 +266,71 @@ for e in tree:
     outtree.Fill()
 
 if isMC: 
-  cats = [
-    "Cosmic", "Nuc", "Self",
-    "Gamma", "pi0Gamma",
-    "Other", "GDaughter", "GGDaughter", "Michel", "Pi", "Proton", "Mu"
-  ]
-  
-  colors = {
-    "Cosmic": kRed+2,
-    "pi0Gamma": kSpring-8,
-    "Pi": kTeal,
-    "Mu": kRed,
-    "Proton": kViolet-3,
-    "Gamma": kOrange+1,
-    "Nuc": kOrange+10,
-    "Other": kBlack,
-    "GDaughter": kMagenta,
-    "GGDaughter": kOrange,
-    "Michel": kPink,
-    "Self": kBlue
-  }
-  
-  
-  cuts = {
-    "Cosmic": "is_cosmic",
-    "pi0Gamma": "pi0_gamma",
-    "Pi": "true_daughter && abs(pdg) == 211",
-    "Mu": "true_daughter && abs(pdg) == 13",
-    "Proton": "true_daughter && abs(pdg) == 2212",
-    "Gamma":  "true_daughter && abs(pdg) == 22",
-    "Nuc":  "true_daughter && abs(pdg) > 2212",
-    "GDaughter": "true_grand_daughter && !pi0_gamma",
-    "GGDaughter": "true_great_grand_daughter && !michel_from_pi_daughter",
-    "Michel": "michel_from_pi_daughter",
-    "Other": "!(true_daughter || true_grand_daughter || true_great_grand_daughter || is_cosmic || pi0_gamma || is_self)",
-    "Self": "is_self"
-  }
+  if args.dtype:
+    cats = [
+      "Cosmic", "Nuc", "Self",
+      "Gamma", "pi0Gamma",
+      "Other", "GDaughter", "GGDaughter", "Michel", "Pi", "Proton", "Mu"
+    ]
+    
+    colors = {
+      "Cosmic": kRed+2,
+      "pi0Gamma": kSpring-8,
+      "Pi": kTeal,
+      "Mu": kRed,
+      "Proton": kViolet-3,
+      "Gamma": kOrange+1,
+      "Nuc": kOrange+10,
+      "Other": kBlack,
+      "GDaughter": kMagenta,
+      "GGDaughter": kOrange,
+      "Michel": kPink,
+      "Self": kBlue
+    }
+    
+    
+    cuts = {
+      "Cosmic": "is_cosmic",
+      "pi0Gamma": "pi0_gamma",
+      "Pi": "true_daughter && abs(pdg) == 211",
+      "Mu": "true_daughter && abs(pdg) == 13",
+      "Proton": "true_daughter && abs(pdg) == 2212",
+      "Gamma":  "true_daughter && abs(pdg) == 22",
+      "Nuc":  "true_daughter && abs(pdg) > 2212",
+      "GDaughter": "true_grand_daughter && !pi0_gamma",
+      "GGDaughter": "true_great_grand_daughter && !michel_from_pi_daughter",
+      "Michel": "michel_from_pi_daughter || (true_daughter && abs(pdg) == 11)",
+      "Other": "!(true_daughter || true_grand_daughter || true_great_grand_daughter || is_cosmic || pi0_gamma || is_self)",
+      "Self": "is_self"
+    }
+  else:
+    cats = [
+      "Mu", "Nuc",
+      "Gamma", 
+      "Other", "e", "Pi", "Proton"
+    ]
+    
+    colors = {
+      "Gamma": kSpring-8,
+      "Pi": kTeal,
+      "Mu": kRed,
+      "Proton": kViolet-3,
+      "Nuc": kOrange,
+      "Other": kBlack,
+      "e": kBlue
+    }
+    
+    
+    cuts = {
+      #"pi0Gamma": "pi0_gamma",
+      "Pi": "abs(pdg) == 211",
+      "Mu": "abs(pdg) == 13",
+      "Proton": "abs(pdg) == 2212",
+      "Gamma":  "abs(pdg) == 22",
+      "Nuc":  "abs(pdg) > 2212",
+      "e":   "abs(pdg) == 11", 
+      "Other": "!( abs(pdg) == 211 || abs(pdg) == 13 || abs(pdg) == 2212 || abs(pdg) == 22 || abs(pdg) > 2212 || abs(pdg) == 11)"
+    }
 else:
   cats = ["Data"]
   colors = { "Data": 1}
@@ -307,6 +345,7 @@ shower_deltaZ_hists = dict()
 slice_hists = dict()
 chi2_hists = dict()
 cnn_hists = dict()
+cnn_collection_hists = dict()
 cnn_michel_hists = dict()
 
 track_nHits_hists = dict()
@@ -327,6 +366,11 @@ else: nVT = 1
 
 cnn_cut = str(args.c)
 
+if(args.c == "full"):
+  cnn_str = "cnn"
+else:
+  cnn_str = "cnn_collection"
+
 for i in range(0, nVT):
   for cat in cats: 
 
@@ -337,24 +381,24 @@ for i in range(0, nVT):
 
 
     print cuts[cat] + " && vertex_type == " + str(i) 
-    outtree.Draw("dR>>h" + cat + str(i) + "(175,0,350)", theCut + " && cnn > " + cnn_cut + " && is_track")
+    outtree.Draw("dR>>h" + cat + str(i) + "(175,0,350)", theCut + " && " + cnn_str + " > " + cnn_cut + " && is_track")
     dR_hists[cat + str(i)] = gDirectory.Get("h"+cat + str(i))
     print dR_hists[cat + str(i)].Integral()
     dR_hists[cat + str(i)].SetLineColor(colors[cat])
     if isMC: dR_hists[cat + str(i)].SetFillColor(colors[cat])
     print cat, dR_hists[cat + str(i)].Integral()
 
-    outtree.Draw("shower_dR>>h_shower_" + cat + str(i) + "(175,0,350)", theCut + " && cnn < " + cnn_cut + " && is_shower")
+    outtree.Draw("shower_dR>>h_shower_" + cat + str(i) + "(175,0,350)", theCut + " && " + cnn_str + " < " + cnn_cut + " && is_shower")
     shower_dR_hists[cat + str(i)] = gDirectory.Get("h_shower_"+cat + str(i))
     shower_dR_hists[cat + str(i)].SetLineColor(colors[cat])
     if isMC: shower_dR_hists[cat + str(i)].SetFillColor(colors[cat])
 
-    outtree.Draw("deltaZ>>h_deltaZ_" + cat + str(i) + "(175,-175,175)", theCut + " && cnn > " + cnn_cut + " && is_track")
+    outtree.Draw("deltaZ>>h_deltaZ_" + cat + str(i) + "(175,-175,175)", theCut + " && " + cnn_str + " > " + cnn_cut + " && is_track")
     deltaZ_hists[cat + str(i)] = gDirectory.Get("h_deltaZ_"+cat + str(i))
     deltaZ_hists[cat + str(i)].SetLineColor(colors[cat])
     if isMC: deltaZ_hists[cat + str(i)].SetFillColor(colors[cat])
 
-    outtree.Draw("shower_deltaZ>>h_shower_deltaZ_" + cat + str(i) + "(175,-175,175)", theCut + " && cnn < " + cnn_cut + " && is_shower")
+    outtree.Draw("shower_deltaZ>>h_shower_deltaZ_" + cat + str(i) + "(175,-175,175)", theCut + " && " + cnn_str + " < " + cnn_cut + " && is_shower")
     shower_deltaZ_hists[cat + str(i)] = gDirectory.Get("h_shower_deltaZ_"+cat + str(i))
     shower_deltaZ_hists[cat + str(i)].SetLineColor(colors[cat])
     if isMC: shower_deltaZ_hists[cat + str(i)].SetFillColor(colors[cat])
@@ -367,7 +411,7 @@ for i in range(0, nVT):
   
     chi2_cut = cuts[cat]  + " && vertex_type == " + str(i)
 
-    outtree.Draw( "chi2>>hChi2" + cat + str(i) + "(100,0,500)", theCut + " && cnn > " + cnn_cut + " && is_track" )
+    outtree.Draw( "chi2>>hChi2" + cat + str(i) + "(100,0,500)", theCut + " && " + cnn_str + " > " + cnn_cut + " && is_track" )
     chi2_hists[cat + str(i)] = gDirectory.Get("hChi2"+cat + str(i))
     chi2_hists[cat + str(i)].SetLineColor(colors[cat])
     if isMC: chi2_hists[cat + str(i)].SetFillColor(colors[cat])
@@ -377,17 +421,22 @@ for i in range(0, nVT):
     cnn_hists[cat + str(i)].SetLineColor(colors[cat])
     if isMC: cnn_hists[cat + str(i)].SetFillColor(colors[cat])
 
+    outtree.Draw( "cnn_collection>>hCNN_collection" + cat + str(i) + "(100,0,1)", theCut)
+    cnn_collection_hists[cat + str(i)] = gDirectory.Get("hCNN_collection"+cat + str(i))
+    cnn_collection_hists[cat + str(i)].SetLineColor(colors[cat])
+    if isMC: cnn_collection_hists[cat + str(i)].SetFillColor(colors[cat])
+
     outtree.Draw( "cnn_michel>>hCNN_michel" + cat + str(i) + "(100,0,1)", theCut  )
     cnn_michel_hists[cat + str(i)] = gDirectory.Get("hCNN_michel"+cat + str(i))
     cnn_michel_hists[cat + str(i)].SetLineColor(colors[cat])
     if isMC: cnn_michel_hists[cat + str(i)].SetFillColor(colors[cat])
 
-    outtree.Draw("nHits>>h_shower_nHits" + cat + str(i) + "(500,0,2000)", theCut + " && cnn < " + cnn_cut + " && is_shower")
+    outtree.Draw("nHits>>h_shower_nHits" + cat + str(i) + "(500,0,2000)", theCut + " && " + cnn_str + " < " + cnn_cut + " && is_shower")
     shower_nHits_hists[cat + str(i)] = gDirectory.Get("h_shower_nHits"+cat + str(i))
     shower_nHits_hists[cat + str(i)].SetLineColor(colors[cat])
     if isMC: shower_nHits_hists[cat + str(i)].SetFillColor(colors[cat])
 
-    outtree.Draw("nHits>>h_track_nHits" + cat + str(i) + "(100,0,2000)", theCut + " && cnn > " + cnn_cut + " && is_track")
+    outtree.Draw("nHits>>h_track_nHits" + cat + str(i) + "(100,0,2000)", theCut + " && " + cnn_str + " > " + cnn_cut + " && is_track")
     track_nHits_hists[cat + str(i)] = gDirectory.Get("h_track_nHits"+cat + str(i))
     track_nHits_hists[cat + str(i)].SetLineColor(colors[cat])
     if isMC: track_nHits_hists[cat + str(i)].SetFillColor(colors[cat])
@@ -400,6 +449,7 @@ for i in range(0, nVT):
   slice_stack = THStack("slice_stack" + str(i), "")
   chi2_stack = THStack("chi2_stack" + str(i), "")
   cnn_stack = THStack("cnn_stack" + str(i), "") 
+  cnn_collection_stack = THStack("cnn_collection_stack" + str(i), "") 
   cnn_michel_stack = THStack("cnn_michel_stack" + str(i), "") 
   shower_nHits_stack = THStack("shower_nHits_stack" + str(i), "")
   track_nHits_stack  = THStack("track_nHits_stack" + str(i), "")
@@ -412,6 +462,7 @@ for i in range(0, nVT):
     slice_stack.Add(slice_hists[cat + str(i)])
     chi2_stack.Add(chi2_hists[cat + str(i)])
     cnn_stack.Add(cnn_hists[cat + str(i)])
+    cnn_collection_stack.Add(cnn_collection_hists[cat + str(i)])
     cnn_michel_stack.Add(cnn_michel_hists[cat + str(i)])
     shower_dR_stack.Add(shower_dR_hists[cat + str(i)])
     deltaZ_stack.Add(deltaZ_hists[cat + str(i)])
@@ -429,6 +480,7 @@ for i in range(0, nVT):
   slice_stack.Write("slice_stack" + str(i))
   chi2_stack.Write("chi2_stack" + str(i))
   cnn_stack.Write("cnn_stack" + str(i))
+  cnn_collection_stack.Write("cnn_collection_stack" + str(i))
   cnn_michel_stack.Write("cnn_michel_stack" + str(i))
 leg.Write("leg")
 
