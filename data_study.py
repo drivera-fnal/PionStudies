@@ -31,6 +31,10 @@ startDirY = array("d", [0])
 beamDirZ = array("d", [0])
 beamDirX = array("d", [0])
 beamDirY = array("d", [0])
+chi2 = array("d", [0])
+cnn = array("d", [0])
+cnn_collection = array("d", [0])
+
 
 outtree.Branch("endZ",        endZ,       "endZ/D"  )
 outtree.Branch("length",      length,     "length/D")
@@ -46,6 +50,9 @@ outtree.Branch("startDirY",   startDirY,  "startDirY/D")
 outtree.Branch("beamDirZ",    beamDirZ,   "beamDirZ/D")
 outtree.Branch("beamDirX",    beamDirX,   "beamDirX/D")
 outtree.Branch("beamDirY",    beamDirY,   "beamDirY/D")
+outtree.Branch("chi2",    chi2,   "chi2/D")
+outtree.Branch("cnn",    cnn,   "cnn/D")
+outtree.Branch("cnn_collection",    cnn_collection,   "cnn_collection/D")
 
 
 
@@ -76,6 +83,11 @@ for e in tree:
   startDirX[0] = e.reco_beam_trackDirX
   startDirY[0] = e.reco_beam_trackDirY
 
+  chi2[0] = e.reco_beam_Chi2_proton / e.reco_beam_Chi2_ndof
+  cnn[0] = e.reco_beam_PFP_trackScore
+  cnn_collection[0] = e.reco_beam_PFP_trackScore_collection
+
+
   outtree.Fill()
 
 outtree.Draw( "length>>lenhist(40,0,500.)" )
@@ -96,7 +108,14 @@ deltaXhist = gDirectory.Get("deltaXhist")
 outtree.Draw( "startY-beamY>>deltaYhist(50, -100., 100.)" )
 deltaYhist = gDirectory.Get("deltaYhist")
 
+outtree.Draw( "chi2>>chi2hist(100, 0., 400.)" )
+chi2hist = gDirectory.Get("chi2hist")
 
+outtree.Draw( "cnn>>cnnhist(100, 0., 1.)" )
+cnnhist = gDirectory.Get("cnnhist")
+
+outtree.Draw( "cnn_collection>>cnn_collectionhist(100, 0., 1.)" )
+cnn_collectionhist = gDirectory.Get("cnn_collectionhist")
 
 outtree.Draw( "endZ>>endZhist(40, 0., 500.)" )
 endZhist = gDirectory.Get("endZhist")
@@ -127,6 +146,17 @@ set_style(deltaYhist, "#DeltaY (cm)", "")
 markers(deltaYhist)
 deltaYhist.Write()
 
+set_style(chi2hist, "#chi^{2}", "")
+markers(chi2hist)
+chi2hist.Write()
+
+set_style(cnnhist, "Track Score", "")
+markers(cnnhist)
+cnnhist.Write()
+
+set_style(cnn_collectionhist, "Track Score", "")
+markers(cnn_collectionhist)
+cnn_collectionhist.Write()
 
 set_style(endZhist, "Track End Z (cm)", "")
 markers(endZhist)
@@ -161,6 +191,13 @@ startXhist = gDirectory.Get("startX_ang_pos_cut")
 outtree.Draw( "startY>>startY_ang_pos_cut(40, 380., 500.)", "1 " + ang_cut + pos_cut)
 startYhist = gDirectory.Get("startY_ang_pos_cut")
 
+outtree.Draw( "chi2>>chi2_ang_pos_cut(100, 0., 400.)", "1 " + ang_cut + pos_cut)
+chi2hist = gDirectory.Get("chi2_ang_pos_cut")
+
+outtree.Draw( "cnn>>cnn_ang_pos_cut(100, 0., 1.)", "1 " + ang_cut + pos_cut)
+cnnhist = gDirectory.Get("cnn_ang_pos_cut")
+
+
 first_cut_dir.cd()
 set_style(lenhist, "Track Length (cm)", "")
 markers(lenhist)
@@ -181,6 +218,17 @@ startZhist.Write()
 set_style(endZhist, "Track End Z (cm)", "")
 markers(endZhist)
 endZhist.Write()
+
+set_style(chi2hist, "#chi^{2}", "")
+markers(chi2hist)
+chi2hist.Write()
+
+set_style(cnnhist, "cnn", "")
+markers(cnnhist)
+cnnhist.Write()
+
+
+
 
 ###################################################
 
@@ -207,6 +255,13 @@ startXhist = gDirectory.Get("startX_ang_pos_endZ_cut")
 outtree.Draw( "startY>>startY_ang_pos_endZ_cut(40, 380., 500.)", "1 " + ang_cut + pos_cut + endZ_cut)
 startYhist = gDirectory.Get("startY_ang_pos_endZ_cut")
 
+outtree.Draw( "chi2>>chi2_ang_pos_endZ_cut(100, 0., 400.)", "1 " + ang_cut + pos_cut + endZ_cut)
+chi2hist = gDirectory.Get("chi2_ang_pos_endZ_cut")
+
+outtree.Draw( "cnn>>cnn_ang_pos_endZ_cut(100, 0., 1.)", "1 " + ang_cut + pos_cut + endZ_cut)
+cnnhist = gDirectory.Get("cnn_ang_pos_endZ_cut")
+
+
 second_cut_dir.cd()
 
 set_style(lenhist, "Track Length (cm)", "")
@@ -229,5 +284,75 @@ set_style(endZhist, "Track End Z (cm)", "")
 markers(endZhist)
 endZhist.Write()
 
+set_style(chi2hist, "#chi^{2}", "")
+markers(chi2hist)
+chi2hist.Write()
+
+set_style(cnnhist, "cnn", "")
+markers(cnnhist)
+cnnhist.Write()
+
 ###########################
+
+## Now with chi2 cuts ###
+third_cut_dir = fout.mkdir( "third_cut_dir", "Cuts include start position and angular cuts and track length cut and chi2 cut")
+third_cut_dir.cd()
+
+
+endZ_cut = " && endZ < 226. "
+chi2_cut = " && chi2 > 140. "
+
+
+outtree.Draw( "length>>len_ang_pos_endZ_chi2_cut(40,0.,500.)", "1 " + ang_cut + pos_cut + endZ_cut + chi2_cut)
+lenhist = gDirectory.Get("len_ang_pos_endZ_chi2_cut")
+
+outtree.Draw( "endZ>>endZ_ang_pos_endZ_chi2_cut(40,0.,500.)", "1 " + ang_cut + pos_cut + endZ_cut + chi2_cut)
+endZhist = gDirectory.Get("endZ_ang_pos_endZ_chi2_cut")
+
+outtree.Draw( "startZ>>startZ_ang_pos_endZ_chi2_cut(80, 0., 80.)", "1 " + ang_cut + pos_cut + endZ_cut + chi2_cut)
+startZhist = gDirectory.Get("startZ_ang_pos_endZ_chi2_cut")
+
+outtree.Draw( "startX>>startX_ang_pos_endZ_chi2_cut(40, -100., 100.)", "1 " + ang_cut + pos_cut + endZ_cut + chi2_cut)
+startXhist = gDirectory.Get("startX_ang_pos_endZ_chi2_cut")
+
+outtree.Draw( "startY>>startY_ang_pos_endZ_chi2_cut(40, 380., 500.)", "1 " + ang_cut + pos_cut + endZ_cut + chi2_cut)
+startYhist = gDirectory.Get("startY_ang_pos_endZ_chi2_cut")
+
+outtree.Draw( "chi2>>chi2_ang_pos_endZ_chi2_cut(100, 0., 400.)", "1 " + ang_cut + pos_cut + endZ_cut + chi2_cut)
+chi2hist = gDirectory.Get("chi2_ang_pos_endZ_chi2_cut")
+
+outtree.Draw( "cnn>>cnn_ang_pos_endZ_chi2_cut(100, 0., 1.)", "1 " + ang_cut + pos_cut + endZ_cut + chi2_cut)
+cnnhist = gDirectory.Get("cnn_ang_pos_endZ_chi2_cut")
+
+
+third_cut_dir.cd()
+
+set_style(lenhist, "Track Length (cm)", "")
+markers(lenhist)
+lenhist.Write()
+
+set_style(startXhist, "Track Start X (cm)", "")
+markers(startXhist)
+startXhist.Write()
+
+set_style(startYhist, "Track Start Y (cm)", "")
+markers(startYhist)
+startYhist.Write()
+
+set_style(startZhist, "Track Start Z (cm)", "")
+markers(startZhist)
+startZhist.Write()
+
+set_style(endZhist, "Track End Z (cm)", "")
+markers(endZhist)
+endZhist.Write()
+
+set_style(chi2hist, "#chi^{2}", "")
+markers(chi2hist)
+chi2hist.Write()
+
+set_style(cnnhist, "cnn", "")
+markers(cnnhist)
+cnnhist.Write()
+
 
