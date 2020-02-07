@@ -14,6 +14,7 @@
 #include "eventSelection.h"
 #include <ROOT/RDataFrame.hxx>
 
+#include "backgrounds.h"
 
 #include <iostream>
 #include <math.h>
@@ -30,7 +31,9 @@ using namespace ROOT::VecOps;
 //***********************
 //Main Function
 
-int eventSelection(const string path = inputFile, const string dataFile = "/Users/fstocker/cernbox/pionAnalyzer/pionAnalyzerTree/pionana_5387_1GeV_1_16_20.root" ){
+int eventSelection(const string path = inputFile, const string dataFile = "/Users/fstocker/cernbox/pionAnalyzer/pionAnalyzerTree/pionana_5387_1GeV_1_16_20.root", bool doCounting=true, bool doBatch=false ){
+
+   gROOT->SetBatch(doBatch);
 
    gInterpreter->GenerateDictionary("vector<vector<int>>", "vector");
    //MC in command line
@@ -54,6 +57,11 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
       .Define("piPlus", pdg_piPlus)
       .Define("piMinus", pdg_piMinus)
       .Define("electron", pdg_electron) 
+      .Define("primaryMuon", primaryMuon, {"reco_beam_true_byHits_PDG", "reco_beam_true_byHits_process", "reco_beam_true_byHits_matched", "reco_beam_true_byHits_origin" })
+      .Define("isCosmic", isCosmic, {"reco_beam_true_byHits_origin"})
+      .Define("isDecay", isDecay, {"reco_beam_true_byHits_process", "reco_beam_true_byHits_origin" })
+      .Define("isExtraBeam", isExtraBeam, {"reco_beam_true_byHits_process", "reco_beam_true_byHits_matched", "reco_beam_true_byHits_origin" })
+      .Define("upstreamInt", upstreamInt, {"reco_beam_true_byHits_process", "reco_beam_true_byHits_origin" })
 
       .Define("good_reco", good_reco, {"quality_reco_view_0_wire_backtrack", "quality_reco_view_1_wire_backtrack", 
             "quality_reco_view_2_wire_backtrack", "quality_reco_view_0_max_segment", "quality_reco_view_1_max_segment", "quality_reco_view_2_max_segment"})
@@ -145,6 +153,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
    auto n_mc_all = mc_all_cutValues.Count();
    auto n_data_all = data_all_cutValues.Count();
 
+
    //Label within MC files who passed which CUT (this can help to see when what drops out)
    auto mc_output_with_label = mc_all_cutValues
       .Define("CUTflow_step1_passBeamType","return primary_isBeamType" )
@@ -177,6 +186,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
    //******************
    //    Cuts are concatenated
    /* *******Beam Cut******* */
+
 
    auto mcCUT_beamType = mc_output_with_label 
       .Filter("primary_isBeamType == true");
@@ -357,100 +367,102 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
 
 
 
-   // ********* Output Counting  **************//
-   //
+   if( doCounting ){
+     // ********* Output Counting  **************//
+     //
 
-   std::cout << "Event Selection Cuts " << std::endl;
-   std::cout << "********************************" << std::endl;
-   std::cout << "Total MC Events = " << *n_mc_all << std::endl;
-   std::cout << "Total Data Events = " << *n_data_all << std::endl;
-   std::cout << "********************************" << std::endl;
-   std::cout << "TRUE Event types" << std::endl;
-   std::cout << "Primary Pion Inelastic with Elastic before = " << *n_true_primPionInel_withElastic << std::endl;
-   std::cout << "Events without primary Pion = " << *n_mc_all - *n_true_primPionInel << std::endl;
-   std::cout << "Events with true Pion Daughters = " << *mc_all.Filter("true_pion_daughter > 0").Count() << std::endl;
-   std::cout << "Combined Signal = " << *n_true_combinedSignal << std::endl;
-   std::cout << "True Abs Signal = " << *n_true_absSignal << std::endl;
-   std::cout << "True Cex Signal = " << *n_true_cexSignal << std::endl;
-   std::cout << "True N-Pi0 Signal = " << *n_true_nPi0Signal << std::endl;
-   std::cout << "True BackGround = " << *n_true_backGround << std::endl;
-   std::cout << "********************************" << std::endl;
+     std::cout << "Event Selection Cuts " << std::endl;
+     std::cout << "********************************" << std::endl;
+     std::cout << "Total MC Events = " << *n_mc_all << std::endl;
+     std::cout << "Total Data Events = " << *n_data_all << std::endl;
+     std::cout << "********************************" << std::endl;
+     std::cout << "TRUE Event types" << std::endl;
+     std::cout << "Primary Pion Inelastic with Elastic before = " << *n_true_primPionInel_withElastic << std::endl;
+     std::cout << "Events without primary Pion = " << *n_mc_all - *n_true_primPionInel << std::endl;
+     std::cout << "Events with true Pion Daughters = " << *mc_all.Filter("true_pion_daughter > 0").Count() << std::endl;
+     std::cout << "Combined Signal = " << *n_true_combinedSignal << std::endl;
+     std::cout << "True Abs Signal = " << *n_true_absSignal << std::endl;
+     std::cout << "True Cex Signal = " << *n_true_cexSignal << std::endl;
+     std::cout << "True N-Pi0 Signal = " << *n_true_nPi0Signal << std::endl;
+     std::cout << "True BackGround = " << *n_true_backGround << std::endl;
+     std::cout << "********************************" << std::endl;
 
-   std::cout << "Starting the CUTs on Total MC Events = " << *n_mc_all << std::endl;
-   std::cout << "Starting the CUTs on Total DATA Events = " << *n_data_all << std::endl;
-   std::cout << "---------PIMARY PARTICLE----" << std::endl;
-   std::cout << "CUT 1 = Beam Particle Track Like  = " << *N_mcCUT_beamType << std::endl;
-   std::cout << "DATA CUT 1 = " << *N_dataCUT_beamType << std::endl;
-   std::cout << "--------- True Combined Signal = " << *mcCUT_beamType.Filter("true_combinedSignal == 1").Count() << std::endl;
-   std::cout << "--------- True Absorption  Signal = " << *mcCUT_beamType.Filter("true_absSignal == 1").Count() << std::endl;
-   std::cout << "--------- True Chex  Signal = " << *mcCUT_beamType.Filter("true_chexSignal == 1").Count() << std::endl;
-   std::cout << "--------- True N-Pi0  Signal = " << *mcCUT_beamType.Filter("true_nPi0Signal == 1").Count() << std::endl;
-   std::cout << "--------- True BackGround = " << *mcCUT_beamType.Filter("true_backGround == 1").Count() << std::endl;
-   std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_beamType.Filter("true_primPionInel == 0 ").Count() << std::endl;
+     std::cout << "Starting the CUTs on Total MC Events = " << *n_mc_all << std::endl;
+     std::cout << "Starting the CUTs on Total DATA Events = " << *n_data_all << std::endl;
+     std::cout << "---------PIMARY PARTICLE----" << std::endl;
+     std::cout << "CUT 1 = Beam Particle Track Like  = " << *N_mcCUT_beamType << std::endl;
+     std::cout << "DATA CUT 1 = " << *N_dataCUT_beamType << std::endl;
+     std::cout << "--------- True Combined Signal = " << *mcCUT_beamType.Filter("true_combinedSignal == 1").Count() << std::endl;
+     std::cout << "--------- True Absorption  Signal = " << *mcCUT_beamType.Filter("true_absSignal == 1").Count() << std::endl;
+     std::cout << "--------- True Chex  Signal = " << *mcCUT_beamType.Filter("true_chexSignal == 1").Count() << std::endl;
+     std::cout << "--------- True N-Pi0  Signal = " << *mcCUT_beamType.Filter("true_nPi0Signal == 1").Count() << std::endl;
+     std::cout << "--------- True BackGround = " << *mcCUT_beamType.Filter("true_backGround == 1").Count() << std::endl;
+     std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_beamType.Filter("true_primPionInel == 0 ").Count() << std::endl;
 
-   std::cout << std::endl;
-   std::cout << "CUT 2 = Beam Position  = " << *N_mcCUT_beamCut << std::endl;
-   std::cout << "DATA CUT 2 = " << *N_dataCUT_beamCut << std::endl;
-   std::cout << "--------- True Combined Signal = " << *mcCUT_beamCut.Filter("true_combinedSignal == 1").Count() << std::endl;
-   std::cout << "--------- True Absorption  Signal = " << *mcCUT_beamCut.Filter("true_absSignal == 1").Count() << std::endl;
-   std::cout << "--------- True Chex  Signal = " << *mcCUT_beamCut.Filter("true_chexSignal == 1").Count() << std::endl;
-   std::cout << "--------- True N-Pi0  Signal = " << *mcCUT_beamCut.Filter("true_nPi0Signal == 1").Count() << std::endl;
-   std::cout << "--------- True BackGround = " << *mcCUT_beamCut.Filter("true_backGround == 1").Count() << std::endl;
-   std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_beamCut.Filter("true_primPionInel == 0").Count() << std::endl;
+     std::cout << std::endl;
+     std::cout << "CUT 2 = Beam Position  = " << *N_mcCUT_beamCut << std::endl;
+     std::cout << "DATA CUT 2 = " << *N_dataCUT_beamCut << std::endl;
+     std::cout << "--------- True Combined Signal = " << *mcCUT_beamCut.Filter("true_combinedSignal == 1").Count() << std::endl;
+     std::cout << "--------- True Absorption  Signal = " << *mcCUT_beamCut.Filter("true_absSignal == 1").Count() << std::endl;
+     std::cout << "--------- True Chex  Signal = " << *mcCUT_beamCut.Filter("true_chexSignal == 1").Count() << std::endl;
+     std::cout << "--------- True N-Pi0  Signal = " << *mcCUT_beamCut.Filter("true_nPi0Signal == 1").Count() << std::endl;
+     std::cout << "--------- True BackGround = " << *mcCUT_beamCut.Filter("true_backGround == 1").Count() << std::endl;
+     std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_beamCut.Filter("true_primPionInel == 0").Count() << std::endl;
 
-   std::cout << std::endl;
-   std::cout << "CUT 3 = Primary in APA 3  = " << *N_mcCUT_endAPA3 << std::endl;
-   std::cout << "DATA CUT 3 = " << *N_dataCUT_endAPA3 << std::endl;
-   std::cout << "--------- True Combined Signal = " << *mcCUT_endAPA3.Filter("true_combinedSignal == 1").Count() << std::endl;
-   std::cout << "--------- True Absorption  Signal = " << *mcCUT_endAPA3.Filter("true_absSignal == 1").Count() << std::endl;
-   std::cout << "--------- True Chex  Signal = " << *mcCUT_endAPA3.Filter("true_chexSignal == 1").Count() << std::endl;
-   std::cout << "--------- True N-Pi0  Signal = " << *mcCUT_endAPA3.Filter("true_nPi0Signal == 1").Count() << std::endl;
-   std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_endAPA3.Filter("true_primPionInel == 0 ").Count() << std::endl;
-   std::cout << "--------- True BackGround = " << *mcCUT_endAPA3.Filter("true_backGround == 1").Count() << std::endl;
-   std::cout << "--------- Events with true Pion Daughters = " << *mcCUT_endAPA3.Filter("true_pion_daughter > 0").Count() << std::endl;
+     std::cout << std::endl;
+     std::cout << "CUT 3 = Primary in APA 3  = " << *N_mcCUT_endAPA3 << std::endl;
+     std::cout << "DATA CUT 3 = " << *N_dataCUT_endAPA3 << std::endl;
+     std::cout << "--------- True Combined Signal = " << *mcCUT_endAPA3.Filter("true_combinedSignal == 1").Count() << std::endl;
+     std::cout << "--------- True Absorption  Signal = " << *mcCUT_endAPA3.Filter("true_absSignal == 1").Count() << std::endl;
+     std::cout << "--------- True Chex  Signal = " << *mcCUT_endAPA3.Filter("true_chexSignal == 1").Count() << std::endl;
+     std::cout << "--------- True N-Pi0  Signal = " << *mcCUT_endAPA3.Filter("true_nPi0Signal == 1").Count() << std::endl;
+     std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_endAPA3.Filter("true_primPionInel == 0 ").Count() << std::endl;
+     std::cout << "--------- True BackGround = " << *mcCUT_endAPA3.Filter("true_backGround == 1").Count() << std::endl;
+     std::cout << "--------- Events with true Pion Daughters = " << *mcCUT_endAPA3.Filter("true_pion_daughter > 0").Count() << std::endl;
 
-   std::cout << std::endl;
-   std::cout << "********************************" << std::endl;
-   std::cout << "RECO COMBINED EVENTS " << std::endl;
-   std::cout << "********************************" << std::endl;
-   std::cout << "CUT 4 = Reject Pion Like Track Objects Chi2  = " << *N_mcCUT_noPionDaughter << std::endl;
-   std::cout << "DATA CUT 4 = " << *N_dataCUT_noPionDaughter << std::endl;
-   std::cout << "--------- True Combined Signal = " << *mc_COMBINED_Signal.Filter("true_combinedSignal == 1").Count() << std::endl;
-   std::cout << "--------- True Absorption  Signal = " << *mc_COMBINED_Signal.Filter("true_absSignal == 1").Count() << std::endl;
-   std::cout << "--------- True Chex  Signal = " << *mc_COMBINED_Signal.Filter("true_chexSignal == 1").Count() << std::endl;
-   std::cout << "--------- True N-Pi0  Signal = " << *mc_COMBINED_Signal.Filter("true_nPi0Signal == 1").Count() << std::endl;
-   std::cout << "--------- True BackGround = " << *mc_COMBINED_Signal.Filter("true_backGround == 1").Count() << std::endl;
-   std::cout << "--------- Contamination of primary NON-pions = " << *mc_COMBINED_Signal.Filter("true_primPionInel == 0").Count() << std::endl;
-   std::cout << "--------- Contamination of Events with Pion Daughter = " << *mc_COMBINED_Signal.Filter("true_pion_daughter > 0").Count() << std::endl;
+     std::cout << std::endl;
+     std::cout << "********************************" << std::endl;
+     std::cout << "RECO COMBINED EVENTS " << std::endl;
+     std::cout << "********************************" << std::endl;
+     std::cout << "CUT 4 = Reject Pion Like Track Objects Chi2  = " << *N_mcCUT_noPionDaughter << std::endl;
+     std::cout << "DATA CUT 4 = " << *N_dataCUT_noPionDaughter << std::endl;
+     std::cout << "--------- True Combined Signal = " << *mc_COMBINED_Signal.Filter("true_combinedSignal == 1").Count() << std::endl;
+     std::cout << "--------- True Absorption  Signal = " << *mc_COMBINED_Signal.Filter("true_absSignal == 1").Count() << std::endl;
+     std::cout << "--------- True Chex  Signal = " << *mc_COMBINED_Signal.Filter("true_chexSignal == 1").Count() << std::endl;
+     std::cout << "--------- True N-Pi0  Signal = " << *mc_COMBINED_Signal.Filter("true_nPi0Signal == 1").Count() << std::endl;
+     std::cout << "--------- True BackGround = " << *mc_COMBINED_Signal.Filter("true_backGround == 1").Count() << std::endl;
+     std::cout << "--------- Contamination of primary NON-pions = " << *mc_COMBINED_Signal.Filter("true_primPionInel == 0").Count() << std::endl;
+     std::cout << "--------- Contamination of Events with Pion Daughter = " << *mc_COMBINED_Signal.Filter("true_pion_daughter > 0").Count() << std::endl;
 
-   std::cout << std::endl;
-   std::cout << "********************************" << std::endl;
-   std::cout << "RECO Charge Exchange EVENTS " << std::endl;
-   std::cout << "********************************" << std::endl;
-   std::cout << "Events with Pi0 Shower  = " << *N_mcSIGNAL_cex << std::endl;
-   std::cout << "DATA  = " << *N_dataSIGNAL_cex << std::endl;
-   std::cout << "--------- True Combined Signal = " << *mcSIGNAL_cex.Filter("true_combinedSignal == 1").Count() << std::endl;
-   std::cout << "--------- True Absorption  Signal = " << *mcSIGNAL_cex.Filter("true_absSignal == 1").Count() << std::endl;
-   std::cout << "--------- True Chex  Signal = " << *mcSIGNAL_cex.Filter("true_chexSignal == 1").Count() << std::endl;
-   std::cout << "--------- True N-Pi0  Signal = " << *mcSIGNAL_cex.Filter("true_nPi0Signal == 1").Count() << std::endl;
-   std::cout << "--------- True BackGround = " << *mcSIGNAL_cex.Filter("true_backGround == 1").Count() << std::endl;
-   std::cout << "--------- Contamination of primary NON-pions = " << *mcSIGNAL_cex.Filter("true_primPionInel == 0 ").Count() << std::endl;
-   std::cout << "--------- Contamination of Events with Pion Daughter = " << *mcSIGNAL_cex.Filter("true_pion_daughter > 0").Count() << std::endl;
+     std::cout << std::endl;
+     std::cout << "********************************" << std::endl;
+     std::cout << "RECO Charge Exchange EVENTS " << std::endl;
+     std::cout << "********************************" << std::endl;
+     std::cout << "Events with Pi0 Shower  = " << *N_mcSIGNAL_cex << std::endl;
+     std::cout << "DATA  = " << *N_dataSIGNAL_cex << std::endl;
+     std::cout << "--------- True Combined Signal = " << *mcSIGNAL_cex.Filter("true_combinedSignal == 1").Count() << std::endl;
+     std::cout << "--------- True Absorption  Signal = " << *mcSIGNAL_cex.Filter("true_absSignal == 1").Count() << std::endl;
+     std::cout << "--------- True Chex  Signal = " << *mcSIGNAL_cex.Filter("true_chexSignal == 1").Count() << std::endl;
+     std::cout << "--------- True N-Pi0  Signal = " << *mcSIGNAL_cex.Filter("true_nPi0Signal == 1").Count() << std::endl;
+     std::cout << "--------- True BackGround = " << *mcSIGNAL_cex.Filter("true_backGround == 1").Count() << std::endl;
+     std::cout << "--------- Contamination of primary NON-pions = " << *mcSIGNAL_cex.Filter("true_primPionInel == 0 ").Count() << std::endl;
+     std::cout << "--------- Contamination of Events with Pion Daughter = " << *mcSIGNAL_cex.Filter("true_pion_daughter > 0").Count() << std::endl;
 
-   std::cout << std::endl;
-   std::cout << "********************************" << std::endl;
-   std::cout << "RECO Absorption EVENTS " << std::endl;
-   std::cout << "********************************" << std::endl;
-   std::cout << "Events without Pi0 Shower  = " << *N_mcSIGNAL_abs << std::endl;
-   std::cout << "DATA = " << *N_dataSIGNAL_abs << std::endl;
-   std::cout << "--------- True Combined Signal = " << *mcSIGNAL_abs.Filter("true_combinedSignal == 1").Count() << std::endl;
-   std::cout << "--------- True Absorption  Signal = " << *mcSIGNAL_abs.Filter("true_absSignal == 1").Count() << std::endl;
-   std::cout << "--------- True Chex  Signal = " << *mcSIGNAL_abs.Filter("true_chexSignal == 1").Count() << std::endl;
-   std::cout << "--------- True N-Pi0  Signal = " << *mcSIGNAL_abs.Filter("true_nPi0Signal == 1").Count() << std::endl;
-   std::cout << "--------- True BackGround = " << *mcSIGNAL_abs.Filter("true_backGround == 1").Count() << std::endl;
-   std::cout << "--------- Contamination of primary NON-pions = " << *mcSIGNAL_abs.Filter("true_primPionInel == 0").Count() << std::endl;
-   std::cout << "--------- Contamination of Events with Pion Daughter = " << *mcSIGNAL_abs.Filter("true_pion_daughter > 0").Count() << std::endl;
+     std::cout << std::endl;
+     std::cout << "********************************" << std::endl;
+     std::cout << "RECO Absorption EVENTS " << std::endl;
+     std::cout << "********************************" << std::endl;
+     std::cout << "Events without Pi0 Shower  = " << *N_mcSIGNAL_abs << std::endl;
+     std::cout << "DATA = " << *N_dataSIGNAL_abs << std::endl;
+     std::cout << "--------- True Combined Signal = " << *mcSIGNAL_abs.Filter("true_combinedSignal == 1").Count() << std::endl;
+     std::cout << "--------- True Absorption  Signal = " << *mcSIGNAL_abs.Filter("true_absSignal == 1").Count() << std::endl;
+     std::cout << "--------- True Chex  Signal = " << *mcSIGNAL_abs.Filter("true_chexSignal == 1").Count() << std::endl;
+     std::cout << "--------- True N-Pi0  Signal = " << *mcSIGNAL_abs.Filter("true_nPi0Signal == 1").Count() << std::endl;
+     std::cout << "--------- True BackGround = " << *mcSIGNAL_abs.Filter("true_backGround == 1").Count() << std::endl;
+     std::cout << "--------- Contamination of primary NON-pions = " << *mcSIGNAL_abs.Filter("true_primPionInel == 0").Count() << std::endl;
+     std::cout << "--------- Contamination of Events with Pion Daughter = " << *mcSIGNAL_abs.Filter("true_pion_daughter > 0").Count() << std::endl;
 
+   }
 
 
 
