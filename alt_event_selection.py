@@ -26,8 +26,6 @@ parser.add_argument( "--showerHitsHigh", type=int, help='shower hits for cut', d
 
 args = parser.parse_args()
 
-
-
 def test_good_reco(e):
   if (e.quality_reco_view_2_wire_backtrack > 15. or e.quality_reco_view_1_wire_backtrack > 15. or e.quality_reco_view_0_wire_backtrack > 15.): return 0
   elif (e.quality_reco_view_2_max_segment > 15. or e.quality_reco_view_1_max_segment > 15. or e.quality_reco_view_0_max_segment > 15.): return 0
@@ -40,7 +38,8 @@ tree = f.Get("pionana/beamana")
 
 fout = TFile( args.o, "RECREATE" )
 outtree = TTree("tree","")
-
+incident = TH1D("incident", "", 40, 0., 2000.)
+interacting = TH1D("interacting", "", 40, 0., 2000.)
 
 vertex = array("i", [0])
 matched = array("i", [0])
@@ -361,6 +360,11 @@ for e in tree:
       else: n_selected_abs += 1
     new_signal_selection[0] = abs_cex(e, dR_cut = 999.)
 
+    for energy in [i for i in e.reco_beam_incidentEnergies]:
+      incident.Fill(energy)
+    if signal_selection[0] and len([i for i in e.reco_beam_incidentEnergies]):
+      interacting.Fill(e.reco_beam_interactingEnergy)
+
 
     if(e.MC): 
       vertex_res[0] = sqrt( (e.reco_beam_endZ - e.true_beam_endZ)**2 + (e.reco_beam_endX - e.true_beam_endX)**2 + (e.reco_beam_endY - e.true_beam_endY)**2 )
@@ -379,4 +383,6 @@ print "Selected Abs\t\t", outtree.GetEntries("passes_PID && passes_beam_type && 
 
 fout.cd()
 outtree.Write()
+incident.Write()
+interacting.Write()
 fout.Close()
