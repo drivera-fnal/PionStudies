@@ -124,3 +124,5 @@ tags
 *.png
 *.pdf
 *.pyc
+
+*AutoDict*
