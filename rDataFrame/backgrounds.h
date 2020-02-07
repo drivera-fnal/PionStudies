@@ -1,5 +1,5 @@
 auto primaryMuon = [](int pdg, std::string process, bool matched, int origin ){
-  return ( abs(pdg) == -13 && process == "primary" && matched && origin == 4 );
+  return ( abs(pdg) == 13 && process == "primary" && matched && origin == 4 );
 };
 
 auto isDecay = [](std::string process, int origin){
