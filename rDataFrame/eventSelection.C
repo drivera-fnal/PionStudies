@@ -30,7 +30,7 @@ using namespace ROOT::VecOps;
 //***********************
 //Main Function
 
-int eventSelection(const string path = inputFile, const string dataFile = "../../../pionAnalyzerTree/pionana_5387_1GeV_1_16_20.root" ){
+int eventSelection(const string path = inputFile, const string dataFile = "/Users/fstocker/cernbox/pionAnalyzer/pionAnalyzerTree/pionana_5387_1GeV_1_16_20.root" ){
 
    gInterpreter->GenerateDictionary("vector<vector<int>>", "vector");
    //MC in command line
@@ -178,7 +178,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
    //    Cuts are concatenated
    /* *******Beam Cut******* */
 
-   auto mcCUT_beamType = mc_all_cutValues
+   auto mcCUT_beamType = mc_output_with_label 
       .Filter("primary_isBeamType == true");
 
    auto N_mcCUT_beamType = mcCUT_beamType.Count();
@@ -190,6 +190,9 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
 
    auto mcCUT_endAPA3 = mcCUT_beamCut
       .Filter("primary_ends_inAPA3 == true");
+
+   auto mc_snap_primPion = mcCUT_endAPA3.Snapshot("pionana/beamana", "eventSelection_mc_PRIMARYPION.root");
+
 
    auto N_mcCUT_endAPA3 = mcCUT_endAPA3.Count();
 
@@ -228,7 +231,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
    //    Cuts are concatenated
    /* *******Beam Cut******* */
 
-   auto dataCUT_beamType = data_all_cutValues
+   auto dataCUT_beamType = data_output_with_label      
       .Filter("primary_isBeamType == true");
 
    auto N_dataCUT_beamType = dataCUT_beamType.Count();
@@ -364,12 +367,10 @@ int eventSelection(const string path = inputFile, const string dataFile = "../..
    std::cout << "********************************" << std::endl;
    std::cout << "TRUE Event types" << std::endl;
    std::cout << "Primary Pion Inelastic with Elastic before = " << *n_true_primPionInel_withElastic << std::endl;
-   std::cout << "Events without primary Pion = " << *n_mc_all - *n_true_primPionInel - *n_true_primPionInel_withElastic << std::endl;
-   std::cout << "Primary Pion Inelastic without Elastic = " << *n_true_primPionInel << std::endl;
+   std::cout << "Events without primary Pion = " << *n_mc_all - *n_true_primPionInel << std::endl;
    std::cout << "Events with true Pion Daughters = " << *mc_all.Filter("true_pion_daughter > 0").Count() << std::endl;
    std::cout << "Combined Signal = " << *n_true_combinedSignal << std::endl;
    std::cout << "True Abs Signal = " << *n_true_absSignal << std::endl;
-   std::cout << "True Cex Signal = " << *n_true_cexSignal << std::endl;
    std::cout << "True Cex Signal = " << *n_true_cexSignal << std::endl;
    std::cout << "True N-Pi0 Signal = " << *n_true_nPi0Signal << std::endl;
    std::cout << "True BackGround = " << *n_true_backGround << std::endl;

@@ -59,7 +59,12 @@ int primary_chi2(const string path = inputFile){
       .Define("piMinus", pdg_piMinus)
       .Define("electron", pdg_electron)
       .Define("good_reco", good_reco, {"quality_reco_view_0_wire_backtrack", "quality_reco_view_1_wire_backtrack", "quality_reco_view_2_wire_backtrack", "quality_reco_view_0_max_segment", "quality_reco_view_1_max_segment", "quality_reco_view_2_max_segment"})
-      .Define("manual_beamCut_mc", manual_beamPos_mc, {"reco_beam_startX", "reco_beam_startY", "reco_beam_startZ", "reco_beam_trackDirX", "reco_beam_trackDirY", "reco_beam_trackDirZ", "true_beam_startDirX", "true_beam_startDirY", "true_beam_startDirZ"})
+      .Define("manual_beamCut_mc", manual_beamPos_mc, {"reco_beam_startX", "reco_beam_startY", "reco_beam_startZ", 
+            "reco_beam_trackDirX", "reco_beam_trackDirY", "reco_beam_trackDirZ", 
+            "true_beam_startDirX", "true_beam_startDirY", "true_beam_startDirZ",
+            "true_beam_startX", "true_beam_startY", "true_beam_startZ"})
+
+      .Define("primary_ends_inAPA3", endAPA3,{ "reco_beam_endZ"})
       .Define("primary_isBeamType", isBeamType, {"reco_beam_type"})
       .Define("Chi2", "reco_beam_Chi2_proton/reco_beam_Chi2_ndof");
 
@@ -68,7 +73,9 @@ int primary_chi2(const string path = inputFile){
    //******DATA ***************
    auto data_definitions = data_frame
        .Define("good_reco", good_reco, {"quality_reco_view_0_wire_backtrack", "quality_reco_view_1_wire_backtrack", "quality_reco_view_2_wire_backtrack", "quality_reco_view_0_max_segment", "quality_reco_view_1_max_segment", "quality_reco_view_2_max_segment"})
-      .Define("manual_beamCut_data", manual_beamPos_data, {"reco_beam_startX", "reco_beam_startY", "reco_beam_startZ", "reco_beam_trackDirX", "reco_beam_trackDirY", "reco_beam_trackDirZ","data_BI_X", "data_BI_Y", "data_BI_dirX", "data_BI_dirY", "data_BI_dirZ", "data_BI_nMomenta", "data_BI_nTracks"})
+      .Define("manual_beamCut_data", manual_beamPos_data, {"event","reco_beam_startX", "reco_beam_startY", 
+            "reco_beam_startZ", "reco_beam_trackDirX", "reco_beam_trackDirY", "reco_beam_trackDirZ","data_BI_X", 
+            "data_BI_Y", "data_BI_dirX", "data_BI_dirY", "data_BI_dirZ", "data_BI_nMomenta", "data_BI_nTracks"})
       .Define("primary_isBeamType", isBeamType, {"reco_beam_type"})
       .Define("Chi2", "reco_beam_Chi2_proton/reco_beam_Chi2_ndof");
 
