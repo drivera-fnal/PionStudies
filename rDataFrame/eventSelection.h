@@ -35,6 +35,8 @@ double cut_daughter_shower_distance_high = 100.;
 double cut_deltaZ_track = 5.;
 double cut_deltaZ_shower_low = -50.;
 double cut_deltaZ_shower_high = 100.;
+double cut_primary_chi2 = 140.;
+double cut_secondary_chi2 = 50.;
 int cut_nHits_shower_low = 12;
 int cut_nHits_shower_high = 1000;
 
@@ -203,6 +205,14 @@ auto cutFlow = [](bool a, bool b){
    return pass;
 };
 
+auto primary_chi2 = [](double chi2, int ndof){
+
+   bool isPion = false;
+   if(chi2/ndof > cut_primary_chi2) return isPion = true;
+   else return isPion;
+
+};
+
 //has daughter in delta Z
 auto daughter_deltaZ_track = [](std::vector<double> &trk_score, double beam_endZ, std::vector<double> &daughter_endZ, std::vector<double> &daughter_startZ){
 
@@ -229,46 +239,6 @@ auto daughter_deltaZ_track = [](std::vector<double> &trk_score, double beam_endZ
 
 };
 
-auto has_deltaZ_track = [](double deltaZ){
-
-   bool has = false;
-   if(abs(deltaZ) < cut_deltaZ_track) return has = true;
-   else return has;
-
-};
-
-auto daughter_deltaZ_shower= [](std::vector<double> &trk_score, double beam_endZ, std::vector<double> &daughter_endZ, std::vector<double> &daughter_startZ){
-
-   double deltaZ = 300., dummy_1 = 0, dummy_2 = 0, dummy = 0;
-   if(daughter_endZ.empty() || trk_score.empty())return deltaZ=0;
-   for(std::string::size_type cnt = 0; cnt < trk_score.size(); cnt++){
-
-      if(trk_score.at(cnt) < 0.35){
-         dummy_1 = beam_endZ - daughter_endZ.at(cnt);
-         dummy_2 = beam_endZ - daughter_startZ.at(cnt);
-
-         if(dummy_1 < dummy_2) dummy = dummy_1;
-         else dummy = dummy_2;
-
-         if(abs(dummy) < abs(deltaZ)) deltaZ = dummy;
-      }
-
-      else continue;
-
-   }
-
-   if(deltaZ == 300.) return deltaZ = 999;
-   return deltaZ;
-
-};
-
-auto has_deltaZ_shower = [](double deltaZ){
-
-   bool has = false;
-   if(cut_deltaZ_shower_low < deltaZ && deltaZ < cut_deltaZ_shower_high) return has = true;
-   else return has;
-
-};
 
 //Distance to Vertex Daughter
 
@@ -303,37 +273,6 @@ auto compute_distanceVertex = [](double beam_endX, double beam_endY, double beam
 
 };
 
-//has Daughter in dR range
-auto secondary_minDistance_daughter_track = [](std::vector<double> &trk_score, std::vector<double> &distance){
-
-   double minimum_distance = 100.;
-   if(distance.empty() || trk_score.empty() ) return minimum_distance = 0.;
-   double dummy = 0.;
-
-   for(std::string::size_type cnt = 0; cnt < distance.size(); cnt++ ){
-
-      if(trk_score.at(cnt) > 0.35){
-
-        dummy = distance.at(cnt);
-        if(dummy < minimum_distance) minimum_distance = dummy;
-
-      }
-      else continue;
-
-      
-   };
-   if(minimum_distance == 100) return minimum_distance = 999.;
-
-   return minimum_distance;
-};
-
-auto has_daugh_track_inDistance = [](double minDistance){
-
-   bool has = false;
-   if(minDistance < cut_daughter_track_distance) return has = true;
-   else return has;
-
-};
 
 
 
@@ -345,7 +284,7 @@ auto secondary_noPion = [](const std::vector<double> &chi2, const std::vector<in
 
    for(std::string::size_type cnt = 0; cnt < chi2.size(); cnt++){
 
-      if(trackID.at(cnt) != -1 && track_score.at(cnt) > 0.35 && chi2.at(cnt)/ndof.at(cnt) > 50. && distance.at(cnt) < cut_daughter_track_distance) {
+      if(trackID.at(cnt) != -1 && track_score.at(cnt) > 0.35 && chi2.at(cnt)/ndof.at(cnt) > cut_secondary_chi2 && distance.at(cnt) < cut_daughter_track_distance) {
          noPion = false;
          break;
       }
