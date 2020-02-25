@@ -116,6 +116,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
             "true_beam_startX", "true_beam_startY", "true_beam_startZ"})
 
       .Define("primary_ends_inAPA3", endAPA3,{ "reco_beam_endZ"})
+      .Define("primary_passes_chi2", primary_chi2,{ "reco_beam_Chi2_proton","reco_beam_Chi2_ndof"})
 
       .Define("has_noPion_daughter", secondary_noPion, {"reco_daughter_allTrack_Chi2_proton", 
             "reco_daughter_allTrack_Chi2_ndof" , "reco_daughter_PFP_trackScore", "daughter_distance3D", "reco_daughter_allTrack_ID"})
@@ -128,6 +129,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
 
    auto data_all_cutValues = data_all
       .Define("primary_ends_inAPA3", endAPA3,{ "reco_beam_endZ"})
+      .Define("primary_passes_chi2", primary_chi2,{ "reco_beam_Chi2_proton","reco_beam_Chi2_ndof"})
       .Define("primary_isBeamType", isBeamType, {"reco_beam_type"})
       //beam cuts
       .Define("passBeamCut", manual_beamPos_data, {"event","reco_beam_startX", "reco_beam_startY", 
@@ -199,7 +201,9 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
    auto N_mcCUT_beamCut = mcCUT_beamCut.Count();
 
    auto mcCUT_endAPA3 = mcCUT_beamCut
-      .Filter("primary_ends_inAPA3 == true");
+        .Filter("primary_ends_inAPA3 == true")
+        .Filter("primary_passes_chi2 == true");
+      //.Filter("primary_ends_inAPA3 == true");
 
    auto mc_snap_primPion = mcCUT_endAPA3.Snapshot("pionana/beamana", "eventSelection_mc_PRIMARYPION.root");
 
@@ -252,7 +256,9 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
    auto N_dataCUT_beamCut = dataCUT_beamCut.Count();
 
    auto dataCUT_endAPA3 = dataCUT_beamCut
-      .Filter("primary_ends_inAPA3 == true");
+        .Filter("primary_ends_inAPA3 == true")
+        .Filter("primary_passes_chi2 == true");
+      //.Filter("primary_ends_inAPA3 == true");
 
    auto N_dataCUT_endAPA3 = dataCUT_endAPA3.Count();
 
