@@ -119,6 +119,10 @@ auto endAPA3 = [](double reco_beam_endZ){
 
 };
 
+auto primary_chi2 = [](double chi2_proton, int chi2_ndof){
+  return( !(chi2_proton/chi2_ndof < 140.) );
+};
+
 //Beam
 
 auto isBeamType = [](int reco_beam_type){
