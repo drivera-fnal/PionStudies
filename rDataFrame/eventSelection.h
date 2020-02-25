@@ -209,6 +209,7 @@ auto cutFlow = [](bool a, bool b){
    return pass;
 };
 
+/*
 auto primary_chi2 = [](double chi2, int ndof){
 
    bool isPion = false;
@@ -216,6 +217,7 @@ auto primary_chi2 = [](double chi2, int ndof){
    else return isPion;
 
 };
+*/
 
 //has daughter in delta Z
 auto daughter_deltaZ_track = [](std::vector<double> &trk_score, double beam_endZ, std::vector<double> &daughter_endZ, std::vector<double> &daughter_startZ){

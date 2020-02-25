@@ -120,8 +120,6 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
       .Define("primary_ends_inAPA3", endAPA3,{ "reco_beam_endZ"})
       .Define("primary_passes_chi2", primary_chi2,{ "reco_beam_Chi2_proton","reco_beam_Chi2_ndof"})
 
-      .Define("primary_chi2_isPion", primary_chi2, {"reco_beam_allTrack_Chi2_proton", "reco_beam_allTrack_Chi2_ndof"})
-
       .Define("has_noPion_daughter", secondary_noPion, {"reco_daughter_allTrack_Chi2_proton", 
             "reco_daughter_allTrack_Chi2_ndof" , "reco_daughter_PFP_trackScore_collection", "daughter_distance3D", "reco_daughter_allTrack_ID"})
 
@@ -139,8 +137,6 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
       .Define("passBeamCut", manual_beamPos_data, {"event","reco_beam_startX", "reco_beam_startY", 
             "reco_beam_startZ", "reco_beam_trackDirX", "reco_beam_trackDirY", "reco_beam_trackDirZ","data_BI_X", 
             "data_BI_Y", "data_BI_dirX", "data_BI_dirY", "data_BI_dirZ", "data_BI_nMomenta", "data_BI_nTracks"})
-
-      .Define("primary_chi2_isPion", primary_chi2, {"reco_beam_allTrack_Chi2_proton", "reco_beam_allTrack_Chi2_ndof"})
 
       .Define("has_noPion_daughter", secondary_noPion, {"reco_daughter_allTrack_Chi2_proton", "reco_daughter_allTrack_Chi2_ndof" , "reco_daughter_PFP_trackScore_collection", "daughter_distance3D", "reco_daughter_allTrack_ID"})
 
@@ -167,7 +163,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
       .Define("CUTflow_step1_passBeamType","return primary_isBeamType" )
       .Define("CUTflow_step2_passBeamCut", cutFlow, {"CUTflow_step1_passBeamType","passBeamCut"})
       .Define("CUTflow_step3_primEndAPA3", cutFlow, {"CUTflow_step2_passBeamCut","primary_ends_inAPA3"})
-      .Define("CUTflow_step3_1_primChi2", cutFlow, {"CUTflow_step3_primEndAPA3", "primary_chi2_isPion"})
+      .Define("CUTflow_step3_1_primChi2", cutFlow, {"CUTflow_step3_primEndAPA3", "primary_passes_chi2"})
       .Define("CUTflow_step4_hasNoPiDaughter", cutFlow, {"CUTflow_step3_1_primChi2","has_noPion_daughter"})
       .Define("reco_combinedSignal", "return CUTflow_step4_hasNoPiDaughter")
       .Define("reco_cexSignal", cutFlow, {"reco_combinedSignal","has_shower_nHits_distance"})
@@ -179,7 +175,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
       .Define("CUTflow_step1_passBeamType","return primary_isBeamType" )
       .Define("CUTflow_step2_passBeamCut", cutFlow, {"CUTflow_step1_passBeamType","passBeamCut"})
       .Define("CUTflow_step3_primEndAPA3", cutFlow, {"CUTflow_step2_passBeamCut","primary_ends_inAPA3"})
-      .Define("CUTflow_step3_1_primChi2", cutFlow, {"CUTflow_step3_primEndAPA3", "primary_chi2_isPion"})
+      .Define("CUTflow_step3_1_primChi2", cutFlow, {"CUTflow_step3_primEndAPA3", "primary_passes_chi2"})
       .Define("CUTflow_step4_hasNoPiDaughter", cutFlow, {"CUTflow_step3_1_primChi2","has_noPion_daughter"})
       .Define("reco_combinedSignal", "return CUTflow_step4_hasNoPiDaughter")
       .Define("reco_cexSignal", cutFlow, {"reco_combinedSignal","has_shower_nHits_distance"})
@@ -209,14 +205,14 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
    auto N_mcCUT_beamCut = mcCUT_beamCut.Count();
 
    auto mcCUT_endAPA3 = mcCUT_beamCut
-        .Filter("primary_ends_inAPA3 == true")
-        .Filter("primary_passes_chi2 == true");
+        .Filter("primary_ends_inAPA3 == true");
       //.Filter("primary_ends_inAPA3 == true");
 
    auto N_mcCUT_endAPA3 = mcCUT_endAPA3.Count();
 
    auto mcCUT_primChi2 = mcCUT_endAPA3
-      .Filter("primary_chi2_isPion");
+        .Filter("primary_passes_chi2 == true");
+
 
    auto mc_snap_primPion = mcCUT_primChi2.Snapshot("pionana/beamana", "eventSelection_mc_PRIMARYPION.root");
 
@@ -269,14 +265,13 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
    auto N_dataCUT_beamCut = dataCUT_beamCut.Count();
 
    auto dataCUT_endAPA3 = dataCUT_beamCut
-        .Filter("primary_ends_inAPA3 == true")
-        .Filter("primary_passes_chi2 == true");
+        .Filter("primary_ends_inAPA3 == true");
       //.Filter("primary_ends_inAPA3 == true");
 
    auto N_dataCUT_endAPA3 = dataCUT_endAPA3.Count();
    
    auto dataCUT_primChi2 = dataCUT_endAPA3
-      .Filter("primary_chi2_isPion");
+        .Filter("primary_passes_chi2 == true");
 
    auto N_dataCUT_primChi2 = dataCUT_primChi2.Count();
 
