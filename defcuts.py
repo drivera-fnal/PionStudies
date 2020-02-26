@@ -15,7 +15,7 @@ def defcuts():
     "NeutronInel":        "reco_beam_true_byHits_process == \"neutronInelastic\"",
     "ProtonInel":         "reco_beam_true_byHits_process == \"protonInelastic\"",
 
-    "Decay":      "reco_beam_true_byHits_process == \"Decay\"",
+    "Decay":      "reco_beam_true_byHits_process == \"Decay\" && reco_beam_true_byHits_origin == 4",
     "hadElastic":         "reco_beam_true_byHits_process == \"hadElastic\"",
     "PiMinusElastic":     "reco_beam_true_byHits_process == \"pi-Inelastic\"",
     "Other":              "reco_beam_true_byHits_origin == -1"

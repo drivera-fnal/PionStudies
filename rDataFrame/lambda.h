@@ -32,8 +32,9 @@ const std::string inputFile = "inputFile/dummyInput.root";
 
 int compString(std::string s1, std::string s2){
 
-   if(s1 != s2) return 0;
-   if(s1 == s2) return 1;
+   return (s1 == s2);
+   //if(s1 != s2) return 0;
+   //if(s1 == s2) return 1;
 };
 
 Int_t palette[] = {kRed, kOrange+7, kBlue+2, kRed+3, kGreen+2, kViolet-5, kCyan-7, kCyan+3, kPink+9, kOrange-2 };
