@@ -22,7 +22,6 @@ using namespace ROOT::VecOps;
 //
 //INPUTfiles
 const std::string inputTree = "pionana/beamana";
-const std::string inputFile = "inputFile/dummyInput.root";
 //**********************************************************
 //DEFINITIONS
 //

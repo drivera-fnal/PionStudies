@@ -38,278 +38,233 @@ int cut_nHits_shower_low = 12;
 int cut_nHits_shower_high = 1000;
 
 //For MC from Owen Goodwins studies
-double xlow = -3.; double xhigh = 7.; double ylow = -8.; double yhigh = 7.; double zlow = 27.5; double zhigh = 32.5; double coslow = 0.93;
+double xlow = -3.,  xhigh = 7.,  ylow = -8.,  yhigh = 7.;
+double zlow = 27.5,  zhigh = 32.5,  coslow = 0.93;
 
 //For Data from Owen Goodwin
-double data_xlow = 0., data_xhigh = 10., data_ylow= -5., data_yhigh= 10., data_zlow=30., data_zhigh=35., data_coslow=.93;
+double data_xlow = 0., data_xhigh = 10., data_ylow= -5.;
+double data_yhigh= 10., data_zlow=30., data_zhigh=35., data_coslow=.93;
 
 //Tag PrimaryPion without elastic Scattering
 //
-auto tagPrimPionInel= [](int true_beam_PDG, std::string true_beam_endProcess)
-{
-
-   std::string pionInel("pi+Inelastic");
-
-   if(true_beam_PDG == 211 && compString(true_beam_endProcess, pionInel) == 1) return 1;
-
-   else return 0;
-
+auto tagPrimPionInel= [](int true_beam_PDG, std::string true_beam_endProcess) {
+  return int(true_beam_PDG == 211 && (true_beam_endProcess == "pi+Inelastic") );
 };
 
-auto tagPrimPionInel_withElastic = [](int true_beam_PDG, std::string true_beam_endProcess, int true_beam_nElasticScatters)
-{
-
-   std::string pionInel("pi+Inelastic");
-
-   if(true_beam_PDG == 211 && compString(true_beam_endProcess, pionInel) == 1 && true_beam_nElasticScatters > 0) return 1;
-
-   else return 0;
-
+auto tagPrimPionInel_withElastic = [](int true_beam_PDG,
+    std::string true_beam_endProcess, int true_beam_nElasticScatters) {
+  return int(true_beam_PDG == 211 && (true_beam_endProcess == "pi+Inelastic") 
+      && true_beam_nElasticScatters > 0);
 };
 
 
-//True Charge Exchange + Absorption Signal, has no piPlus or piMinus as daughters
-auto tagAbsChEx = [](int tagPrimPi, const int true_daughter_nPiPlus, const int true_daughter_nPiMinus)
-{
-   if(tagPrimPi == 1 && true_daughter_nPiPlus + true_daughter_nPiMinus == 0) return 1;
-
-   else return 0;
-
+//True Charge Exchange + Absorption Signal, has no piPlus or piMinus daughters
+auto tagAbsChEx = [](int tagPrimPi, const int true_daughter_nPiPlus,
+    const int true_daughter_nPiMinus) {
+  return int(tagPrimPi && ((true_daughter_nPiPlus + true_daughter_nPiMinus) == 0));
 };
 
-//True Charge Exchange Signal first filter for ChEx + Absoprtion signal, then ask for a pi0
+//True Charge Exchange Signal first filter for ChEx + Absoprtion signal,
+//then ask for a pi0
 auto tagChEx = [](int tagAbsChEx, int true_daughter_nPi0) {
-   if(tagAbsChEx == 1 && true_daughter_nPi0 == 1) return 1;
-
-   else return 0;
+  return int( tagAbsChEx && true_daughter_nPi0 == 1 );
 };
 
-//True Absorption Signal, first filter for ChEx + Abs Signal, then ask for at least one proton Daughter
-//
+//True Absorption Signal, first filter for ChEx + Abs Signal,
+//then ask for at least one proton Daughter
 auto tagAbs = [](int tagAbsChEx, int true_daughter_nPi0) { 
-
-   if(tagAbsChEx == 1 && true_daughter_nPi0 == 0) return 1;
-
-   else return 0;
+  return int(tagAbsChEx && true_daughter_nPi0 == 0);
 };
 
-auto tagNpi0 = [](int tagAbsChEx, int true_daughter_nPi0){
-
-   if(tagAbsChEx == 1 && true_daughter_nPi0 > 1) return 1;
-
-   else return 0;
+auto tagNpi0 = [](int tagAbsChEx, int true_daughter_nPi0) {
+  return int(tagAbsChEx == 1 && true_daughter_nPi0 > 1);
 };
 
-auto tagBackGround = [](int tagPrimPi, int tagAbsChex ){
-
-   if(tagPrimPi == 1 && tagAbsChex == 1) return 0;
-   
-   else return 1;
-
+auto tagBackGround = [](int tagPrimPi, int tagAbsChex ) {
+  return int( !(tagPrimPi && tagAbsChex) );
 };
 
 //Beam Track ends in APA3
-auto endAPA3 = [](double reco_beam_endZ){
-
-   bool endAPA3;
-   if(reco_beam_endZ < cutAPA3_Z) return endAPA3 = true;
-
-   else return endAPA3 = false;
-
+auto endAPA3 = [](double reco_beam_endZ) {
+  return ( reco_beam_endZ < cutAPA3_Z );
 };
 
 auto primary_chi2 = [](double chi2_proton, int chi2_ndof){
-  return( !(chi2_proton/chi2_ndof < 140.) );
+  return( (chi2_proton/chi2_ndof > 140.) );
 };
 
 //Beam
-
 auto isBeamType = [](int reco_beam_type){
-
-   bool isBeam = false;
-   if(reco_beam_type == 13) return isBeam = true;
-
-   else return isBeam = false;
-
+  return (reco_beam_type == 13);
 };
 
-auto manual_beamPos_mc = [](double beam_startX, double beam_startY, double beam_startZ, double beam_dirX, double beam_dirY, double beam_dirZ, double true_dirX, double true_dirY, double true_dirZ, double true_startX, double true_startY, double true_startZ){
+auto manual_beamPos_mc = [](double beam_startX, double beam_startY,
+                            double beam_startZ, double beam_dirX,
+                            double beam_dirY,   double beam_dirZ, 
+                            double true_dirX,   double true_dirY,
+                            double true_dirZ,   double true_startX,
+                            double true_startY, double true_startZ) {
+  double projectX = (true_startX + -1*true_startZ*(true_dirX/true_dirZ) );
+  double projectY = (true_startY + -1*true_startZ*(true_dirY/true_dirZ) );
+  double cos = true_dirX*beam_dirX + true_dirY*beam_dirY + true_dirZ*beam_dirZ;
 
-   bool manual_beam_pass = false;
+  if ( (beam_startX - projectX) < xlow )
+    return false;
+  
+  if ( (beam_startX - projectX) > xhigh )
+    return false;
 
-   if( beam_startX - (true_startX + -1*true_startZ*(true_dirX/true_dirZ) ) < xlow ) return manual_beam_pass = false;
-   
-   if ( beam_startX - (true_startX + -1*true_startZ*(true_dirX/true_dirZ) ) > xhigh ) return manual_beam_pass = false;
+  if ( (beam_startY - projectY) < ylow )
+    return false;
 
-   if ( beam_startY - (true_startY + -1*true_startZ*(true_dirY/true_dirZ) ) < ylow ) return manual_beam_pass = false;
+  if ( (beam_startY - projectY) > yhigh )
+    return false;
+  
+  if (beam_startZ < zlow || zhigh < beam_startZ)
+    return false;
+  
+  if ( cos < coslow)
+    return false;
 
-   if ( beam_startY - (true_startY + -1*true_startZ*(true_dirY/true_dirZ)) > yhigh ) return manual_beam_pass = false;
-   
-   if (beam_startZ < zlow || zhigh < beam_startZ) return manual_beam_pass = false;
-   
-   if ((true_dirX*beam_dirX + true_dirY*beam_dirY + true_dirZ*beam_dirZ) < coslow) return manual_beam_pass = false;
-
-   return manual_beam_pass = true;
+  return true;
 
 };
 
 auto data_beam_PID = [](const std::vector<int>& pidCandidates){
-   int searchPDG=211;
-
-  for(size_t i = 0; i < pidCandidates.size(); ++i ){
-    if( pidCandidates[i] == searchPDG )
-      return true;
-  }
-  return false;
+  auto pid_search = std::find(pidCandidates.begin(), pidCandidates.end(), 211);
+  return (pid_search != pidCandidates.end());
 };
 
-auto manual_beamPos_data = [](int event, double data_startX, double data_startY, double data_startZ, double data_dirX, double data_dirY, double data_dirZ, double data_BI_X, double data_BI_Y, double data_BI_dirX, double data_BI_dirY, double data_BI_dirZ,int data_BI_nMomenta,int data_BI_nTracks){
+auto manual_beamPos_data = [](int event,            double data_startX,
+                              double data_startY,   double data_startZ,
+                              double data_dirX,     double data_dirY,
+                              double data_dirZ,     double data_BI_X,
+                              double data_BI_Y,     double data_BI_dirX,
+                              double data_BI_dirY,  double data_BI_dirZ,
+                              int data_BI_nMomenta, int data_BI_nTracks) {
 
-   bool manual_data_pass = false;
+  double deltaX = data_startX - data_BI_X;
+  double deltaY = data_startY - data_BI_Y;
+  double cos = data_BI_dirX*data_dirX + data_BI_dirY*data_dirY +
+               data_BI_dirZ*data_dirZ;
 
-   if(data_BI_nMomenta != 1 || data_BI_nTracks != 1) {
-       //std::cout<< std::endl;
-       //std::cout<< event << " " <<  data_BI_nMomenta << " " << data_BI_nTracks << std::endl;
-      return manual_data_pass = false;}
+  if(data_BI_nMomenta != 1 || data_BI_nTracks != 1)
+    return false;
 
+  if( (deltaX < data_xlow) || (deltaX > data_xhigh) )
+    return false;
 
-   if( ((data_startX - data_BI_X) < data_xlow) || ((data_startX - data_BI_X) > data_xhigh) ) {
+  if ( (deltaY < data_ylow) || (deltaY > data_yhigh) )
+    return false;
 
-       //std::cout<< "X "<< (data_startX - data_BI_X) << " " <<  (data_startX - data_BI_X) << std::endl;
-      return manual_data_pass = false;}
+  if ( (data_startZ < data_zlow) || (data_startZ > data_zhigh) )
+    return false;
 
-   if ( ((data_startY - data_BI_Y) < data_ylow) || ((data_startY - data_BI_Y) > data_yhigh) ){ 
+  if (cos < data_coslow)
+    return false;
 
-       //std::cout<< "Y "<< (data_startY - data_BI_Y) << " " <<  (data_startY - data_BI_Y) << std::endl;
-      return manual_data_pass = false;}
-
-   if ((data_startZ < data_zlow) ||  (data_startZ > data_zhigh)) {
-
-       //std::cout<< "Z "<< data_startZ  << " " <<  data_startZ << std::endl;
-      return manual_data_pass = false;}
-
-   if ((data_BI_dirX*data_dirX + data_BI_dirY*data_dirY + data_BI_dirZ*data_dirZ) < data_coslow) {
-
-       //std::cout<< "cos " << data_BI_dirX*data_dirX + data_BI_dirY*data_dirY + data_BI_dirZ*data_dirZ << std::endl;
-      return manual_data_pass = false;}
-
-   return manual_data_pass = true;
+  return true;
 
 };
 
 //for marking cutflow in rows only needs condition before and tested
 auto cutFlow = [](bool a, bool b){
-   bool pass = false;
-
-   if(a && b) pass = true;
-
-   return pass;
+  return (a && b);
 };
-
-/*
-auto primary_chi2 = [](double chi2, int ndof){
-
-   bool isPion = false;
-   if(chi2/ndof > cut_primary_chi2) return isPion = true;
-   else return isPion;
-
-};
-*/
-
 
 //Distance to Vertex Daughter
+auto compute_distanceVertex = [](double beam_endX,
+                                 double beam_endY,
+                                 double beam_endZ, 
+                                 const std::vector<double> &d_startX,
+                                 const std::vector<double> &d_startY,
+                                 const std::vector<double> &d_startZ,
+                                 const std::vector<double> &d_endX,
+                                 const std::vector<double> &d_endY,
+                                 const std::vector<double> &d_endZ) {
+  std::vector<double> distance;
+  double dummy = 0., dummy_1 = 0., dummy_2 = 0.;
+  double diff_X_end = 0., diff_Y_end = 0., diff_Z_end = 0.;
+  double diff_X_start = 0., diff_Y_start = 0., diff_Z_start = 0.;
 
-auto compute_distanceVertex = [](double beam_endX, double beam_endY, double beam_endZ, const std::vector<double> &d_startX, std::vector<double> &d_startY, std::vector<double> &d_startZ, std::vector<double> &d_endX, std::vector<double> &d_endY, std::vector<double> &d_endZ){
+  if(d_startX.empty()) return distance;
 
-   std::vector<double> distance;
-   double dummy = 0., dummy_1 = 0., dummy_2 = 0.;
-   double diff_X_end = 0. , diff_Y_end = 0., diff_Z_end = 0.;
-   double diff_X_start = 0. , diff_Y_start = 0., diff_Z_start = 0.;
+  for( size_t i = 0; i < d_startX.size(); ++i ) {
+    diff_X_end = d_endX[i] - beam_endX;
+    diff_Y_end = d_endY[i] - beam_endY;
+    diff_Z_end = d_endZ[i] - beam_endZ;
 
-   if(d_startX.empty()) return distance;
+    diff_X_start = d_startX[i] - beam_endX;
+    diff_Y_start = d_startY[i] - beam_endY;
+    diff_Z_start = d_startZ[i] - beam_endZ;
 
-   for(std::string::size_type cnt = 0; cnt < d_startX.size(); cnt++ ){
+    dummy_1 = sqrt(diff_X_end*diff_X_end + diff_Y_end*diff_Y_end + 
+                   diff_Z_end*diff_Z_end);
 
-         diff_X_end = d_endX.at(cnt) - beam_endX;
-         diff_Y_end = d_endY.at(cnt) - beam_endY;
-         diff_Z_end = d_endZ.at(cnt) - beam_endZ;
+    dummy_2 = sqrt(diff_X_start*diff_X_start + diff_Y_start*diff_Y_start +
+                   diff_Z_start*diff_Z_start);
 
-         diff_X_start = d_startX.at(cnt) - beam_endX;
-         diff_Y_start = d_startY.at(cnt) - beam_endY;
-         diff_Z_start = d_startZ.at(cnt) - beam_endZ;
+    if(dummy_1 < dummy_2)
+      distance.push_back(dummy_1);
+    else 
+      distance.push_back(dummy_2);
+  }
 
-         dummy_1 = sqrt(diff_X_end*diff_X_end + diff_Y_end*diff_Y_end + diff_Z_end*diff_Z_end);
-         dummy_2 = sqrt(diff_X_start*diff_X_start + diff_Y_start*diff_Y_start + diff_Z_start*diff_Z_start);
-
-         if(dummy_1 < dummy_2) distance.push_back(dummy_1);
-         else distance.push_back(dummy_2);
-         
-   };
-
-   return distance;
-
+  return distance;
 };
-
-
-
-
 
 //contains no secondary Pion Chi2
-auto secondary_noPion = [](const std::vector<double> &chi2, const std::vector<int> &ndof , const std::vector<double> &track_score, const std::vector<double> &distance, std::vector<int> &trackID){
+auto secondary_noPion = [](const std::vector<double> &chi2, 
+                           const std::vector<int> &ndof,
+                           const std::vector<double> &track_score,
+                           const std::vector<double> &distance, 
+                           const std::vector<int> &trackID) {
+  for( size_t i = 0; i < chi2.size(); ++i ) {
+    if ((trackID[i] != -1) && (track_score[i] > cut_trackScore) &&
+        (chi2[i]/ndof[i] > cut_secondary_chi2) &&
+        (distance[i] < cut_daughter_track_distance)) {
+      return false;
+    }
+  }
 
-   bool noPion = true;
-
-   for(std::string::size_type cnt = 0; cnt < chi2.size(); cnt++){
-
-      if(trackID.at(cnt) != -1 && track_score.at(cnt) > cut_trackScore && chi2.at(cnt)/ndof.at(cnt) > cut_secondary_chi2 && distance.at(cnt) < cut_daughter_track_distance) {
-         noPion = false;
-         break;
-      }
-      
-   };
-
-   return noPion;
+  return true;
 };
 
-auto TEST_noPion_nHits = [](const std::vector<double> &chi2, const std::vector<int> &ndof , const std::vector<double> &track_score, const std::vector<int> &nHits, const std::vector<double> &distance, std::vector<int> &trackID){
+auto TEST_noPion_nHits = [](const std::vector<double> &chi2,
+                            const std::vector<int> &ndof,
+                            const std::vector<double> &track_score,
+                            const std::vector<int> &nHits,
+                            const std::vector<double> &distance,
+                            const std::vector<int> &trackID) {
+  for( size_t i = 0; i < chi2.size(); ++i ) {
+    if ((trackID[i] != -1) && (chi2[i]/ndof[i] > cut_secondary_chi2) &&
+        (track_score[i] < 1.) && (nHits[i] < 300) &&
+        (distance[i] < cut_daughter_track_distance)) {
+      return false;
+    }
+  }
 
-   bool noPion_test = true;
-
-   for(std::string::size_type cnt = 0; cnt < chi2.size(); cnt++){
-
-      if(trackID.at(cnt) != -1 && chi2.at(cnt)/ndof.at(cnt) > cut_secondary_chi2 && track_score.at(cnt) < 1. && nHits.at(cnt) < 300 && distance.at(cnt) < cut_daughter_track_distance) {
-         noPion_test = false;
-         break;
-      }
-      
-   };
-
-   return noPion_test;
-
+  return true;
 };
 
 
-auto has_shower_nHits_distance= [](const std::vector<double> &track_score, const std::vector<int> &nHits, const std::vector<double> &distance){
+auto has_shower_nHits_distance = [](const std::vector<double> &track_score,
+                                    const std::vector<int> &nHits,
+                                    const std::vector<double> &distance) {
+  if(track_score.empty() || nHits.empty())
+    return false;
 
-   bool hasShowerNhits = false;
+  for(size_t i = 0; i < track_score.size(); ++i){
+     if ((track_score[i] < cut_trackScore) &&
+         (nHits[i] > cut_nHits_shower_low) &&
+         (nHits[i] < cut_nHits_shower_high) && (track_score[i] != -999.) &&
+         (distance[i] < cut_daughter_shower_distance_high) &&
+         (distance[i] > cut_daughter_shower_distance_low)) {
+       return true;
+     }
+  }
 
-   if(track_score.empty() || nHits.empty()) return hasShowerNhits;
-
-   for(std::string::size_type cnt = 0; cnt < track_score.size(); cnt++){
-
-      if(track_score.at(cnt) < cut_trackScore && nHits.at(cnt) > cut_nHits_shower_low && nHits.at(cnt) < cut_nHits_shower_high && track_score.at(cnt) != -999.
-            && distance.at(cnt) < cut_daughter_shower_distance_high && distance.at(cnt) > cut_daughter_shower_distance_low){
-
-         hasShowerNhits = true;
-         break;
-         
-      }
-      else continue;
-
-   };
-
- 
-   return hasShowerNhits;
+  return false;
 };
 
 
