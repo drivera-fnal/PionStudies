@@ -391,23 +391,26 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
    h_data_total->Draw("PSAME");
    c1->BuildLegend();
 
+   //*******************************
    //Efficiencies and Purity available Events are after primary Chi2 CUT
-/*
-   auto comb_signal_help = &mc_COMBINED_Signal.Filter("true_combinedSignal == 1").Count();
-   auto abs_signal_help = &mcSIGNAL_abs.Filter("true_absSignal == 1").Count();
-   auto cex_signal_help = &mcSIGNAL_cex.Filter("true_chexSignal == 1").Count();
+   //*******************************
+
+   auto comb_signal_help = (double)*mc_COMBINED_Signal.Filter("true_combinedSignal == 1").Count();
+   auto abs_signal_help = (double)*mcSIGNAL_abs.Filter("true_absSignal == 1").Count();
+   auto cex_signal_help = (double)(*mcSIGNAL_cex.Filter("true_chexSignal == 1").Count() + *mcSIGNAL_cex.Filter("true_nPi0Signal == 1").Count()) ;
 
 
-   auto combined_eff = comb_signal_help / &N_mcCUT_primChi2;
-   auto combined_pur = comb_signal_help/ &N_mcCUT_noPionDaughter;
+   auto CUTprimChi2_combined_eff = 100* comb_signal_help / (double)*mcCUT_primChi2.Filter("true_combinedSignal == 1").Count();
+   auto CUTprimChi2_combined_pur = 100* comb_signal_help/ (double)*N_mcCUT_noPionDaughter;
 
-   auto abs_eff = abs_signal_help / &N_mcCUT_primChi2;
-   auto abs_pur = abs_signal_help / &N_mcSIGNAL_abs;
+   auto CUTprimChi2_abs_eff = 100* abs_signal_help / (double)*mcCUT_primChi2.Filter("true_absSignal == 1").Count();
+   auto CUTprimChi2_abs_pur = 100* abs_signal_help / (double)*N_mcSIGNAL_abs;
 
-   auto cex_eff = cex_signal_help / &N_mcCUT_primChi2;
-   auto cex_pur = cex_signal_help / &N_mcSIGNAL_cex;
+   auto CUTprimChi2_cex_eff = 100* cex_signal_help / (double)(*mcCUT_primChi2.Filter("true_chexSignal == 1").Count() + *mcCUT_primChi2.Filter("true_nPi0Signal == 1").Count());
+   auto CUTprimChi2_cex_pur = 100* cex_signal_help / (double)*N_mcSIGNAL_cex;
 
-*/
+
+
    if( doCounting ){
      // ********* Output Counting  **************//
      //
@@ -416,7 +419,7 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
      std::cout << "********************************" << std::endl;
      std::cout << "Total MC Events = " << *n_mc_all << std::endl;
      std::cout << "Total Data Events = " << *n_data_all << std::endl;
-     std::cout << "********************************" << std::endl;
+    std::cout << "********************************" << std::endl;
      std::cout << "TRUE Event types" << std::endl;
      std::cout << "Primary Pion Inelastic with Elastic before = " << *n_true_primPionInel_withElastic << std::endl;
      std::cout << "Events without primary Pion = " << *n_mc_all - *n_true_primPionInel << std::endl;
@@ -515,19 +518,20 @@ int eventSelection(const string path = inputFile, const string dataFile = "/User
      std::cout << "--------- Contamination of primary NON-pions = " << *mcSIGNAL_abs.Filter("true_primPionInel == 0").Count() << std::endl;
      std::cout << "--------- Contamination of Events with Pion Daughter = " << *mcSIGNAL_abs.Filter("true_pion_daughter > 0").Count() << std::endl;
 
-     /*
+   
+
+   }
+
      std::cout << std::endl;
      std::cout << "********************************" << std::endl;
      std::cout << "EFFICIENCY & PURITY " << std::endl;
      std::cout << "********************************" << std::endl;
-     std::cout << "**SELECTION********EFFICIENCY********PURITY***********" << std::endl;
-     std::cout << "--combined------" <<  combined_eff << "---------------------" << combined_pur << std::endl;
-     std::cout << "-----abs--------" <<  abs_eff << "---------------------" << abs_pur << std::endl;
-     std::cout << "-----cex--------" <<  cex_eff << "---------------------" << cex_pur << std::endl;
-*/
-
-
-   }
+     std::cout << "**SELECTION********EFFICIENCY to Chi2 on primary*****************PURITY***********" << std::endl;
+     std::cout << "*******************************************************" << std::endl;
+     std::cout << "--COMBINED------" <<  CUTprimChi2_combined_eff << "--------------------------" << CUTprimChi2_combined_pur << std::endl;
+     std::cout << "-----CEX*--------" <<  CUTprimChi2_cex_eff << "--------------------------" << CUTprimChi2_cex_pur << std::endl;
+     std::cout << "-----ABS--------" <<  CUTprimChi2_abs_eff << "---------------------------" << CUTprimChi2_abs_pur << std::endl;
+     std::cout << "********************************" << std::endl;
 
 
 
