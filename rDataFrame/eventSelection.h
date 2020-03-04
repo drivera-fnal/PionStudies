@@ -27,14 +27,11 @@ using namespace ROOT::VecOps;
 //
 //Some Cut Values
 double cutAPA3_Z = 226.;
-double cut_dR = 5.;
+double cut_trackScore = 0.35;
 //daughter Distance cut
 double cut_daughter_track_distance = 10.;
 double cut_daughter_shower_distance_low = 2.;
 double cut_daughter_shower_distance_high = 100.;
-double cut_deltaZ_track = 5.;
-double cut_deltaZ_shower_low = -50.;
-double cut_deltaZ_shower_high = 100.;
 double cut_primary_chi2 = 140.;
 double cut_secondary_chi2 = 50.;
 int cut_nHits_shower_low = 12;
@@ -219,32 +216,6 @@ auto primary_chi2 = [](double chi2, int ndof){
 };
 */
 
-//has daughter in delta Z
-auto daughter_deltaZ_track = [](std::vector<double> &trk_score, double beam_endZ, std::vector<double> &daughter_endZ, std::vector<double> &daughter_startZ){
-
-   double deltaZ = 100., dummy_1 = 0 , dummy_2 = 0, dummy = 0;
-   if(daughter_endZ.empty() || trk_score.empty())return deltaZ=0;
-   for(std::string::size_type cnt = 0; cnt < trk_score.size(); cnt++){
-
-      if(trk_score.at(cnt) > 0.35){
-         dummy_1 = beam_endZ - daughter_endZ.at(cnt);
-         dummy_2 = beam_endZ - daughter_startZ.at(cnt);
-
-         if(dummy_1 < dummy_2) dummy = dummy_1;
-         else dummy = dummy_2;
-
-         if(abs(dummy) < abs(deltaZ)) deltaZ = dummy;
-      }
-
-      else continue;
-
-   }
-
-   if(deltaZ == 100.) return deltaZ = 999;
-   return deltaZ;
-
-};
-
 
 //Distance to Vertex Daughter
 
@@ -290,7 +261,7 @@ auto secondary_noPion = [](const std::vector<double> &chi2, const std::vector<in
 
    for(std::string::size_type cnt = 0; cnt < chi2.size(); cnt++){
 
-      if(trackID.at(cnt) != -1 && track_score.at(cnt) > 0.35 && chi2.at(cnt)/ndof.at(cnt) > cut_secondary_chi2 && distance.at(cnt) < cut_daughter_track_distance) {
+      if(trackID.at(cnt) != -1 && track_score.at(cnt) > cut_trackScore && chi2.at(cnt)/ndof.at(cnt) > cut_secondary_chi2 && distance.at(cnt) < cut_daughter_track_distance) {
          noPion = false;
          break;
       }
@@ -298,6 +269,23 @@ auto secondary_noPion = [](const std::vector<double> &chi2, const std::vector<in
    };
 
    return noPion;
+};
+
+auto TEST_noPion_nHits = [](const std::vector<double> &chi2, const std::vector<int> &ndof , const std::vector<double> &track_score, const std::vector<int> &nHits, const std::vector<double> &distance, std::vector<int> &trackID){
+
+   bool noPion_test = true;
+
+   for(std::string::size_type cnt = 0; cnt < chi2.size(); cnt++){
+
+      if(trackID.at(cnt) != -1 && chi2.at(cnt)/ndof.at(cnt) > cut_secondary_chi2 && track_score.at(cnt) < 1. && nHits.at(cnt) < 300 && distance.at(cnt) < cut_daughter_track_distance) {
+         noPion_test = false;
+         break;
+      }
+      
+   };
+
+   return noPion_test;
+
 };
 
 
@@ -309,7 +297,7 @@ auto has_shower_nHits_distance= [](const std::vector<double> &track_score, const
 
    for(std::string::size_type cnt = 0; cnt < track_score.size(); cnt++){
 
-      if(track_score.at(cnt) < 0.35 && nHits.at(cnt) > cut_nHits_shower_low && nHits.at(cnt) < cut_nHits_shower_high && track_score.at(cnt) != -999.
+      if(track_score.at(cnt) < cut_trackScore && nHits.at(cnt) > cut_nHits_shower_low && nHits.at(cnt) < cut_nHits_shower_high && track_score.at(cnt) != -999.
             && distance.at(cnt) < cut_daughter_shower_distance_high && distance.at(cnt) > cut_daughter_shower_distance_low){
 
          hasShowerNhits = true;
