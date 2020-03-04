@@ -374,6 +374,44 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   TH1I *h_true_nPi0 = new TH1I("true_nPi0", "True N-Pi0 Signal", 8 , 0., 8.);
   TH1I *h_true_BG = new TH1I("true_BG", "Background", 8 , 0., 8.);
 
+
+  //Before filling, split it up MC by the true signal/BG
+  //This will later be used in the counting as well
+  auto beamType_absSignal = mcCUT_beamType.Filter("true_absSignal").Count();
+  auto beamType_chexSignal = mcCUT_beamType.Filter("true_chexSignal").Count();
+  auto beamType_nPi0Signal = mcCUT_beamType.Filter("true_nPi0Signal").Count();
+  auto beamType_background = mcCUT_beamType.Filter("true_backGround").Count();
+
+  auto beamCut_absSignal = mcCUT_beamCut.Filter("true_absSignal").Count();
+  auto beamCut_chexSignal = mcCUT_beamCut.Filter("true_chexSignal").Count();
+  auto beamCut_nPi0Signal = mcCUT_beamCut.Filter("true_nPi0Signal").Count();
+  auto beamCut_background = mcCUT_beamCut.Filter("true_backGround").Count();
+
+  auto endAPA3_absSignal = mcCUT_endAPA3.Filter("true_absSignal").Count();
+  auto endAPA3_chexSignal = mcCUT_endAPA3.Filter("true_chexSignal").Count();
+  auto endAPA3_nPi0Signal = mcCUT_endAPA3.Filter("true_nPi0Signal").Count();
+  auto endAPA3_background = mcCUT_endAPA3.Filter("true_backGround").Count();
+
+  auto primChi2_absSignal = mcCUT_primChi2.Filter("true_absSignal").Count();
+  auto primChi2_chexSignal = mcCUT_primChi2.Filter("true_chexSignal").Count();
+  auto primChi2_nPi0Signal = mcCUT_primChi2.Filter("true_nPi0Signal").Count();
+  auto primChi2_background = mcCUT_primChi2.Filter("true_backGround").Count();
+
+  auto noPionDaughter_absSignal = mcCUT_noPionDaughter.Filter("true_absSignal").Count();
+  auto noPionDaughter_chexSignal = mcCUT_noPionDaughter.Filter("true_chexSignal").Count();
+  auto noPionDaughter_nPi0Signal = mcCUT_noPionDaughter.Filter("true_nPi0Signal").Count();
+  auto noPionDaughter_background = mcCUT_noPionDaughter.Filter("true_backGround").Count();
+
+  auto chex_absSignal = mcSIGNAL_cex.Filter("true_absSignal").Count();
+  auto chex_chexSignal = mcSIGNAL_cex.Filter("true_chexSignal").Count();
+  auto chex_nPi0Signal = mcSIGNAL_cex.Filter("true_nPi0Signal").Count();
+  auto chex_background = mcSIGNAL_cex.Filter("true_backGround").Count();
+
+  auto abs_absSignal = mcSIGNAL_abs.Filter("true_absSignal").Count();
+  auto abs_chexSignal = mcSIGNAL_abs.Filter("true_chexSignal").Count();
+  auto abs_nPi0Signal = mcSIGNAL_abs.Filter("true_nPi0Signal").Count();
+  auto abs_background = mcSIGNAL_abs.Filter("true_backGround").Count();
+
   h_mc_total->SetBinContent(1 , *n_mc_all );
   h_data_total->SetBinContent(1, *n_data_all );
   h_true_abs->SetBinContent(1, *n_true_absSignal );
@@ -383,53 +421,53 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
 
   h_mc_total->SetBinContent(2 , *N_mcCUT_beamType );
   h_data_total->SetBinContent(2, *N_dataCUT_beamType);
-  h_true_abs->SetBinContent(2, *mcCUT_beamType.Filter("true_absSignal").Count() );
-  h_true_cex->SetBinContent(2, *mcCUT_beamType.Filter("true_chexSignal").Count() );
-  h_true_nPi0->SetBinContent(2, *mcCUT_beamType.Filter("true_nPi0Signal").Count() );
-  h_true_BG->SetBinContent(2, *mcCUT_beamType.Filter("true_backGround").Count()  );
+  h_true_abs->SetBinContent(2, *beamType_absSignal);
+  h_true_cex->SetBinContent(2, *beamType_chexSignal);
+  h_true_nPi0->SetBinContent(2, *beamType_nPi0Signal);
+  h_true_BG->SetBinContent(2, *beamType_background);
 
   h_mc_total->SetBinContent(3 , *N_mcCUT_beamCut );
   h_data_total->SetBinContent(3, *N_dataCUT_beamCut);
-  h_true_abs->SetBinContent(3, *mcCUT_beamCut.Filter("true_absSignal").Count() );
-  h_true_cex->SetBinContent(3, *mcCUT_beamCut.Filter("true_chexSignal").Count() );
-  h_true_nPi0->SetBinContent(3, *mcCUT_beamCut.Filter("true_nPi0Signal").Count() );
-  h_true_BG->SetBinContent(3, *mcCUT_beamCut.Filter("true_backGround").Count());
+  h_true_abs->SetBinContent(3, *beamCut_absSignal);
+  h_true_cex->SetBinContent(3, *beamCut_chexSignal);
+  h_true_nPi0->SetBinContent(3, *beamCut_nPi0Signal);
+  h_true_BG->SetBinContent(3, *beamCut_background);
 
   h_mc_total->SetBinContent(4 , *N_mcCUT_endAPA3 );
   h_data_total->SetBinContent(4, *N_dataCUT_endAPA3);
-  h_true_abs->SetBinContent(4, *mcCUT_endAPA3.Filter("true_absSignal").Count() );
-  h_true_cex->SetBinContent(4, *mcCUT_endAPA3.Filter("true_chexSignal").Count() );
-  h_true_nPi0->SetBinContent(4, *mcCUT_endAPA3.Filter("true_nPi0Signal").Count() );
-  h_true_BG->SetBinContent(4, *mcCUT_endAPA3.Filter("true_backGround").Count() );
+  h_true_abs->SetBinContent(4, *endAPA3_absSignal );
+  h_true_cex->SetBinContent(4, *endAPA3_chexSignal );
+  h_true_nPi0->SetBinContent(4, *endAPA3_nPi0Signal );
+  h_true_BG->SetBinContent(4, *endAPA3_background );
 
   h_mc_total->SetBinContent(5, *N_mcCUT_primChi2 );
   h_data_total->SetBinContent(5, *N_dataCUT_primChi2);
-  h_true_abs->SetBinContent(5, *mcCUT_primChi2.Filter("true_absSignal").Count() );
-  h_true_cex->SetBinContent(5, *mcCUT_primChi2.Filter("true_chexSignal").Count() );
-  h_true_nPi0->SetBinContent(5, *mcCUT_primChi2.Filter("true_nPi0Signal").Count() );
-  h_true_BG->SetBinContent(5, *mcCUT_primChi2.Filter("true_backGround").Count() );
+  h_true_abs->SetBinContent(5,  *primChi2_absSignal );
+  h_true_cex->SetBinContent(5,  *primChi2_chexSignal );
+  h_true_nPi0->SetBinContent(5, *primChi2_nPi0Signal );
+  h_true_BG->SetBinContent(5,   *primChi2_background );
 
   h_mc_total->SetBinContent(6 , *N_mcCUT_noPionDaughter );
   h_data_total->SetBinContent(6, *N_dataCUT_noPionDaughter);
-  h_true_abs->SetBinContent(6, *mcCUT_noPionDaughter.Filter("true_absSignal").Count() );
-  h_true_cex->SetBinContent(6, *mcCUT_noPionDaughter.Filter("true_chexSignal").Count() );
-  h_true_nPi0->SetBinContent(6, *mcCUT_noPionDaughter.Filter("true_nPi0Signal").Count() );
-  h_true_BG->SetBinContent(6,*mcCUT_noPionDaughter.Filter("true_backGround").Count() );
+  h_true_abs->SetBinContent(6, *noPionDaughter_absSignal );
+  h_true_cex->SetBinContent(6, *noPionDaughter_chexSignal );
+  h_true_nPi0->SetBinContent(6, *noPionDaughter_nPi0Signal );
+  h_true_BG->SetBinContent(6, *noPionDaughter_background );
 
 
   h_mc_total->SetBinContent(7 , *N_mcSIGNAL_cex );
   h_data_total->SetBinContent(7, *N_dataSIGNAL_cex);
-  h_true_abs->SetBinContent(7, *mcSIGNAL_cex.Filter("true_absSignal").Count() );
-  h_true_cex->SetBinContent(7, *mcSIGNAL_cex.Filter("true_chexSignal").Count() );
-  h_true_nPi0->SetBinContent(7, *mcSIGNAL_cex.Filter("true_nPi0Signal").Count() );
-  h_true_BG->SetBinContent(7, *mcSIGNAL_cex.Filter("true_backGround").Count() );
+  h_true_abs->SetBinContent(7,  *chex_absSignal );
+  h_true_cex->SetBinContent(7,  *chex_chexSignal );
+  h_true_nPi0->SetBinContent(7, *chex_nPi0Signal );
+  h_true_BG->SetBinContent(7,   *chex_background );
 
   h_mc_total->SetBinContent(8 , *N_mcSIGNAL_abs );
   h_data_total->SetBinContent(8, *N_dataSIGNAL_abs);
-  h_true_abs->SetBinContent(8, *mcSIGNAL_abs.Filter("true_absSignal").Count() );
-  h_true_cex->SetBinContent(8, *mcSIGNAL_abs.Filter("true_chexSignal").Count() );
-  h_true_nPi0->SetBinContent(8, *mcSIGNAL_abs.Filter("true_nPi0Signal").Count() );
-  h_true_BG->SetBinContent(8, *mcSIGNAL_abs.Filter("true_backGround").Count() );
+  h_true_abs->SetBinContent(8,  *abs_absSignal );
+  h_true_cex->SetBinContent(8,  *abs_chexSignal );
+  h_true_nPi0->SetBinContent(8, *abs_nPi0Signal );
+  h_true_BG->SetBinContent(8,   *abs_background );
 
 
   h_mc_total->SetFillColor(kBlue - 9);
@@ -459,17 +497,17 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   //*******************************
 
   auto comb_signal_help = (double)*mc_COMBINED_Signal.Filter("true_combinedSignal == 1").Count();
-  auto abs_signal_help = (double)*mcSIGNAL_abs.Filter("true_absSignal == 1").Count();
-  auto cex_signal_help = (double)(*mcSIGNAL_cex.Filter("true_chexSignal == 1").Count() + *mcSIGNAL_cex.Filter("true_nPi0Signal == 1").Count()) ;
+  auto abs_signal_help = (double)*abs_absSignal;
+  auto cex_signal_help = (double)(*chex_chexSignal + *chex_nPi0Signal) ;
 
 
   auto CUTprimChi2_combined_eff = 100* comb_signal_help / (double)*mcCUT_primChi2.Filter("true_combinedSignal == 1").Count();
   auto CUTprimChi2_combined_pur = 100* comb_signal_help/ (double)*N_mcCUT_noPionDaughter;
 
-  auto CUTprimChi2_abs_eff = 100* abs_signal_help / (double)*mcCUT_primChi2.Filter("true_absSignal == 1").Count();
+  auto CUTprimChi2_abs_eff = 100* abs_signal_help / (double)*primChi2_absSignal;
   auto CUTprimChi2_abs_pur = 100* abs_signal_help / (double)*N_mcSIGNAL_abs;
 
-  auto CUTprimChi2_cex_eff = 100* cex_signal_help / (double)(*mcCUT_primChi2.Filter("true_chexSignal == 1").Count() + *mcCUT_primChi2.Filter("true_nPi0Signal == 1").Count());
+  auto CUTprimChi2_cex_eff = 100* cex_signal_help / (double)(*primChi2_chexSignal + *primChi2_nPi0Signal);
   auto CUTprimChi2_cex_pur = 100* cex_signal_help / (double)*N_mcSIGNAL_cex;
 
 
@@ -500,42 +538,42 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     std::cout << "CUT 1 = Beam Particle Track Like  = " << *N_mcCUT_beamType << std::endl;
     std::cout << "DATA CUT 1 = " << *N_dataCUT_beamType << std::endl;
     std::cout << "--------- True Combined Signal = " << *mcCUT_beamType.Filter("true_combinedSignal == 1").Count() << std::endl;
-    std::cout << "--------- True Absorption  Signal = " << *mcCUT_beamType.Filter("true_absSignal == 1").Count() << std::endl;
-    std::cout << "--------- True Chex  Signal = " << *mcCUT_beamType.Filter("true_chexSignal == 1").Count() << std::endl;
-    std::cout << "--------- True N-Pi0  Signal = " << *mcCUT_beamType.Filter("true_nPi0Signal == 1").Count() << std::endl;
-    std::cout << "--------- True BackGround = " << *mcCUT_beamType.Filter("true_backGround == 1").Count() << std::endl;
+    std::cout << "--------- True Absorption  Signal = " << *beamType_absSignal << std::endl;
+    std::cout << "--------- True Chex  Signal = " << *beamType_chexSignal << std::endl;
+    std::cout << "--------- True N-Pi0  Signal = " << *beamType_nPi0Signal << std::endl;
+    std::cout << "--------- True BackGround = " << *beamType_background << std::endl;
     std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_beamType.Filter("true_primPionInel == 0 ").Count() << std::endl;
 
     std::cout << std::endl;
     std::cout << "CUT 2 = Beam Position  = " << *N_mcCUT_beamCut << std::endl;
     std::cout << "DATA CUT 2 = " << *N_dataCUT_beamCut << std::endl;
     std::cout << "--------- True Combined Signal = " << *mcCUT_beamCut.Filter("true_combinedSignal == 1").Count() << std::endl;
-    std::cout << "--------- True Absorption  Signal = " << *mcCUT_beamCut.Filter("true_absSignal == 1").Count() << std::endl;
-    std::cout << "--------- True Chex  Signal = " << *mcCUT_beamCut.Filter("true_chexSignal == 1").Count() << std::endl;
-    std::cout << "--------- True N-Pi0  Signal = " << *mcCUT_beamCut.Filter("true_nPi0Signal == 1").Count() << std::endl;
-    std::cout << "--------- True BackGround = " << *mcCUT_beamCut.Filter("true_backGround == 1").Count() << std::endl;
+    std::cout << "--------- True Absorption  Signal = " << *beamCut_absSignal << std::endl;
+    std::cout << "--------- True Chex  Signal = " << *beamCut_chexSignal << std::endl;
+    std::cout << "--------- True N-Pi0  Signal = " << *beamCut_nPi0Signal << std::endl;
+    std::cout << "--------- True BackGround = " << *beamCut_background << std::endl;
     std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_beamCut.Filter("true_primPionInel == 0").Count() << std::endl;
 
     std::cout << std::endl;
     std::cout << "CUT 3 = Primary in APA 3  = " << *N_mcCUT_endAPA3 << std::endl;
     std::cout << "DATA CUT 3 = " << *N_dataCUT_endAPA3 << std::endl;
     std::cout << "--------- True Combined Signal = " << *mcCUT_endAPA3.Filter("true_combinedSignal == 1").Count() << std::endl;
-    std::cout << "--------- True Absorption  Signal = " << *mcCUT_endAPA3.Filter("true_absSignal == 1").Count() << std::endl;
-    std::cout << "--------- True Chex  Signal = " << *mcCUT_endAPA3.Filter("true_chexSignal == 1").Count() << std::endl;
-    std::cout << "--------- True N-Pi0  Signal = " << *mcCUT_endAPA3.Filter("true_nPi0Signal == 1").Count() << std::endl;
+    std::cout << "--------- True Absorption  Signal = " << *endAPA3_absSignal << std::endl;
+    std::cout << "--------- True Chex  Signal = " << *endAPA3_chexSignal << std::endl;
+    std::cout << "--------- True N-Pi0  Signal = " << *endAPA3_nPi0Signal << std::endl;
     std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_endAPA3.Filter("true_primPionInel == 0 ").Count() << std::endl;
-    std::cout << "--------- True BackGround = " << *mcCUT_endAPA3.Filter("true_backGround == 1").Count() << std::endl;
+    std::cout << "--------- True BackGround = " << *endAPA3_background << std::endl;
     std::cout << "--------- Events with true Pion Daughters = " << *mcCUT_endAPA3.Filter("true_pion_daughter > 0").Count() << std::endl;
 
     std::cout << std::endl;
     std::cout << "CUT 3_1 = Primary Chi2 > 140  = " << *N_mcCUT_primChi2 << std::endl;
     std::cout << "DATA CUT 3_1 = " << *N_dataCUT_primChi2 << std::endl;
     std::cout << "--------- True Combined Signal = " << *mcCUT_primChi2.Filter("true_combinedSignal == 1").Count() << std::endl;
-    std::cout << "--------- True Absorption  Signal = " << *mcCUT_primChi2.Filter("true_absSignal == 1").Count() << std::endl;
-    std::cout << "--------- True Chex  Signal = " << *mcCUT_primChi2.Filter("true_chexSignal == 1").Count() << std::endl;
-    std::cout << "--------- True N-Pi0  Signal = " << *mcCUT_primChi2.Filter("true_nPi0Signal == 1").Count() << std::endl;
+    std::cout << "--------- True Absorption  Signal = " << *primChi2_absSignal << std::endl;
+    std::cout << "--------- True Chex  Signal = " << *primChi2_chexSignal << std::endl;
+    std::cout << "--------- True N-Pi0  Signal = " << *primChi2_nPi0Signal << std::endl;
     std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_primChi2.Filter("true_primPionInel == 0 ").Count() << std::endl;
-    std::cout << "--------- True BackGround = " << *mcCUT_primChi2.Filter("true_backGround == 1").Count() << std::endl;
+    std::cout << "--------- True BackGround = " << *primChi2_background << std::endl;
     std::cout << "--------- Events with true Pion Daughters = " << *mcCUT_primChi2.Filter("true_pion_daughter > 0").Count() << std::endl;
 
 
@@ -560,10 +598,10 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     std::cout << "Events with Pi0 Shower  = " << *N_mcSIGNAL_cex << std::endl;
     std::cout << "DATA  = " << *N_dataSIGNAL_cex << std::endl;
     std::cout << "--------- True Combined Signal = " << *mcSIGNAL_cex.Filter("true_combinedSignal == 1").Count() << std::endl;
-    std::cout << "--------- True Absorption  Signal = " << *mcSIGNAL_cex.Filter("true_absSignal == 1").Count() << std::endl;
-    std::cout << "--------- True Chex  Signal = " << *mcSIGNAL_cex.Filter("true_chexSignal == 1").Count() << std::endl;
-    std::cout << "--------- True N-Pi0  Signal = " << *mcSIGNAL_cex.Filter("true_nPi0Signal == 1").Count() << std::endl;
-    std::cout << "--------- True BackGround = " << *mcSIGNAL_cex.Filter("true_backGround == 1").Count() << std::endl;
+    std::cout << "--------- True Absorption  Signal = " << *chex_absSignal << std::endl;
+    std::cout << "--------- True Chex  Signal = " << *chex_chexSignal << std::endl;
+    std::cout << "--------- True N-Pi0  Signal = " << *chex_nPi0Signal << std::endl;
+    std::cout << "--------- True BackGround = " << *chex_background << std::endl;
     std::cout << "--------- Contamination of primary NON-pions = " << *mcSIGNAL_cex.Filter("true_primPionInel == 0 ").Count() << std::endl;
     std::cout << "--------- Contamination of Events with Pion Daughter = " << *mcSIGNAL_cex.Filter("true_pion_daughter > 0").Count() << std::endl;
 
@@ -574,10 +612,10 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     std::cout << "Events without Pi0 Shower  = " << *N_mcSIGNAL_abs << std::endl;
     std::cout << "DATA = " << *N_dataSIGNAL_abs << std::endl;
     std::cout << "--------- True Combined Signal = " << *mcSIGNAL_abs.Filter("true_combinedSignal == 1").Count() << std::endl;
-    std::cout << "--------- True Absorption  Signal = " << *mcSIGNAL_abs.Filter("true_absSignal == 1").Count() << std::endl;
-    std::cout << "--------- True Chex  Signal = " << *mcSIGNAL_abs.Filter("true_chexSignal == 1").Count() << std::endl;
-    std::cout << "--------- True N-Pi0  Signal = " << *mcSIGNAL_abs.Filter("true_nPi0Signal == 1").Count() << std::endl;
-    std::cout << "--------- True BackGround = " << *mcSIGNAL_abs.Filter("true_backGround == 1").Count() << std::endl;
+    std::cout << "--------- True Absorption  Signal = " << *abs_absSignal << std::endl;
+    std::cout << "--------- True Chex  Signal = " << *abs_chexSignal << std::endl;
+    std::cout << "--------- True N-Pi0  Signal = " << *abs_nPi0Signal << std::endl;
+    std::cout << "--------- True BackGround = " << *abs_background << std::endl;
     std::cout << "--------- Contamination of primary NON-pions = " << *mcSIGNAL_abs.Filter("true_primPionInel == 0").Count() << std::endl;
     std::cout << "--------- Contamination of Events with Pion Daughter = " << *mcSIGNAL_abs.Filter("true_pion_daughter > 0").Count() << std::endl;
 
