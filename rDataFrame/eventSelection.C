@@ -318,6 +318,12 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
       "pionana/beamana", "eventSelection_mc_ABS.root");
   auto N_mcSIGNAL_abs = mcSIGNAL_abs.Count();
 
+  //Make a file for events with a tagged pion daughter
+  auto mcCUT_PionDaughter = mcCUT_primChi2.Filter("!has_noPion_daughter");
+  auto mc_snap_pion_daughter = mcCUT_PionDaughter.Snapshot(
+      "pionana/beamana", "eventSelection_mc_rejected.root");
+                        
+
 
   //Start Cutting DATA
   //******************
