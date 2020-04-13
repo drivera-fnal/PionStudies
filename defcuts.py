@@ -33,6 +33,7 @@ def defcuts():
   cuts["UpstreamIntToProton"]  = cuts["UpstreamInt"] + " && reco_beam_true_byHits_PDG == 2212"
   cuts["UpstreamIntToNuc"]     = cuts["UpstreamInt"] + " && reco_beam_true_byHits_PDG  > 2212"
   cuts["UpstreamIntToGamma"]   = cuts["UpstreamInt"] + " && reco_beam_true_byHits_PDG == 22"
+  cuts["UpstreamIntToPion"]    = cuts["UpstreamInt"] + " && abs(reco_beam_true_byHits_PDG) == 211"
 
 
   return cuts
