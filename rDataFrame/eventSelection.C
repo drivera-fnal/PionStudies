@@ -69,6 +69,11 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     .Define("upstreamInt", upstreamInt,
             {"reco_beam_true_byHits_process", "reco_beam_true_byHits_origin"})
 
+    //tag if there is a true Pion with high momentum in event, threshold defined in eventSelection.h
+    .Define("true_daughter_pion_momentumHigh", tagDaughterPionMomentumHigh, 
+          {"true_beam_daughter_PDG", "true_beam_daughter_startP",
+           "true_daughter_nPiPlus", "true_daughter_nPiMinus"})
+
     //Jake: I think we should take this out
     //      I think we won't really use this in the end
     .Define("good_reco", good_reco, {"quality_reco_view_0_wire_backtrack",
@@ -86,8 +91,7 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
              "true_beam_nElasticScatters"})
 
     .Define("true_combinedSignal", tagAbsChEx,
-            {"true_primPionInel", "true_daughter_nPiPlus",
-             "true_daughter_nPiMinus"})
+            {"true_primPionInel", "true_daughter_pion_momentumHigh"})
 
     .Define("true_chexSignal", tagChEx, {"true_combinedSignal",
                                          "true_daughter_nPi0"})

@@ -28,6 +28,7 @@ using namespace ROOT::VecOps;
 //Some Cut Values
 double cutAPA3_Z = 226.;
 double cut_trackScore = 0.35;
+double cut_trackScore_test = 0.35;
 //daughter Distance cut
 double cut_daughter_track_distance = 10.;
 double cut_daughter_shower_distance_low = 2.;
@@ -36,6 +37,9 @@ double cut_primary_chi2 = 140.;
 double cut_secondary_chi2 = 50.;
 int cut_nHits_shower_low = 12;
 int cut_nHits_shower_high = 1000;
+
+//Daughter Pion Momentum (GeV)
+double daughter_pion_momentum = 0.15;
 
 //For MC from Owen Goodwins studies
 double xlow = -3.,  xhigh = 7.,  ylow = -8.,  yhigh = 7.;
@@ -57,11 +61,22 @@ auto tagPrimPionInel_withElastic = [](int true_beam_PDG,
       && true_beam_nElasticScatters > 0);
 };
 
+//Function to tag if in an event there is no Pion or Pion with momentum lower than daughter_pion_momentum
+//for true Signal definition
+auto tagDaughterPionMomentumHigh = [](std::vector<int> &true_daughter_PDG, std::vector<double> &true_daughter_startP,
+      const int true_daughter_nPiPlus, const int true_daughter_nPiMinus){
 
-//True Charge Exchange + Absorption Signal, has no piPlus or piMinus daughters
-auto tagAbsChEx = [](int tagPrimPi, const int true_daughter_nPiPlus,
-    const int true_daughter_nPiMinus) {
-  return int(tagPrimPi && ((true_daughter_nPiPlus + true_daughter_nPiMinus) == 0));
+   int daughter_pion = 0;
+   if(true_daughter_nPiPlus + true_daughter_nPiMinus > 0) {
+      for(size_t i=0; i < true_daughter_PDG.size(); i++){
+         if( abs(true_daughter_PDG[i]) == 211 && true_daughter_startP[i] > daughter_pion_momentum) return daughter_pion = 1;}
+   }
+   return daughter_pion;
+};
+
+//True Charge Exchange + Absorption Signal, has no piPlus or piMinus daughters with Momentum bigger than daughter_pion_momentum
+auto tagAbsChEx = [](int tagPrimPi, int piDaughterHighMomentum) {
+  return int(tagPrimPi && piDaughterHighMomentum == 0);
 };
 
 //True Charge Exchange Signal first filter for ChEx + Absoprtion signal,
@@ -238,9 +253,14 @@ auto TEST_noPion_nHits = [](const std::vector<double> &chi2,
                             const std::vector<int> &trackID) {
   for( size_t i = 0; i < chi2.size(); ++i ) {
     if ((trackID[i] != -1) && (chi2[i]/ndof[i] > cut_secondary_chi2) &&
-        (track_score[i] < 1.) && (nHits[i] < 300) &&
+        (track_score[i] < cut_trackScore) && (nHits[i] > 500) &&
         (distance[i] < cut_daughter_track_distance)) {
       return false;
+    }
+    if ((trackID[i] != -1) && (chi2[i]/ndof[i] > cut_secondary_chi2) &&
+        (nHits[i] < 500) &&
+        (distance[i] < cut_daughter_track_distance)) {
+       return false;
     }
   }
 
@@ -255,7 +275,7 @@ auto has_shower_nHits_distance = [](const std::vector<double> &track_score,
     return false;
 
   for(size_t i = 0; i < track_score.size(); ++i){
-     if ((track_score[i] < cut_trackScore) &&
+     if ((track_score[i] < cut_trackScore_test) &&
          (nHits[i] > cut_nHits_shower_low) &&
          (nHits[i] < cut_nHits_shower_high) && (track_score[i] != -999.) &&
          (distance[i] < cut_daughter_shower_distance_high) &&
