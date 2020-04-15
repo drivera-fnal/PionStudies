@@ -2,6 +2,7 @@
 #include "TROOT.h"
 #include "TGraph.h"
 #include "TGraphErrors.h"
+#include "TMultiGraph.h"
 #include "TH1.h"
 #include "THStack.h"
 #include "TLegend.h"
@@ -35,7 +36,7 @@ std::string default_data =
 //***********************
 //Main Function
 int eventSelection(const string mcFile, const string dataFile = default_data,
-                   bool doCounting = true, bool doBatch = false) {
+                   bool doCounting = false, bool doBatch = false) {
 
   //This prevents the canvas from being draw at the end
   //Useful for when on the gpvms 
@@ -475,13 +476,27 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   h_true_nPi0->SetBinContent(8, *abs_nPi0Signal );
   h_true_BG->SetBinContent(8,   *abs_background );
 
-
+ 
   h_mc_total->SetFillColor(kBlue - 9);
   h_true_abs->SetFillColor(kGreen);
   h_true_cex->SetFillColor(kMagenta);
   h_true_nPi0->SetFillColor(kTeal);
   h_true_BG->SetFillColor(kBlue);
 
+  //Scaling MC to DATA
+  double total = h_data_total->GetBinContent(5);
+  double total_2 = h_true_abs->GetBinContent(5) + h_true_cex->GetBinContent(5) +
+                   h_true_nPi0->GetBinContent(5) + h_true_BG->GetBinContent(5);
+
+  h_true_BG->Scale(total / total_2);
+  h_true_abs->Scale(total / total_2);
+  h_true_cex->Scale(total / total_2);
+  h_true_nPi0->Scale(total / total_2);
+
+  h_true_BG->Sumw2(0);
+  h_true_abs->Sumw2(0);
+  h_true_cex->Sumw2(0);
+  h_true_nPi0->Sumw2(0);
 
   stack_cutFlow->Add(h_true_BG);
   stack_cutFlow->Add(h_true_abs);
@@ -489,14 +504,20 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   stack_cutFlow->Add(h_true_nPi0);   
 
 
-  double total = h_true_abs->GetBinContent(5) + h_true_cex->GetBinContent(5) +
-                 h_true_nPi0->GetBinContent(5) + h_true_BG->GetBinContent(5);
-  h_data_total->Scale(total / h_data_total->GetBinContent(5));
+
+  //****Scaling Data to MC --> shouldn't do that***/
+
+  //double total = h_true_abs->GetBinContent(5) + h_true_cex->GetBinContent(5) +
+  //               h_true_nPi0->GetBinContent(5) + h_true_BG->GetBinContent(5);
+  //h_data_total->Scale(total / h_data_total->GetBinContent(5));
+
 
   auto c1 = new TCanvas("Event Selection Flow", "",1600,1200);
   stack_cutFlow->Draw();
   h_data_total->Draw("PSAME");
   c1->BuildLegend();
+  c1->Write();
+  c1->Close();
 
   //*******************************
   //Efficiencies and Purity available Events are after primary Chi2 CUT
@@ -515,6 +536,77 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
 
   auto CUTprimChi2_cex_eff = 100* cex_signal_help / (double)(*primChi2_chexSignal + *primChi2_nPi0Signal);
   auto CUTprimChi2_cex_pur = 100* cex_signal_help / (double)*N_mcSIGNAL_cex;
+
+  //*******************
+  //Efficiency and Purities after each Cut for Abs
+  //******************
+  //
+  //TGraph for Purity Efficiency Development
+  //
+  int n_cuts = 6;
+  double x[] = {1,2,3,4,5,6};
+  double eff_abs[n_cuts];
+  double pur_abs[n_cuts];
+  double eff_times_pur_abs[n_cuts];
+
+  pur_abs[0] = (double)*beamType_absSignal / (double)*N_mcCUT_beamType;
+  eff_abs[0] = (double)*beamType_absSignal / (double)*n_true_absSignal;
+  
+  pur_abs[1] = (double)*beamCut_absSignal / (double)*N_mcCUT_beamCut;
+  eff_abs[1] = (double)*beamCut_absSignal / (double)*n_true_absSignal;
+
+  pur_abs[2] = (double)*endAPA3_absSignal / (double)*N_mcCUT_endAPA3;
+  eff_abs[2] = (double)*endAPA3_absSignal / (double)*n_true_absSignal;
+
+  pur_abs[3] = (double)*primChi2_absSignal / (double)*N_mcCUT_primChi2;
+  eff_abs[3] = (double)*primChi2_absSignal / (double)*n_true_absSignal;
+
+  pur_abs[4] = (double)*noPionDaughter_absSignal / (double)*N_mcCUT_noPionDaughter;
+  eff_abs[4] = (double)*noPionDaughter_absSignal / (double)*n_true_absSignal;
+
+  pur_abs[5] = (double)*abs_absSignal / (double)*N_mcSIGNAL_abs;
+  eff_abs[5] = (double)*abs_absSignal / (double)*n_true_absSignal;
+
+  for(int i=0; i < n_cuts; i++){
+     eff_times_pur_abs[i] = pur_abs[i]*eff_abs[i];
+  };
+
+ 
+  auto c_eff_pur_abs = new TCanvas("eff_pur_cuts", "",1600,2000 );
+  c_eff_pur_abs->SetGrid();
+  auto multi_graph = new TMultiGraph();
+  multi_graph->SetTitle("Efficiency and Purity");
+    
+  auto graph_eff_abs = new TGraph(n_cuts,x,eff_abs);
+  graph_eff_abs->SetTitle("Efficiency Absorption");
+  graph_eff_abs->SetLineColor(kBlue);
+  graph_eff_abs->SetLineWidth(4);
+  graph_eff_abs->SetMarkerStyle(21);
+
+  auto graph_pur_abs = new TGraph(n_cuts,x,pur_abs);
+  graph_pur_abs->SetTitle("Purity Absorption");
+  graph_pur_abs->SetLineColor(6);
+  graph_pur_abs->SetLineWidth(4);
+  graph_pur_abs->SetMarkerStyle(21);
+
+  auto graph_eff_times_pur = new TGraph(n_cuts,x,eff_times_pur_abs);
+  graph_eff_times_pur->SetTitle("Efficiency x Purity");
+  graph_eff_times_pur->SetLineColor(8);
+  graph_eff_times_pur->SetLineWidth(4);
+  graph_eff_times_pur->SetMarkerStyle(29);
+
+  multi_graph->Add(graph_eff_abs);
+  multi_graph->Add(graph_pur_abs);
+  multi_graph->Add(graph_eff_times_pur);
+
+  multi_graph->GetYaxis()->SetRangeUser(0.,1.);
+  multi_graph->GetXaxis()->SetTitle("Cuts");
+
+  multi_graph->Draw("ALP");
+    
+  c_eff_pur_abs->BuildLegend();
+  c_eff_pur_abs->Write();
+  c_eff_pur_abs->Close();
 
 
 
@@ -645,7 +737,6 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
 
 
 
-  c1->Write();
   output->Write();
   return 0;
 }
