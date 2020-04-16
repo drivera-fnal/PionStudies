@@ -36,8 +36,9 @@ int compString(std::string s1, std::string s2){
    //if(s1 == s2) return 1;
 };
 
-Int_t palette[] = {kRed, kOrange+7, kBlue+2, kRed+3, kGreen+2, kViolet-5, kCyan-7, kCyan+3, kPink+9, kOrange-2 };
-
+Int_t palette_pid[] = {kRed, kOrange+7, kBlue+2, kRed+3, kGreen+2, kViolet-5, kCyan-7, kCyan+3, kPink+9, kOrange-2 };
+Int_t palette_interactions[] = {kRed, kOrange, kBlue, kGreen, kCyan, kMagenta};
+Int_t palette_pdg_reduced[] = {kViolet, kCyan, kGreen, kRed, kOrange, kBlue};
 
 //good Reco primary Pions (true MC) with pi+inelastic interaction in the end
 //
@@ -78,6 +79,15 @@ auto trueBackGround = [](int true_daughter_nPiPlus, int true_daughter_nPiMinus, 
    return !(true_daughter_nPiPlus + true_daughter_nPiMinus == 0 && true_daughter_nPi0 <2);
 };
 
+template <class F>
+F primary_property(int pdg, int pdg_primary, const F primary_property){
+   F property = -999;
+   if(pdg == pdg_primary){
+      property = primary_property;
+   }
+   return property;
+};
+
 //Define all particle types
 //I haven't yet figured out how anything else than columns can be passed to lambdas. so for now this helps a define function to define a new column "proton" etc for the particles, filled with that value and then use it to pass to a function that will take that value and compare it to a PDG value
 auto pdg_proton = [](){return 2212;};
@@ -95,9 +105,9 @@ auto pdg_neutron = [](){return 2112;};
 //COUNT particle Type in Daughters
 auto count_type = [](int pdg, const std::vector<int> &pdg_vec){
    int cnt = 0;
-   for(std::string::size_type pos = 0; pos < pdg_vec.size(); pos++){
-      if( pdg != 9999 && pdg == pdg_vec.at(pos)) cnt++;
-      else if (pdg == 9999 && pdg_vec.at(pos) > 3000) cnt++;
+   for(size_t pos = 0; pos < pdg_vec.size(); pos++){
+      if( pdg != 9999 && pdg == pdg_vec[pos]) cnt++;
+      else if (pdg == 9999 && pdg_vec[pos] > 3000) cnt++;
    };
    return cnt;
 };
@@ -105,10 +115,10 @@ auto count_type = [](int pdg, const std::vector<int> &pdg_vec){
 auto count_pi0_gamma = [](const std::vector<int> &pi0_gamma_ID, const std::vector<int> &reco_true_ID){
    int cnt_gamma = 0;
    if(pi0_gamma_ID.size() != 0){
-      for(std::string::size_type pos = 0; pos < pi0_gamma_ID.size(); pos++){
+      for(size_t pos = 0; pos < pi0_gamma_ID.size(); pos++){
          if(pos < reco_true_ID.size()){
-            for(std::string::size_type cnt = 0; cnt < reco_true_ID.size(); cnt++){
-               if(pi0_gamma_ID.at(pos) == reco_true_ID.at(cnt)) cnt_gamma++;
+            for(size_t cnt = 0; cnt < reco_true_ID.size(); cnt++){
+               if(pi0_gamma_ID[pos] == reco_true_ID[cnt]) cnt_gamma++;
             };
          }
       };
@@ -120,11 +130,22 @@ auto count_pi0_gamma = [](const std::vector<int> &pi0_gamma_ID, const std::vecto
 template <class T>
 T daughter_property(int pdg, const std::vector<int> &pdg_vec, const T &daughter_property){
    T return_vec; 
-   for (std::string::size_type pos =0; pos < pdg_vec.size(); pos++){ 
-      if(pdg!= 9999 && pdg_vec.at(pos) == pdg && daughter_property.size()> pos){
-         return_vec.push_back(daughter_property.at(pos));}
-      else if(pdg == 9999 && pdg_vec.at(pos) > 3000 && daughter_property.size() > pos) {
-         return_vec.push_back(daughter_property.at(pos));};
+   for (size_t pos =0; pos < pdg_vec.size(); pos++){ 
+      if(pdg!= 9999 && pdg_vec[pos] == pdg && daughter_property.size()> pos){
+         return_vec.push_back(daughter_property[pos]);}
+      else if(pdg == 9999 && pdg_vec[pos] > 3000 && daughter_property.size() > pos) {
+         return_vec.push_back(daughter_property[pos]);};
+   };
+   return return_vec;
+};
+
+template <class A>
+A pion_daughter_property( const std::vector<int> &pdg_vec, const A &daughter_property){
+   A return_vec; 
+   for (size_t pos =0; pos < pdg_vec.size(); pos++){ 
+      if(abs(pdg_vec[pos]) == 211 && daughter_property.size()> pos){
+         return_vec.push_back(daughter_property[pos]);
+      }
    };
    return return_vec;
 };
@@ -134,10 +155,10 @@ S pi0_gamma_property (const std::vector<int> &pi0_gamma_ID, const std::vector<in
    S return_vec;
    if(pi0_gamma_ID.size() != 0){
 
-      for(std::string::size_type pos = 0; pos < pi0_gamma_ID.size(); pos++){
+      for(size_t pos = 0; pos < pi0_gamma_ID.size(); pos++){
          if(pos < reco_daugh_ID.size()){
-            for(std::string::size_type cnt = 0; cnt < reco_daugh_ID.size(); cnt++){
-               if(pi0_gamma_ID.at(pos) == reco_daugh_ID.at(cnt) && cnt < daughter_property.size() ) return_vec.push_back(daughter_property.at(cnt));
+            for(size_t cnt = 0; cnt < reco_daugh_ID.size(); cnt++){
+               if(pi0_gamma_ID[pos] == reco_daugh_ID[cnt] && cnt < daughter_property.size() ) return_vec.push_back(daughter_property[cnt]);
             };
          }
       };
@@ -150,17 +171,17 @@ B nuclear_gamma_property (const std::vector<int> &pi0_gamma_ID, const std::vecto
    B return_vec;
    if(pi0_gamma_ID.size() != 0){
 
-      for(std::string::size_type pos = 0; pos < pi0_gamma_ID.size(); pos++){
+      for(size_t pos = 0; pos < pi0_gamma_ID.size(); pos++){
          if(pos < reco_daugh_ID.size()){
-            for(std::string::size_type cnt = 0; cnt < reco_daugh_ID.size(); cnt++){
-               if(pi0_gamma_ID.at(pos) != reco_daugh_ID.at(cnt) && reco_daugh_PDG.at(cnt) == 22 && cnt < daughter_property.size()) return_vec.push_back(daughter_property.at(cnt));
+            for(size_t cnt = 0; cnt < reco_daugh_ID.size(); cnt++){
+               if(pi0_gamma_ID[pos] != reco_daugh_ID[cnt] && reco_daugh_PDG[cnt] == 22 && cnt < daughter_property.size()) return_vec.push_back(daughter_property[cnt]);
             };
          }
       };
    }
    else {
-      for(std::string::size_type cnt = 0; cnt < reco_daugh_PDG.size(); cnt++){
-         if(reco_daugh_PDG.at(cnt) == 22 && cnt < daughter_property.size()) return_vec.push_back(daughter_property.at(cnt));
+      for(size_t cnt = 0; cnt < reco_daugh_PDG.size(); cnt++){
+         if(reco_daugh_PDG[cnt] == 22 && cnt < daughter_property.size()) return_vec.push_back(daughter_property[cnt]);
       };
    }
    return return_vec;
@@ -170,11 +191,11 @@ B nuclear_gamma_property (const std::vector<int> &pi0_gamma_ID, const std::vecto
 //Find properties of an event if one of the daughters is a specific particle
 auto event_property = [](int pdg, const std::vector<int> &pdg_vec, int ev_property){
    int return_value = 0; 
-   for (std::string::size_type pos =0; pos < pdg_vec.size(); pos++){ 
-      if(pdg!= 9999 && pdg_vec.at(pos) == pdg ){
+   for (size_t pos =0; pos < pdg_vec.size(); pos++){ 
+      if(pdg!= 9999 && pdg_vec[pos] == pdg ){
          return_value = ev_property;
          break;}
-      else if(pdg == 9999 && pdg_vec.at(pos) > 3000 ) {
+      else if(pdg == 9999 && pdg_vec[pos] > 3000 ) {
          return_value = ev_property;
          break;};
    };
@@ -186,18 +207,18 @@ auto event_property = [](int pdg, const std::vector<int> &pdg_vec, int ev_proper
 auto daugh_trkANDshow_property = [](int pdg, const std::vector<int> &trk_pdg_vec, const std::vector<int> &show_pdg_vec, const std::vector<double> &daugh_track_property, const std::vector<double> &daugh_show_property){
    std::vector<double> return_vec; 
 
-   for (std::string::size_type pos =0; pos < trk_pdg_vec.size(); pos++){ 
-      if(pdg!= 9999 && trk_pdg_vec.at(pos) == pdg && daugh_track_property.size()> pos){
-         return_vec.push_back(daugh_track_property.at(pos));}
-      else if(pdg == 9999 && trk_pdg_vec.at(pos) > 3000 && daugh_track_property.size() > pos) {
-         return_vec.push_back(daugh_track_property.at(pos));};
+   for (size_t pos =0; pos < trk_pdg_vec.size(); pos++){ 
+      if(pdg!= 9999 && trk_pdg_vec[pos] == pdg && daugh_track_property.size()> pos){
+         return_vec.push_back(daugh_track_property[pos]);}
+      else if(pdg == 9999 && trk_pdg_vec[pos] > 3000 && daugh_track_property.size() > pos) {
+         return_vec.push_back(daugh_track_property[pos]);};
    };
 
-   for (std::string::size_type pos =0; pos < show_pdg_vec.size(); pos++){ 
-      if(pdg!= 9999 && show_pdg_vec.at(pos) == pdg && daugh_show_property.size()> pos){
-         return_vec.push_back(daugh_show_property.at(pos));}
-      else if(pdg == 9999 && show_pdg_vec.at(pos) > 3000 && daugh_show_property.size() > pos) {
-         return_vec.push_back(daugh_show_property.at(pos));};
+   for (size_t pos =0; pos < show_pdg_vec.size(); pos++){ 
+      if(pdg!= 9999 && show_pdg_vec[pos] == pdg && daugh_show_property.size()> pos){
+         return_vec.push_back(daugh_show_property[pos]);}
+      else if(pdg == 9999 && show_pdg_vec[pos] > 3000 && daugh_show_property.size() > pos) {
+         return_vec.push_back(daugh_show_property[pos]);};
    };
 
    return return_vec;
@@ -205,11 +226,11 @@ auto daugh_trkANDshow_property = [](int pdg, const std::vector<int> &trk_pdg_vec
 
 auto merge_trk_show_property = [](const std::vector<double> &daughter_trk_property, const std::vector<double> &daughter_shower_property){
    std::vector<double> merge_vec;
-   for(std::string::size_type pos = 0; pos < daughter_trk_property.size(); pos++){
-      merge_vec.push_back(daughter_trk_property.at(pos));
+   for(size_t pos = 0; pos < daughter_trk_property.size(); pos++){
+      merge_vec.push_back(daughter_trk_property[pos]);
    };
-   for(std::string::size_type pos = 0; pos < daughter_shower_property.size(); pos++){
-      merge_vec.push_back(daughter_shower_property.at(pos));
+   for(size_t pos = 0; pos < daughter_shower_property.size(); pos++){
+      merge_vec.push_back(daughter_shower_property[pos]);
    };
    return merge_vec;
 };
@@ -222,6 +243,61 @@ auto meanDaughterdEdX = [](const ROOT::RVec<std::vector<double>> &vecs){
    return means;
 };
 
+//truncated mean of 10%
+auto truncatedMeanSigma = [](std::vector<std::vector<double>> &vecs_dEdX){
+
+   size_t size = 0;
+   std::vector<double> trunc_mean;
+   std::vector<double> help_vec;
+   double median = 0.;
+   double sigma = 0.6827;
+
+   //sort the dEdX vecotrs in matrix
+   for(auto &&vec : vecs_dEdX){
+      size = vec.size();
+      help_vec.clear();
+
+      //check dEdX vector isn't empty!
+      if(vec.empty()){
+         trunc_mean.push_back(-999.);
+         continue;
+      }
+
+      else{
+         //Find median
+         sort(vec.begin(), vec.end());
+         
+         if(size % 2 == 0){
+            median = (vec[size /2 - 1] + vec[size / 2]) / 2;
+         }
+
+         else {
+            median = vec[size / 2];
+         }
+
+         //Go through vector and keep +- sigma (68.27%)
+         for(auto i : vec){
+
+            if( i > median - sigma*median && i < median + sigma*median){
+
+               help_vec.push_back(i);
+            }
+
+         };
+         
+         //Mean of help vector
+
+         trunc_mean.push_back(accumulate(help_vec.begin(), help_vec.end(), 0.0) / help_vec.size());
+
+      }
+
+
+   };
+
+   return trunc_mean;
+
+};
+
 
 auto recoLength = [](const std::vector<double> &sX, const std::vector<double> &sY, const std::vector<double> &sZ, const std::vector<double> &eX, const std::vector<double> &eY, const std::vector<double> &eZ){
    std::vector<double> length;
@@ -229,15 +305,65 @@ auto recoLength = [](const std::vector<double> &sX, const std::vector<double> &s
 
    if( sX.size() == eZ.size()){
 
-      for(std::string::size_type pos = 0; pos < sX.size(); pos++){
-         dX = sX.at(pos) - eX.at(pos);
-         dY = sY.at(pos) - eY.at(pos);
-         dZ = sZ.at(pos) - eZ.at(pos);
+      for(size_t pos = 0; pos < sX.size(); pos++){
+         dX = sX[pos] - eX[pos];
+         dY = sY[pos] - eY[pos];
+         dZ = sZ[pos] - eZ[pos];
          length.push_back(sqrt(dX*dX + dY*dY + dZ*dZ));
       };
 
    }
    else length.push_back(-999);
    return length;
+};
+
+auto select_daughter_matrix = [](int pdg, const std::vector<int> &pdg_vec, const std::vector<std::vector<double>> &matrix){
+
+   std::vector<std::vector<double>> return_matrix;
+   std::vector<double> help;
+   for(size_t i=0; i < pdg_vec.size(); ++i){
+      if(abs(pdg_vec[i]) == pdg) {
+
+         for(size_t n=0; n < matrix[i].size(); ++n){
+            help.push_back(matrix[i][n]);
+         }
+
+         return_matrix.push_back(help);
+         help.clear();     
+      };
+   }
+   return return_matrix;
+
+};
+
+auto matrix_vector = [](const std::vector<std::vector<double>> &matrix, const std::vector<std::vector<double>> &matrix_help){
+
+   std::vector<double> return_vec;
+   size_t temp;
+   for(size_t i=0; i < matrix.size(); ++i){
+
+      //to ensure that vectors have same length (resRange dEdX)
+      if(matrix[i].size() <= matrix_help[i].size()) temp = matrix[i].size();
+      else temp = matrix_help[i].size();
+
+      for(size_t n=0; n < temp; ++n){
+         return_vec.push_back(matrix[i][n]);
+      }
+   }
+
+   return return_vec;
+};
+
+auto doChi2 = [](std::vector<double> &chi2, std::vector<int> &ndof){
+
+   std::vector<double> return_vec;
+   if(chi2.size() != 0){
+      for(std::string::size_type pos = 0; pos < chi2.size(); pos++){
+         return_vec.push_back(chi2.at(pos)/ndof.at(pos));
+      }
+      return return_vec;
+   }
+
+   return return_vec;
 };
 

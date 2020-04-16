@@ -524,7 +524,7 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   c1->Close();
 
   //*******************************
-  //Efficiencies and Purity available Events are after primary Chi2 CUT
+  //Efficiencies and Purity available Events are after end APA3  CUT
   //*******************************
 
   auto comb_signal_help = (double)*mc_COMBINED_Signal.Filter("true_combinedSignal == 1").Count();
@@ -532,13 +532,13 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   auto cex_signal_help = (double)(*chex_chexSignal + *chex_nPi0Signal) ;
 
 
-  auto CUTprimChi2_combined_eff = 100* comb_signal_help / (double)*mcCUT_primChi2.Filter("true_combinedSignal == 1").Count();
+  auto CUTprimChi2_combined_eff = 100* comb_signal_help / (double)*mcCUT_endAPA3.Filter("true_combinedSignal == 1").Count();
   auto CUTprimChi2_combined_pur = 100* comb_signal_help/ (double)*N_mcCUT_noPionDaughter;
 
-  auto CUTprimChi2_abs_eff = 100* abs_signal_help / (double)*primChi2_absSignal;
+  auto CUTprimChi2_abs_eff = 100* abs_signal_help / (double)*endAPA3_absSignal;
   auto CUTprimChi2_abs_pur = 100* abs_signal_help / (double)*N_mcSIGNAL_abs;
 
-  auto CUTprimChi2_cex_eff = 100* cex_signal_help / (double)(*primChi2_chexSignal + *primChi2_nPi0Signal);
+  auto CUTprimChi2_cex_eff = 100* cex_signal_help / (double)(*endAPA3_chexSignal + *endAPA3_nPi0Signal);
   auto CUTprimChi2_cex_pur = 100* cex_signal_help / (double)*N_mcSIGNAL_cex;
 
   //*******************
@@ -547,29 +547,24 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   //
   //TGraph for Purity Efficiency Development
   //
-  int n_cuts = 6;
-  double x[] = {1,2,3,4,5,6};
+  int n_cuts = 4;
+  double x[] = {1,2,3,4};
   double eff_abs[n_cuts];
   double pur_abs[n_cuts];
   double eff_times_pur_abs[n_cuts];
 
-  pur_abs[0] = (double)*beamType_absSignal / (double)*N_mcCUT_beamType;
-  eff_abs[0] = (double)*beamType_absSignal / (double)*n_true_absSignal;
-  
-  pur_abs[1] = (double)*beamCut_absSignal / (double)*N_mcCUT_beamCut;
-  eff_abs[1] = (double)*beamCut_absSignal / (double)*n_true_absSignal;
 
-  pur_abs[2] = (double)*endAPA3_absSignal / (double)*N_mcCUT_endAPA3;
-  eff_abs[2] = (double)*endAPA3_absSignal / (double)*n_true_absSignal;
+  pur_abs[0] = (double)*endAPA3_absSignal / (double)*N_mcCUT_endAPA3;
+  eff_abs[0] = (double)*endAPA3_absSignal / (double)*endAPA3_absSignal;
 
-  pur_abs[3] = (double)*primChi2_absSignal / (double)*N_mcCUT_primChi2;
-  eff_abs[3] = (double)*primChi2_absSignal / (double)*n_true_absSignal;
+  pur_abs[1] = (double)*primChi2_absSignal / (double)*N_mcCUT_primChi2;
+  eff_abs[1] = (double)*primChi2_absSignal / (double)*endAPA3_absSignal;
 
-  pur_abs[4] = (double)*noPionDaughter_absSignal / (double)*N_mcCUT_noPionDaughter;
-  eff_abs[4] = (double)*noPionDaughter_absSignal / (double)*n_true_absSignal;
+  pur_abs[2] = (double)*noPionDaughter_absSignal / (double)*N_mcCUT_noPionDaughter;
+  eff_abs[2] = (double)*noPionDaughter_absSignal / (double)*endAPA3_absSignal;
 
-  pur_abs[5] = (double)*abs_absSignal / (double)*N_mcSIGNAL_abs;
-  eff_abs[5] = (double)*abs_absSignal / (double)*n_true_absSignal;
+  pur_abs[3] = (double)*abs_absSignal / (double)*N_mcSIGNAL_abs;
+  eff_abs[3] = (double)*abs_absSignal / (double)*endAPA3_absSignal;
 
   for(int i=0; i < n_cuts; i++){
      eff_times_pur_abs[i] = pur_abs[i]*eff_abs[i];
