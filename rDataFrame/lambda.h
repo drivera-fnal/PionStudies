@@ -14,6 +14,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <vector>
+#include <numeric>
 //using RDataFrame to cut and analyse PionTtrr
 
 using namespace std;
@@ -243,14 +244,63 @@ auto meanDaughterdEdX = [](const ROOT::RVec<std::vector<double>> &vecs){
    return means;
 };
 
-//truncated mean of 10%
-auto truncatedMeanSigma = [](std::vector<std::vector<double>> &vecs_dEdX){
+auto medianDaughterdEdX = [](std::vector<std::vector<double>> &vecs){
+   std::vector<double> return_vec;
+   std::vector<double> help_vec;
+   size_t size = 0;
+   
+   for(size_t i=0; i < vecs.size(); i++){
+
+      help_vec.clear();
+
+      for(size_t j=0; j < vecs[i].size(); j++){
+
+         help_vec.push_back(vecs[i][j]);
+      };
+
+      sort( help_vec.begin(), help_vec.end() );
+      size = help_vec.size();
+      
+      if(size == 0){
+         return_vec.push_back(-9999);
+         continue;
+      }
+
+      if (size % 2 == 0){
+        return_vec.push_back( (help_vec[size / 2 - 1] + help_vec[size / 2]) / 2);
+      }
+      else{
+         return_vec.push_back( help_vec[size / 2] );
+      }
+
+   };
+   
+   return return_vec;
+
+};
+
+
+//fill matrix Values into vector
+auto matrix_to_vector = [](std::vector<std::vector<double>> &matrix){
+   std::vector<double> return_vec;
+   for(auto &&vec : matrix) {
+      for(auto i : vec) {
+         return_vec.push_back(i);
+      };
+   };
+   return return_vec;
+};
+
+
+//truncated mean of SIGMA = cutting %
+auto truncatedMean = [](double truncate_low, double truncate_high, std::vector<std::vector<double>> &vecs_dEdX){
 
    size_t size = 0;
    std::vector<double> trunc_mean;
    std::vector<double> help_vec;
-   double median = 0.;
-   double sigma = 0.6827;
+   truncate_high = 1 - truncate_high; 
+   int i_low = 0;
+   int i_high = 0;
 
    //sort the dEdX vecotrs in matrix
    for(auto &&vec : vecs_dEdX){
@@ -259,32 +309,24 @@ auto truncatedMeanSigma = [](std::vector<std::vector<double>> &vecs_dEdX){
 
       //check dEdX vector isn't empty!
       if(vec.empty()){
-         trunc_mean.push_back(-999.);
+         trunc_mean.push_back(-9999.);
          continue;
       }
 
       else{
-         //Find median
+         //Sort Vector
          sort(vec.begin(), vec.end());
+       
+         //Discard upper and lower part of signal
+         //rint rounds to integer
+         i_low = rint ( size*truncate_low);
+         i_high = rint( size*truncate_high);
          
-         if(size % 2 == 0){
-            median = (vec[size /2 - 1] + vec[size / 2]) / 2;
-         }
-
-         else {
-            median = vec[size / 2];
-         }
-
-         //Go through vector and keep +- sigma (68.27%)
-         for(auto i : vec){
-
-            if( i > median - sigma*median && i < median + sigma*median){
-
-               help_vec.push_back(i);
-            }
-
+         
+         for(int i = i_low; i <= i_high; i++){
+               help_vec.push_back(vec[i]);
          };
-         
+
          //Mean of help vector
 
          trunc_mean.push_back(accumulate(help_vec.begin(), help_vec.end(), 0.0) / help_vec.size());
@@ -366,4 +408,26 @@ auto doChi2 = [](std::vector<double> &chi2, std::vector<int> &ndof){
 
    return return_vec;
 };
+
+
+auto rad_deg = [](std::vector<double> &rad){
+      std::vector<double> deg;
+      for(size_t i=0; i<rad.size(); i++){
+         deg.push_back(rad[i]*(180/3.14159));
+      }
+      return deg;
+   };
+
+   auto energyDeposition = [](std::vector<double> &dEdX, std::vector<double> &len){
+
+      std::vector<double> energy;
+      for(size_t i=0; i< dEdX.size(); i++){
+         energy.push_back( dEdX[i] * len[i]);
+      };
+
+      return energy;
+
+   };
+
+
 

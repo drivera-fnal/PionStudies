@@ -37,6 +37,9 @@ double cut_primary_chi2 = 140.;
 double cut_secondary_chi2 = 50.;
 int cut_nHits_shower_low = 12;
 int cut_nHits_shower_high = 1000;
+//Low Energy Values
+double energy_limit = 15;
+double dEdX_limit = 0.8;
 
 //Daughter Pion Momentum (GeV)
 double daughter_pion_momentum = 0.15;
@@ -245,22 +248,20 @@ auto secondary_noPion = [](const std::vector<double> &chi2,
   return true;
 };
 
-auto TEST_noPion_nHits = [](const std::vector<double> &chi2,
-                            const std::vector<int> &ndof,
-                            const std::vector<double> &track_score,
-                            const std::vector<int> &nHits,
-                            const std::vector<double> &distance,
-                            const std::vector<int> &trackID) {
+auto secondary_noPion_ignoreLowE = [](const std::vector<double> &chi2, 
+                           const std::vector<int> &ndof,
+                           const std::vector<double> &track_score,
+                           const std::vector<double> &distance, 
+                           const std::vector<int> &trackID,
+                           const std::vector<double> &energy,
+                           const std::vector<double> &dEdX) {
   for( size_t i = 0; i < chi2.size(); ++i ) {
-    if ((trackID[i] != -1) && (chi2[i]/ndof[i] > cut_secondary_chi2) &&
-        (track_score[i] < cut_trackScore) && (nHits[i] > 500) &&
-        (distance[i] < cut_daughter_track_distance)) {
+    if ((trackID[i] != -1) && (track_score[i] > cut_trackScore) &&
+        (chi2[i]/ndof[i] > cut_secondary_chi2) &&
+        (distance[i] < cut_daughter_track_distance) &&
+        (energy[i] > energy_limit) &&
+        (dEdX[i] > dEdX_limit)) {
       return false;
-    }
-    if ((trackID[i] != -1) && (chi2[i]/ndof[i] > cut_secondary_chi2) &&
-        (nHits[i] < 500) &&
-        (distance[i] < cut_daughter_track_distance)) {
-       return false;
     }
   }
 
