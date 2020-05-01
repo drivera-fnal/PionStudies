@@ -176,20 +176,20 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     .Define("primary_passes_chi2", primary_chi2,
             {"reco_beam_Chi2_proton","reco_beam_Chi2_ndof"})
 
-    .Define("has_noPion_daughter", secondary_noPion,
+    /*.Define("has_noPion_daughter", secondary_noPion,
             {"reco_daughter_allTrack_Chi2_proton", 
              "reco_daughter_allTrack_Chi2_ndof" , 
              "reco_daughter_PFP_trackScore_collection",
              "daughter_distance3D", "reco_daughter_allTrack_ID"})
              
-
-    /*.Define("has_noPion_daughter", secondary_noPion_ignoreLowE,
+*/
+    .Define("has_noPion_daughter", secondary_noPion_ignoreLowE,
             {"reco_daughter_allTrack_Chi2_proton",
              "reco_daughter_allTrack_Chi2_ndof" ,
              "reco_daughter_PFP_trackScore_collection", "daughter_distance3D",
              "reco_daughter_allTrack_ID","reco_daughter_allTrack_energy", 
              "reco_daughter_allTrack_truncated_dEdX" })
-*/
+
     .Define("has_shower_nHits_distance", has_shower_nHits_distance,
             {"reco_daughter_PFP_trackScore_collection",
              "reco_daughter_PFP_nHits", "daughter_distance3D_shower"});
@@ -210,19 +210,19 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
             "data_BI_X", "data_BI_Y", "data_BI_dirX", "data_BI_dirY",
             "data_BI_dirZ", "data_BI_nMomenta", "data_BI_nTracks"})
 
-    .Define("has_noPion_daughter", secondary_noPion,
+   /* .Define("has_noPion_daughter", secondary_noPion,
             {"reco_daughter_allTrack_Chi2_proton",
              "reco_daughter_allTrack_Chi2_ndof" ,
              "reco_daughter_PFP_trackScore_collection", "daughter_distance3D",
              "reco_daughter_allTrack_ID"})
-
-    /*.Define("has_noPion_daughter", secondary_noPion_ignoreLowE,
+*/
+    .Define("has_noPion_daughter", secondary_noPion_ignoreLowE,
             {"reco_daughter_allTrack_Chi2_proton",
              "reco_daughter_allTrack_Chi2_ndof" ,
              "reco_daughter_PFP_trackScore_collection", "daughter_distance3D",
              "reco_daughter_allTrack_ID","reco_daughter_allTrack_energy", 
              "reco_daughter_allTrack_truncated_dEdX" })
-*/
+
     .Define("has_shower_nHits_distance", has_shower_nHits_distance,
             {"reco_daughter_PFP_trackScore_collection",
              "reco_daughter_PFP_nHits", "daughter_distance3D_shower"});
@@ -667,7 +667,7 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     std::cout << "--------- True Chex  Signal = " << *beamType_chexSignal << std::endl;
     std::cout << "--------- True N-Pi0  Signal = " << *beamType_nPi0Signal << std::endl;
     std::cout << "--------- True BackGround = " << *beamType_background << std::endl;
-    std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_beamType.Filter("true_primPionInel == 0 ").Count() << std::endl;
+    std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_beamType.Filter("true_backGround").Filter("true_primPionInel == 0 ").Count() << std::endl;
 
     std::cout << std::endl;
     std::cout << "CUT 2 = Beam Position  = " << *N_mcCUT_beamCut << std::endl;
@@ -677,7 +677,7 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     std::cout << "--------- True Chex  Signal = " << *beamCut_chexSignal << std::endl;
     std::cout << "--------- True N-Pi0  Signal = " << *beamCut_nPi0Signal << std::endl;
     std::cout << "--------- True BackGround = " << *beamCut_background << std::endl;
-    std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_beamCut.Filter("true_primPionInel == 0").Count() << std::endl;
+    std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_beamCut.Filter("true_backGround").Filter("true_primPionInel == 0").Count() << std::endl;
 
     std::cout << std::endl;
     std::cout << "CUT 3 = Primary in APA 3  = " << *N_mcCUT_endAPA3 << std::endl;
@@ -688,7 +688,7 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     std::cout << "--------- True N-Pi0  Signal = " << *endAPA3_nPi0Signal << std::endl;
     std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_endAPA3.Filter("true_primPionInel == 0 ").Count() << std::endl;
     std::cout << "--------- True BackGround = " << *endAPA3_background << std::endl;
-    std::cout << "--------- Events with true Pion Daughters = " << *mcCUT_endAPA3.Filter("true_pion_daughter > 0").Count() << std::endl;
+    std::cout << "--------- Events with true Pion Daughters = " << *mcCUT_endAPA3.Filter("true_backGround").Filter("true_pion_daughter > 0").Count() << std::endl;
 
     std::cout << std::endl;
     std::cout << "CUT 3_1 = Primary Chi2 > 140  = " << *N_mcCUT_primChi2 << std::endl;
@@ -699,7 +699,7 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     std::cout << "--------- True N-Pi0  Signal = " << *primChi2_nPi0Signal << std::endl;
     std::cout << "--------- Contamination of primary NON-pions = " << *mcCUT_primChi2.Filter("true_primPionInel == 0 ").Count() << std::endl;
     std::cout << "--------- True BackGround = " << *primChi2_background << std::endl;
-    std::cout << "--------- Events with true Pion Daughters = " << *mcCUT_primChi2.Filter("true_pion_daughter > 0").Count() << std::endl;
+    std::cout << "--------- Events with true Pion Daughters = " << *mcCUT_primChi2.Filter("true_backGround").Filter("true_pion_daughter > 0").Count() << std::endl;
 
 
     std::cout << std::endl;
@@ -714,7 +714,7 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     std::cout << "--------- True N-Pi0  Signal = " << *mc_COMBINED_Signal.Filter("true_nPi0Signal == 1").Count() << std::endl;
     std::cout << "--------- True BackGround = " << *mc_COMBINED_Signal.Filter("true_backGround == 1").Count() << std::endl;
     std::cout << "--------- Contamination of primary NON-pions = " << *mc_COMBINED_Signal.Filter("true_primPionInel == 0").Count() << std::endl;
-    std::cout << "--------- Contamination of Events with Pion Daughter = " << *mc_COMBINED_Signal.Filter("true_pion_daughter > 0").Count() << std::endl;
+    std::cout << "--------- Contamination of Events with Pion Daughter = " << *mc_COMBINED_Signal.Filter("true_backGround").Filter("true_pion_daughter > 0").Count() << std::endl;
 
     std::cout << std::endl;
     std::cout << "********************************" << std::endl;
@@ -728,7 +728,7 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     std::cout << "--------- True N-Pi0  Signal = " << *chex_nPi0Signal << std::endl;
     std::cout << "--------- True BackGround = " << *chex_background << std::endl;
     std::cout << "--------- Contamination of primary NON-pions = " << *mcSIGNAL_cex.Filter("true_primPionInel == 0 ").Count() << std::endl;
-    std::cout << "--------- Contamination of Events with Pion Daughter = " << *mcSIGNAL_cex.Filter("true_pion_daughter > 0").Count() << std::endl;
+    std::cout << "--------- Contamination of Events with Pion Daughter = " << *mcSIGNAL_cex.Filter("true_backGround").Filter("true_pion_daughter > 0").Count() << std::endl;
 
     std::cout << std::endl;
     std::cout << "********************************" << std::endl;
@@ -742,7 +742,7 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     std::cout << "--------- True N-Pi0  Signal = " << *abs_nPi0Signal << std::endl;
     std::cout << "--------- True BackGround = " << *abs_background << std::endl;
     std::cout << "--------- Contamination of primary NON-pions = " << *mcSIGNAL_abs.Filter("true_primPionInel == 0").Count() << std::endl;
-    std::cout << "--------- Contamination of Events with Pion Daughter = " << *mcSIGNAL_abs.Filter("true_pion_daughter > 0").Count() << std::endl;
+    std::cout << "--------- Contamination of Events with Pion Daughter = " << *mcSIGNAL_abs.Filter("true_backGround").Filter("true_pion_daughter > 0").Count() << std::endl;
 
   
 
