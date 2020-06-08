@@ -132,11 +132,26 @@ template <class T>
 T daughter_property(int pdg, const std::vector<int> &pdg_vec, const T &daughter_property){
    T return_vec; 
    for (size_t pos =0; pos < pdg_vec.size(); pos++){ 
-      if(pdg!= 9999 && pdg_vec[pos] == pdg && daughter_property.size()> pos){
+      if(pdg!= 666 && pdg!= 9999 && pdg_vec[pos] == pdg && daughter_property.size()> pos){
          return_vec.push_back(daughter_property[pos]);}
+      //for nuclei
       else if(pdg == 9999 && pdg_vec[pos] > 3000 && daughter_property.size() > pos) {
+         return_vec.push_back(daughter_property[pos]);}
+      //others than proton pion and photon
+      else if(pdg == 666 && pdg_vec[pos] != 22 && pdg_vec[pos] != 211 && pdg_vec[pos] != 2212 && daughter_property.size() > pos){
          return_vec.push_back(daughter_property[pos]);};
    };
+   return return_vec;
+};
+
+//shower property
+template <class F>
+F shower_property(const std::vector<double> &trackScore, const F &daughter_property){
+   F return_vec; 
+   for (size_t pos =0; pos < trackScore.size(); pos++){ 
+      if(trackScore[pos] < 0.3 && trackScore[pos] != -999){
+         return_vec.push_back(daughter_property[pos]);}
+         };
    return return_vec;
 };
 
@@ -204,37 +219,6 @@ auto event_property = [](int pdg, const std::vector<int> &pdg_vec, int ev_proper
 };
 
 
-//Indepentend of shower or track tag from Pandora, find the property for both Tags for a certain particle and fill a vector
-auto daugh_trkANDshow_property = [](int pdg, const std::vector<int> &trk_pdg_vec, const std::vector<int> &show_pdg_vec, const std::vector<double> &daugh_track_property, const std::vector<double> &daugh_show_property){
-   std::vector<double> return_vec; 
-
-   for (size_t pos =0; pos < trk_pdg_vec.size(); pos++){ 
-      if(pdg!= 9999 && trk_pdg_vec[pos] == pdg && daugh_track_property.size()> pos){
-         return_vec.push_back(daugh_track_property[pos]);}
-      else if(pdg == 9999 && trk_pdg_vec[pos] > 3000 && daugh_track_property.size() > pos) {
-         return_vec.push_back(daugh_track_property[pos]);};
-   };
-
-   for (size_t pos =0; pos < show_pdg_vec.size(); pos++){ 
-      if(pdg!= 9999 && show_pdg_vec[pos] == pdg && daugh_show_property.size()> pos){
-         return_vec.push_back(daugh_show_property[pos]);}
-      else if(pdg == 9999 && show_pdg_vec[pos] > 3000 && daugh_show_property.size() > pos) {
-         return_vec.push_back(daugh_show_property[pos]);};
-   };
-
-   return return_vec;
-};
-
-auto merge_trk_show_property = [](const std::vector<double> &daughter_trk_property, const std::vector<double> &daughter_shower_property){
-   std::vector<double> merge_vec;
-   for(size_t pos = 0; pos < daughter_trk_property.size(); pos++){
-      merge_vec.push_back(daughter_trk_property[pos]);
-   };
-   for(size_t pos = 0; pos < daughter_shower_property.size(); pos++){
-      merge_vec.push_back(daughter_shower_property[pos]);
-   };
-   return merge_vec;
-};
 
 
 //Means of dEdX Vector<Vector<double>> for the Daughter Particles
@@ -418,7 +402,7 @@ auto rad_deg = [](std::vector<double> &rad){
       return deg;
    };
 
-   auto energyDeposition = [](std::vector<double> &dEdX, std::vector<double> &len){
+auto energyDeposition = [](std::vector<double> &dEdX, std::vector<double> &len){
 
       std::vector<double> energy;
       for(size_t i=0; i< dEdX.size(); i++){

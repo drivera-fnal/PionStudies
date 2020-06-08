@@ -27,16 +27,14 @@ using namespace ROOT::VecOps;
 //
 //Some Cut Values
 double cutAPA3_Z = 226.;
-double cut_trackScore = 0.35;
-double cut_trackScore_test = 0.35;
+double cut_trackScore = 0.3;
+double cut_dEdX = 3.8;
+int cut_nHits_shower_low = 40;
 //daughter Distance cut
 double cut_daughter_track_distance = 10.;
 double cut_daughter_shower_distance_low = 2.;
 double cut_daughter_shower_distance_high = 100.;
-double cut_primary_chi2 = 140.;
 double cut_secondary_chi2 = 50.;
-int cut_nHits_shower_low = 12;
-int cut_nHits_shower_high = 1000;
 //Low Energy Values
 double energy_limit = 15;
 double dEdX_limit = 0.8;
@@ -231,36 +229,30 @@ auto compute_distanceVertex = [](double beam_endX,
   return distance;
 };
 
-//contains no secondary Pion Chi2
-auto secondary_noPion = [](const std::vector<double> &chi2, 
-                           const std::vector<int> &ndof,
-                           const std::vector<double> &track_score,
-                           const std::vector<double> &distance, 
-                           const std::vector<int> &trackID) {
-  for( size_t i = 0; i < chi2.size(); ++i ) {
-    if ((trackID[i] != -1) && (track_score[i] > cut_trackScore) &&
-        (chi2[i]/ndof[i] > cut_secondary_chi2) &&
-        (distance[i] < cut_daughter_track_distance)) {
-      return false;
-    }
-  }
 
-  return true;
-};
-
-auto secondary_noPion_ignoreLowE = [](const std::vector<double> &chi2, 
-                           const std::vector<int> &ndof,
-                           const std::vector<double> &track_score,
-                           const std::vector<double> &distance, 
+//Using dQdX like Libo AND trackScore
+/*auto secondary_noPion_test= [](const std::vector<double> &track_score, 
                            const std::vector<int> &trackID,
-                           const std::vector<double> &energy,
-                           const std::vector<double> &dEdX) {
-  for( size_t i = 0; i < chi2.size(); ++i ) {
+                           const std::vector<double> &dQdX) {
+  for( size_t i = 0; i < track_score.size(); ++i ) {
     if ((trackID[i] != -1) && (track_score[i] > cut_trackScore) &&
-        (chi2[i]/ndof[i] > cut_secondary_chi2) &&
-        (distance[i] < cut_daughter_track_distance) &&
-        (energy[i] > energy_limit) &&
-        (dEdX[i] > dEdX_limit)) {
+        (dQdX[i] >= 250  ) && (dQdX[i] <= 400)) {
+      return false;
+    }
+  }
+
+  return true;
+};
+*/
+
+//Using dEdX truncated mean and trackscore
+auto secondary_noPion= [](
+                           const std::vector<double> &track_score, 
+                           const std::vector<int> &trackID,
+                           const std::vector<double> &dEdX) {
+  for( size_t i = 0; i < track_score.size(); ++i ) {
+    if ((trackID[i] != -1) && (track_score[i] > cut_trackScore) &&
+        (dEdX[i] <= cut_dEdX)) {
       return false;
     }
   }
@@ -269,18 +261,16 @@ auto secondary_noPion_ignoreLowE = [](const std::vector<double> &chi2,
 };
 
 
-auto has_shower_nHits_distance = [](const std::vector<double> &track_score,
-                                    const std::vector<int> &nHits,
-                                    const std::vector<double> &distance) {
+
+auto has_shower_nHits = [](const std::vector<double> &track_score,
+                                  const std::vector<int> &nHits) {
   if(track_score.empty() || nHits.empty())
     return false;
 
   for(size_t i = 0; i < track_score.size(); ++i){
-     if ((track_score[i] < cut_trackScore_test) &&
+     if ((track_score[i] < cut_trackScore) &&
          (nHits[i] > cut_nHits_shower_low) &&
-         (nHits[i] < cut_nHits_shower_high) && (track_score[i] != -999.) &&
-         (distance[i] < cut_daughter_shower_distance_high) &&
-         (distance[i] > cut_daughter_shower_distance_low)) {
+         (track_score[i] != -999.)) {
        return true;
      }
   }
@@ -289,6 +279,5 @@ auto has_shower_nHits_distance = [](const std::vector<double> &track_score,
 };
 
 
-//something about nHits of showers?
 
 
