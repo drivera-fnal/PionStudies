@@ -149,6 +149,11 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
              "reco_beam_trackDirX", "reco_beam_trackDirY", "reco_beam_trackDirZ",
              "true_beam_startDirX", "true_beam_startDirY", "true_beam_startDirZ",
              "true_beam_startX", "true_beam_startY", "true_beam_startZ"})
+    .Define("passBeamCutBI", beam_cut_MC_BI,
+            {"reco_beam_startX", "reco_beam_startY", "reco_beam_startZ",
+             "reco_beam_trackDirX", "reco_beam_trackDirY", "reco_beam_trackDirZ",
+             "data_BI_X", "data_BI_Y", "data_BI_dirX", "data_BI_dirY",
+             "data_BI_dirZ", "data_BI_nMomenta", "data_BI_nTracks"})
 
     .Define("primary_ends_inAPA3", endAPA3, {"reco_beam_endZ"})
 
@@ -174,12 +179,13 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
             {"reco_beam_Chi2_proton", "reco_beam_Chi2_ndof"})
 
     .Define("primary_isBeamType", isBeamType, {"reco_beam_type"})
-
+    .Define("passBeamQuality", data_BI_quality,
+            {"data_BI_nMomenta", "data_BI_nTracks"})
     .Define("passBeamCut", manual_beamPos_data,
-            {"event","reco_beam_startX", "reco_beam_startY", "reco_beam_startZ",
-            "reco_beam_trackDirX", "reco_beam_trackDirY", "reco_beam_trackDirZ",
-            "data_BI_X", "data_BI_Y", "data_BI_dirX", "data_BI_dirY",
-            "data_BI_dirZ", "data_BI_nMomenta", "data_BI_nTracks"})
+            {"reco_beam_startX", "reco_beam_startY", "reco_beam_startZ",
+             "reco_beam_trackDirX", "reco_beam_trackDirY", "reco_beam_trackDirZ",
+             "data_BI_X", "data_BI_Y", "data_BI_dirX", "data_BI_dirY",
+             "data_BI_dirZ", "data_BI_nMomenta", "data_BI_nTracks"})
 
     .Define("has_noPion_daughter", secondary_noPion,
             {"reco_daughter_allTrack_Chi2_proton",
@@ -214,6 +220,8 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
 
      .Define("CUTflow_step2_passBeamCut", cutFlow,
              {"CUTflow_step1_passBeamType","passBeamCut"})
+//     .Define("CUTflow_step2_passBeamCut", cutFlow,
+//             {"CUTflow_step1_passBeamType","passBeamCutBI"})
 
      .Define("CUTflow_step3_primEndAPA3", cutFlow,
              {"CUTflow_step2_passBeamCut","primary_ends_inAPA3"})
@@ -273,24 +281,41 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   /* *******Beam Cut******* */
 
   //Filter out non track-like beam objects 
+  auto mc_snap_all = mc_output_with_label.Snapshot(
+      "pionana/beamana", "eventSelection_mc_all.root");
+
   auto mcCUT_beamType = mc_output_with_label.Filter("primary_isBeamType");
   auto N_mcCUT_beamType = mcCUT_beamType.Count();
+  std::cout << "MC beam type: " << *N_mcCUT_beamType << std::endl;
+
+  auto mc_snap_beam_type = mcCUT_beamType.Snapshot(
+      "pionana/beamana", "eventSelection_mc_beamType.root");
 
   //Beam quality cuts (start position/direction)
   auto mcCUT_beamCut = mcCUT_beamType.Filter("passBeamCut");
   auto N_mcCUT_beamCut = mcCUT_beamCut.Count();
+  std::cout << "MC beam cut: " << *N_mcCUT_beamCut << std::endl;
 
   //Make sure the beam track ends before APA2
   auto mcCUT_endAPA3 = mcCUT_beamCut.Filter("primary_ends_inAPA3");
   auto N_mcCUT_endAPA3 = mcCUT_endAPA3.Count();
+  std::cout << "MC APA3 cut: " << *N_mcCUT_endAPA3 << std::endl;
 
   //Make sure the beam track has a pion-like chi2
   auto mcCUT_primChi2 = mcCUT_endAPA3.Filter("primary_passes_chi2");
   auto N_mcCUT_primChi2 = mcCUT_primChi2.Count();
+  std::cout << "MC chi2 cut: " << *N_mcCUT_primChi2 << std::endl;
 
   //Make a file with only primary pions in it
   auto mc_snap_primPion = mcCUT_primChi2.Snapshot(
       "pionana/beamana", "eventSelection_mc_PRIMARYPION.root");
+
+  //New: making a snapshot for events > APA3 cut
+  //auto mc_failed_APA3_cut = mcCUT_beamCut.Filter("!primary_ends_inAPA3");
+  //auto N_failed_APA3 = mc_failed_APA3_cut.Count();
+  //std::cout << "MC failed APA3 cut: " << *N_failed_APA3 << std::endl;
+  //auto mc_snap_failed_APA3 = mc_failed_APA3_cut.Snapshot(
+  //    "pionana/beamana", "eventSelection_mc_failed_APA3.root" );
 
 
   /* ****** COMBINED SAMPLE ******/
@@ -324,18 +349,27 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
       "pionana/beamana", "eventSelection_mc_rejected.root");
                         
 
-
   //Start Cutting DATA
   //******************
   //    Cuts are concatenated
   /* *******Beam Cut******* */
 
+  //Filter out non track-like beam objects 
+  auto data_snap_all = data_output_with_label.Snapshot(
+      "pionana/beamana", "eventSelection_data_all.root");
+
   //Reco Beam object is track-like
   auto dataCUT_beamType = data_output_with_label.Filter("primary_isBeamType");
   auto N_dataCUT_beamType = dataCUT_beamType.Count();
 
+  auto dataCUT_beamQuality = dataCUT_beamType.Filter("passBeamQuality");
+  auto N_dataCUT_beamQuality = dataCUT_beamQuality.Count();
+  auto data_snap_beamQuality = dataCUT_beamQuality.Snapshot(
+      "pionana/beamana", "eventSelection_data_BeamQuality.root");
+
   //Passes the beam cuts (start position/direction)
-  auto dataCUT_beamCut = dataCUT_beamType.Filter("passBeamCut");
+  //auto dataCUT_beamCut = dataCUT_beamType.Filter("passBeamCut");
+  auto dataCUT_beamCut = dataCUT_beamQuality.Filter("passBeamCut");
   auto N_dataCUT_beamCut = dataCUT_beamCut.Count();
 
   //Ends before APA2
@@ -346,6 +380,21 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   auto dataCUT_primChi2 = dataCUT_endAPA3.Filter("primary_passes_chi2");
   auto N_dataCUT_primChi2 = dataCUT_primChi2.Count();
 
+  //Make a file with only primary pions in it
+  auto data_snap_primPion = dataCUT_primChi2.Snapshot(
+      "pionana/beamana", "eventSelection_data_PRIMARYPION.root");
+
+  //New: making a snapshot for events > APA3 cut
+  //auto data_failed_APA3_cut = dataCUT_beamCut.Filter("!primary_ends_inAPA3");
+  //auto data_snap_failed_APA3 = data_failed_APA3_cut.Snapshot(
+  //    "pionana/beamana", "eventSelection_data_failed_APA3.root" );
+  //auto N_data_failed_APA3 = data_failed_APA3_cut.Count();
+  //std::cout << "Data failed APA3 cut: " << *N_data_failed_APA3 << std::endl;
+
+  std::cout << "Data chi2 cut: " << *N_dataCUT_primChi2 << std::endl;
+  std::cout << "Data APA3 cut: " << *N_dataCUT_endAPA3 << std::endl;
+  std::cout << "Data beam cut: " << *N_dataCUT_beamCut << std::endl;
+  std::cout << "Data beam type: " << *N_dataCUT_beamType << std::endl;
 
   /* ****** COMBINED SAMPLE ******/
 
@@ -646,6 +695,8 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
 
 
   c1->Write();
+  stack_cutFlow->Write();
+  h_data_total->Write();
   output->Write();
   return 0;
 }

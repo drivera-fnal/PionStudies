@@ -45,6 +45,10 @@ double zlow = 27.5,  zhigh = 32.5,  coslow = 0.93;
 double data_xlow = 0., data_xhigh = 10., data_ylow= -5.;
 double data_yhigh= 10., data_zlow=30., data_zhigh=35., data_coslow=.93;
 
+//For Data from Owen Goodwin
+double mc_BI_xlow = 0., mc_BI_xhigh = 10., mc_BI_ylow= -5.;
+double mc_BI_yhigh= 10., mc_BI_zlow=30., mc_BI_zhigh=35., mc_BI_coslow=.93;
+
 //Tag PrimaryPion without elastic Scattering
 //
 auto tagPrimPionInel= [](int true_beam_PDG, std::string true_beam_endProcess) {
@@ -135,7 +139,11 @@ auto data_beam_PID = [](const std::vector<int>& pidCandidates){
   return (pid_search != pidCandidates.end());
 };
 
-auto manual_beamPos_data = [](int event,            double data_startX,
+auto data_BI_quality = [](int data_BI_nMomenta, int data_BI_nTracks) {
+  return (data_BI_nMomenta == 1 && data_BI_nTracks == 1);
+};
+
+auto manual_beamPos_data = [](double data_startX,
                               double data_startY,   double data_startZ,
                               double data_dirX,     double data_dirY,
                               double data_dirZ,     double data_BI_X,
@@ -165,6 +173,36 @@ auto manual_beamPos_data = [](int event,            double data_startX,
 
   return true;
 
+};
+
+auto beam_cut_MC_BI = [](double startX,
+                         double startY,   double startZ,
+                         double dirX,     double dirY,
+                         double dirZ,     double BI_X,
+                         double BI_Y,     double BI_dirX,
+                         double BI_dirY,  double BI_dirZ,
+                         int BI_nMomenta, int BI_nTracks) {
+
+  double deltaX = startX - BI_X;
+  double deltaY = startY - BI_Y;
+  double cos = BI_dirX*dirX + BI_dirY*dirY +
+               BI_dirZ*dirZ;
+  if(BI_nMomenta != 1 || BI_nTracks != 1)
+    return false;
+
+  if( (deltaX < mc_BI_xlow) || (deltaX > mc_BI_xhigh) )
+    return false;
+
+  if ( (deltaY < mc_BI_ylow) || (deltaY > mc_BI_yhigh) )
+    return false;
+
+  if ( (startZ < mc_BI_zlow) || (startZ > mc_BI_zhigh) )
+    return false;
+
+  if (cos < mc_BI_coslow)
+    return false;
+
+  return true;
 };
 
 //for marking cutflow in rows only needs condition before and tested
