@@ -184,6 +184,7 @@ def data_pos_cut_str( xlow=0., xhigh=10., ylow=-5., yhigh=10., zlow=30., zhigh=3
   cut += " && ( (reco_beam_startY - data_BI_Y) < " + str(yhigh) +" ) "
   cut += " && (reco_beam_startZ > " + str(zlow) +" ) "
   cut += " && (reco_beam_startZ < " + str(zhigh) +" ) "
+  cut += " && @data_BI_nMomenta.size() == 1 && @data_BI_nTracks.size()"
   
   return cut
 

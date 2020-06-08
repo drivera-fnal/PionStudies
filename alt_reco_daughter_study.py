@@ -3,7 +3,7 @@ from array import array
 from vertex_type import vertex_type as vt
 from defcuts import ang_pos_test_cut, data_ang_pos_test_cut
 from math import sqrt
-from chi2 import chi2 as do_chi2
+#from chi2 import chi2 as do_chi2
 
 from argparse import ArgumentParser as ap
 
@@ -287,7 +287,21 @@ if isMC:
       "Michel": kPink,
       "Self": kBlue
     }
-    
+
+    leg_names = {
+      "Cosmic"    : "Cosmic",
+      "pi0Gamma"  : "#pi^{0} Shower",
+      "Pi"        : "#pi^{#pm}", 
+      "Mu"        : "#mu",
+      "Proton"    : "p",
+      "Gamma"     : "#gamma",
+      "Nuc"       : "Nuclear fragment",
+      "Other"     : "Other",
+      "GDaughter" : "Grand Daughter",
+      "GGDaughter": "Great-Grand Daughter",
+      "Michel"    : "Michel electron",
+      "Self"      : "Self"
+    }
     
     cuts = {
       "Cosmic": "is_cosmic",
@@ -330,6 +344,16 @@ if isMC:
       "Nuc":  "abs(pdg) > 2212",
       "e":   "abs(pdg) == 11", 
       "Other": "!( abs(pdg) == 211 || abs(pdg) == 13 || abs(pdg) == 2212 || abs(pdg) == 22 || abs(pdg) > 2212 || abs(pdg) == 11)"
+    }
+
+    leg_names = {
+      "Pi": "#pi^{#pm}",
+      "Mu": "#mu",
+      "Proton": "p",
+      "Gamma": "#gamma",
+      "Nuc": "Nuclear fragment",
+      "e": "e",
+      "Other": "Other"
     }
 else:
   cats = ["Data"]
@@ -457,7 +481,7 @@ for i in range(0, nVT):
   for cat in cats:
     dR_stack.Add(dR_hists[cat + str(i)])
     if i == 0: 
-      leg.AddEntry(dR_hists[cat + str(i)], cat, "lf")
+      leg.AddEntry(dR_hists[cat + str(i)], leg_names[cat], "lf")
   
     slice_stack.Add(slice_hists[cat + str(i)])
     chi2_stack.Add(chi2_hists[cat + str(i)])

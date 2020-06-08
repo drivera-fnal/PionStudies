@@ -22,16 +22,18 @@ cuts = defcuts()
 
 leg = TLegend(.6,.6,.85,.85)
 names = [
-  "PrimaryPionDecay",
-  "PrimaryPionFastScint",
-  "PrimaryPionInteract",
+  #"PrimaryPionDecay",
+  #"PrimaryPionFastScint",
+  #"PrimaryPionInteract",
+  "PrimaryPion",
   "PrimaryMuon",
   #"PrimaryProton",
   #"PrimaryElectron",
   "Cosmic",
   "PrimaryBeamNotTrig",
-  "UpstreamIntToPiPlus",
-  "UpstreamIntToPiMinus",
+  #"UpstreamIntToPiPlus",
+  #"UpstreamIntToPiMinus",
+  "UpstreamIntToPion",
   "UpstreamIntToProton",
   "UpstreamIntToKaon",
   "UpstreamIntToNuc",
@@ -46,19 +48,21 @@ names = [
 ]
 
 titles = [
-  "Primary #pi^{+} Decay",
-  "Primary #pi^{+} Decay at Rest",
-  "Primary #pi^{+} Interacting",
+  #"Primary #pi^{+} Decay",
+  #"Primary #pi^{+} Decay at Rest",
+  #"Primary #pi^{+} Interacting",
+  "Primary #pi^{+}",
   "Primary #mu",
   #"PrimaryProton",
   #"PrimaryElectron",
   "Cosmic",
-  "Primary Beam Not Trig",
-  "\"Upstream\" Int #rightarrow #pi^{+}",
-  "\"Upstream\" Int #rightarrow #pi^{-}",
-  "\"Upstream\" Int #rightarrow p",
-  "\"Upstream\" Int #rightarrow K",
-  "\"Upstream\" Int #rightarrow Nucleus",
+  "Extra Primary",
+  #"\"Upstream\" Int #rightarrow #pi^{+}",
+  #"\"Upstream\" Int #rightarrow #pi^{-}",
+  "#pi^{#pm} From Interaction",
+  "p From Interaction",
+  "K From Interaction",
+  "Nucleus From Interaction",
 #  "Pion #rightarrow #pi^{+}",
 #  "Pion #rightarrow #pi^{-}",
 #  "Pion #rightarrow p",
@@ -71,16 +75,18 @@ titles = [
 ]
 
 colors = {
-  "PrimaryPionDecay": (kTeal+3),
-  "PrimaryPionFastScint": (kRed-4),
-  "PrimaryPionInteract": (kBlue-4),
+  #"PrimaryPionDecay": (kTeal+3),
+  #"PrimaryPionFastScint": (kRed-4),
+  #"PrimaryPionInteract": (kBlue-4),
+  "PrimaryPion": (kBlue-4),
   "PrimaryMuon": (kOrange+1),
   #"PrimaryProton": (kTeal+2),
   #"PrimaryElectron": (kViolet-7),
   "PrimaryBeamNotTrig": (kRed+2),
   "Cosmic": (kSpring-8),
-  "UpstreamIntToPiPlus": (kViolet-3),
-  "UpstreamIntToPiMinus": (kCyan-2),
+  #"UpstreamIntToPiPlus": (kViolet-3),
+  #"UpstreamIntToPiMinus": (kCyan-2),
+  "UpstreamIntToPion": (kViolet-3),
   "UpstreamIntToProton": (kTeal),
   "UpstreamIntToKaon": (kYellow-6),
   "UpstreamIntToNuc": (kOrange+10),
@@ -100,13 +106,13 @@ pos_stackX = THStack("pos_stackX","")
 pos_stackY = THStack("pos_stackY","")
 
 reco_pos_hists = dict()
-reco_pos_stackX = THStack("reco_pos_stackX","")
-reco_pos_stackY = THStack("reco_pos_stackY","")
-reco_pos_stackZ = THStack("reco_pos_stackZ","")
+reco_pos_stackX = THStack("recoX_stack","")
+reco_pos_stackY = THStack("recoY_stack","")
+reco_pos_stackZ = THStack("recoZ_stack","")
 
 pos_diff_hists = dict()
-pos_diff_stackX = THStack("pos_diff_stackX","")
-pos_diff_stackY = THStack("pos_diff_stackY","")
+pos_diff_stackX = THStack("diffX_stack","")
+pos_diff_stackY = THStack("diffY_stack","")
 
 cos_hists = dict()
 cos_stack = THStack("cos_stack", "")
@@ -166,8 +172,8 @@ for name,title in zip(names,titles):
   pos_diff_stackY.Add(pos_diff_hists["diffY_"+name])
 
   ##Angle diffs
-  #cos_theta = "(true_beam_startDirX*reco_beam_trackDirX + true_beam_startDirY*reco_beam_trackDirY + true_beam_startDirZ*reco_beam_trackDirZ)"
-  cos_theta = "(-0.183638062571*reco_beam_trackDirX + -0.198218481834*reco_beam_trackDirY + 0.962801379016*reco_beam_trackDirZ)"
+  cos_theta = "(true_beam_startDirX*reco_beam_trackDirX + true_beam_startDirY*reco_beam_trackDirY + true_beam_startDirZ*reco_beam_trackDirZ)"
+  #cos_theta = "(-0.183638062571*reco_beam_trackDirX + -0.198218481834*reco_beam_trackDirY + 0.962801379016*reco_beam_trackDirZ)"
   tree.Draw( cos_theta + ">>cos_" + name + " (500,0.,1.)", cut + extra_cut )
   cos_hists[ "cos_" + name ] = gDirectory.Get( "cos_" + name )
   cos_hists[ "cos_" + name ].SetFillColor(colors[name])

@@ -9,7 +9,7 @@ f = TFile( sys.argv[1] )
 
 tree = f.Get("pionana/beamana")
 
-base_cut = " reco_beam_type == 13 && (data_BI_PDG_candidates[0] == 13 || data_BI_PDG_candidates[0] == 211)" 
+base_cut = " reco_beam_type == 13 && (data_BI_PDG_candidates[0] == 13 || data_BI_PDG_candidates[0] == 211) && @data_BI_nMomenta.size() == 1 && @data_BI_nTracks.size() == 1"
 
 fout = TFile( sys.argv[2], "RECREATE" )
 
@@ -27,16 +27,25 @@ recoX = gDirectory.Get("recoX")
 recoY = gDirectory.Get("recoY")
 recoZ = gDirectory.Get("recoZ")
 
+##Diff
+tree.Draw( "data_BI_X - reco_beam_startX>>diffX(60, -20, 40)", base_cut + extra_cut )
+tree.Draw( "data_BI_Y - reco_beam_startY>>diffY(60, -20, 40)", base_cut + extra_cut )
+diffX = gDirectory.Get("diffX")
+diffY = gDirectory.Get("diffY")
 
 #Nominal beam: -0.183638062571 -0.198218481834 0.962801379016
 ##Angle diffs
-cos_theta = "(-0.183638062571*reco_beam_trackDirX + -0.198218481834*reco_beam_trackDirY + 0.962801379016*reco_beam_trackDirZ)"
-tree.Draw( cos_theta + ">>cosHist(500,0.,1.)", base_cut + extra_cut )
-cosHist = gDirectory.Get("cosHist")
+#cos_theta = "(-0.183638062571*reco_beam_trackDirX + -0.198218481834*reco_beam_trackDirY + 0.962801379016*reco_beam_trackDirZ)"
+cos_theta = "data_BI_dirX*reco_beam_trackDirX + data_BI_dirY*reco_beam_trackDirY + data_BI_dirZ*reco_beam_trackDirZ"
+
+tree.Draw( cos_theta + ">>cos(500,0.,1.)", base_cut + extra_cut )
+cosHist = gDirectory.Get("cos")
 
 fout.cd()
 recoX.Write()
 recoY.Write()
 recoZ.Write()
+diffX.Write()
+diffY.Write()
 
 cosHist.Write()

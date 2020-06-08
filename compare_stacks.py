@@ -2,6 +2,7 @@ from ROOT import *
 import sys
 from set_style import * 
 from add_stack import *
+from scale_stack import *
 from argparse import ArgumentParser as ap
 
 parser = ap()
@@ -33,7 +34,7 @@ gROOT.SetBatch(1)
 gStyle.SetOptStat(0)
 
 fData = TFile(args.d)
-data_stack = fData.Get(stack_title)
+#data_stack = fData.Get(stack_title)
 
 fMC = TFile(args.m)
 mc_stack = fMC.Get(stack_title)
@@ -43,7 +44,8 @@ mc_stack = fMC.Get(stack_title)
 #for i in range(1,mc_stack.GetNhists()):
 #  mc_hist.Add(mc_stack.GetHists().At(i))
 
-data_hist = fData.Get(stack_title).GetHists().At(0).Clone("")
+#data_hist = fData.Get(stack_title).GetHists().At(0).Clone("")
+data_hist = fData.Get(stack_title)
 
 
 print data_hist.Integral()
@@ -52,7 +54,8 @@ print add_stack( mc_stack )
 
 #data_hist.Scale( mc_hist.Integral() / data_hist.Integral() )
 data_hist.Sumw2()
-data_hist.Scale( add_stack( mc_stack ) / data_hist.Integral() )
+#data_hist.Scale( add_stack( mc_stack ) / data_hist.Integral() )
+mc_stack = scale_stack(mc_stack, data_hist)
 
 if( args.r ):
   data_hist.Rebin(args.r)
@@ -82,7 +85,7 @@ print data_hist.GetMaximum(), mc_stack.GetMaximum()
 if data_hist.GetMaximum() > mc_stack.GetMaximum():
   mc_stack.SetMaximum(1.1*data_hist.GetMaximum())
 
-mc_stack.Draw()
+mc_stack.Draw("HIST")
 data_hist.SetMarkerStyle(20)
 data_hist.SetMarkerSize(.5)
 data_hist.Draw("same PE")

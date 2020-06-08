@@ -108,6 +108,9 @@ deltaXhist = gDirectory.Get("deltaXhist")
 outtree.Draw( "startY-beamY>>deltaYhist(50, -100., 100.)" )
 deltaYhist = gDirectory.Get("deltaYhist")
 
+outtree.Draw( "(beamDirX*startDirX + beamDirY*startDirY + beamDirZ*startDirZ)>>coshist(50, .75, 1.)")
+coshist = gDirectory.Get("coshist")
+
 outtree.Draw( "chi2>>chi2hist(100, 0., 400.)" )
 chi2hist = gDirectory.Get("chi2hist")
 
@@ -145,6 +148,10 @@ deltaXhist.Write()
 set_style(deltaYhist, "#DeltaY (cm)", "")
 markers(deltaYhist)
 deltaYhist.Write()
+
+set_style(coshist, "Cos(#theta)", "")
+markers(coshist)
+coshist.Write()
 
 set_style(chi2hist, "#chi^{2}", "")
 markers(chi2hist)
