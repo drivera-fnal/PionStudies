@@ -44,8 +44,8 @@ mc_stack = fMC.Get(stack_title)
 #for i in range(1,mc_stack.GetNhists()):
 #  mc_hist.Add(mc_stack.GetHists().At(i))
 
-#data_hist = fData.Get(stack_title).GetHists().At(0).Clone("")
-data_hist = fData.Get(stack_title)
+data_hist = fData.Get(stack_title).GetHists().At(0).Clone("")
+#data_hist = fData.Get(stack_title)
 
 
 print data_hist.Integral()

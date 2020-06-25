@@ -40,6 +40,10 @@ outtree = TTree("tree","")
 
 dR = array("d", [0.])
 shower_dR = array("d", [0.])
+shower_len_per_dR = array("d", [0.])
+shower_Energy = array("d", [0.])
+shower_Energy_per_hit = array("d", [0.])
+shower_cos = array("d", [0.])
 vertex_slice = array("i", [0])
 daughter_slice = array("i", [0])
 is_cosmic = array("i", [0])
@@ -103,6 +107,10 @@ outtree.Branch("beamTrackID", beamTrackID, "beamTrackID/I")
 outtree.Branch("daughterTrackID", daughterTrackID, "daughterTrackID/I")
 outtree.Branch("daughterPFPID", daughterPFPID, "daughterPFPID/I")
 outtree.Branch("shower_dR", shower_dR, "shower_dR/D")
+outtree.Branch("shower_len_per_dR", shower_len_per_dR, "shower_len_per_dR/D")
+outtree.Branch("shower_Energy", shower_Energy, "shower_Energy/D")
+outtree.Branch("shower_Energy_per_hit", shower_Energy_per_hit, "shower_Energy_per_hit/D")
+outtree.Branch("shower_cos", shower_cos, "shower_cos/D")
 outtree.Branch("good_reco", good_reco, "good_reco/I")
 outtree.Branch("is_track", is_track, "is_track/I")
 outtree.Branch("is_shower", is_shower, "is_shower/I")
@@ -168,6 +176,10 @@ for e in tree:
 
     dR[0] = -1.
     shower_dR[0] = -1.
+    shower_len_per_dR[0] = -1.
+    shower_Energy[0] = -1.
+    shower_Energy_per_hit[0] = -1.
+    shower_cos[0] = -1.
 
     nHits[0] = e.reco_daughter_PFP_nHits[i]
 
@@ -220,8 +232,14 @@ for e in tree:
       dZ = e.reco_daughter_allShower_startZ[i]
 
       shower_dR[0] = sqrt( (dX - bX)**2 + (dY - bY)**2 + (dZ - bZ)**2 )
+      shower_len_per_dR[0] = shower_dR[0] / e.reco_daughter_allShower_len[i]
       shower_deltaZ[0] = dZ - bZ 
 
+      shower_Energy[0] = e.reco_daughter_allShower_energy[i] 
+      shower_Energy_per_hit[0] = e.reco_daughter_allShower_energy[i]/nHits[0]
+      shower_cos[0] = (e.reco_daughter_allShower_dirX[i]*e.reco_beam_trackEndDirX +
+                       e.reco_daughter_allShower_dirY[i]*e.reco_beam_trackEndDirY +
+                       e.reco_daughter_allShower_dirZ[i]*e.reco_beam_trackEndDirZ)
       is_shower[0] = 1
     else: 
       is_shower[0] = 0
@@ -364,6 +382,10 @@ else:
 #Looking at dR -- distance between Closer(end/start) of daughter and closest point on beam track
 dR_hists = dict()
 shower_dR_hists = dict()
+shower_len_per_dR_hists = dict()
+shower_Energy_hists = dict()
+shower_Energy_per_hit_hists = dict()
+shower_cos_hists = dict()
 deltaZ_hists = dict()
 shower_deltaZ_hists = dict()
 slice_hists = dict()
@@ -412,10 +434,30 @@ for i in range(0, nVT):
     if isMC: dR_hists[cat + str(i)].SetFillColor(colors[cat])
     print cat, dR_hists[cat + str(i)].Integral()
 
-    outtree.Draw("shower_dR>>h_shower_" + cat + str(i) + "(175,0,350)", theCut + " && " + cnn_str + " < " + cnn_cut + " && is_shower")
+    outtree.Draw("shower_dR>>h_shower_" + cat + str(i) + "(350,0,350)", theCut + " && " + cnn_str + " < " + cnn_cut + " && is_shower")
     shower_dR_hists[cat + str(i)] = gDirectory.Get("h_shower_"+cat + str(i))
     shower_dR_hists[cat + str(i)].SetLineColor(colors[cat])
     if isMC: shower_dR_hists[cat + str(i)].SetFillColor(colors[cat])
+
+    outtree.Draw("shower_len_per_dR>>h_shower_lendr" + cat + str(i) + "(500,0,20)", theCut + " && " + cnn_str + " < " + cnn_cut + " && is_shower")
+    shower_len_per_dR_hists[cat + str(i)] = gDirectory.Get("h_shower_lendr"+cat + str(i))
+    shower_len_per_dR_hists[cat + str(i)].SetLineColor(colors[cat])
+    if isMC: shower_len_per_dR_hists[cat + str(i)].SetFillColor(colors[cat])
+
+    outtree.Draw("shower_Energy>>h_shower_Energy" + cat + str(i) + "(50,0,500)", theCut + " && " + cnn_str + " < " + cnn_cut + " && is_shower")
+    shower_Energy_hists[cat + str(i)] = gDirectory.Get("h_shower_Energy" + cat + str(i))
+    shower_Energy_hists[cat + str(i)].SetLineColor(colors[cat])
+    if isMC: shower_Energy_hists[cat + str(i)].SetFillColor(colors[cat])
+
+    outtree.Draw("shower_Energy_per_hit>>h_shower_Energy_per_hit" + cat + str(i) + "(50,0,5)", theCut + " && " + cnn_str + " < " + cnn_cut + " && is_shower")
+    shower_Energy_per_hit_hists[cat + str(i)] = gDirectory.Get("h_shower_Energy_per_hit" + cat + str(i))
+    shower_Energy_per_hit_hists[cat + str(i)].SetLineColor(colors[cat])
+    if isMC: shower_Energy_per_hit_hists[cat + str(i)].SetFillColor(colors[cat])
+
+    outtree.Draw("shower_cos>>h_shower_cos" + cat + str(i) + "(50, -1., 1.)", theCut + " && " + cnn_str + " < " + cnn_cut + " && is_shower")
+    shower_cos_hists[cat + str(i)] = gDirectory.Get("h_shower_cos" + cat + str(i))
+    shower_cos_hists[cat + str(i)].SetLineColor(colors[cat])
+    if isMC: shower_cos_hists[cat + str(i)].SetFillColor(colors[cat])
 
     outtree.Draw("deltaZ>>h_deltaZ_" + cat + str(i) + "(175,-175,175)", theCut + " && " + cnn_str + " > " + cnn_cut + " && is_track")
     deltaZ_hists[cat + str(i)] = gDirectory.Get("h_deltaZ_"+cat + str(i))
@@ -468,6 +510,10 @@ for i in range(0, nVT):
   
   dR_stack = THStack("dR_stack" + str(i), "")
   shower_dR_stack = THStack("shower_dR_stack" + str(i), "")
+  shower_len_per_dR_stack = THStack("shower_len_per_dR_stack" + str(i), "")
+  shower_Energy_per_hit_stack = THStack("shower_Energy_per_hit_stack" + str(i), "")
+  shower_Energy_stack = THStack("shower_Energy_stack" + str(i), "")
+  shower_cos_stack = THStack("shower_cos_stack" + str(i), "")
   shower_deltaZ_stack = THStack("shower_deltaZ_stack" + str(i), "")
   deltaZ_stack = THStack("deltaZ_stack" + str(i), "")
   slice_stack = THStack("slice_stack" + str(i), "")
@@ -480,7 +526,7 @@ for i in range(0, nVT):
 
   for cat in cats:
     dR_stack.Add(dR_hists[cat + str(i)])
-    if i == 0: 
+    if i == 0 and isMC: 
       leg.AddEntry(dR_hists[cat + str(i)], leg_names[cat], "lf")
   
     slice_stack.Add(slice_hists[cat + str(i)])
@@ -489,6 +535,10 @@ for i in range(0, nVT):
     cnn_collection_stack.Add(cnn_collection_hists[cat + str(i)])
     cnn_michel_stack.Add(cnn_michel_hists[cat + str(i)])
     shower_dR_stack.Add(shower_dR_hists[cat + str(i)])
+    shower_len_per_dR_stack.Add(shower_len_per_dR_hists[cat + str(i)])
+    shower_Energy_per_hit_stack.Add(shower_Energy_per_hit_hists[cat + str(i)])
+    shower_Energy_stack.Add(shower_Energy_hists[cat + str(i)])
+    shower_cos_stack.Add(shower_cos_hists[cat + str(i)])
     deltaZ_stack.Add(deltaZ_hists[cat + str(i)])
     shower_deltaZ_stack.Add(shower_deltaZ_hists[cat + str(i)])
     shower_nHits_stack.Add(shower_nHits_hists[cat + str(i)])
@@ -497,6 +547,10 @@ for i in range(0, nVT):
   dR_stack.SetTitle(";dR (cm);")
   dR_stack.Write("dR_stack" + str(i))
   shower_dR_stack.Write("shower_dR_stack" + str(i))
+  shower_len_per_dR_stack.Write("shower_len_per_dR_stack" + str(i))
+  shower_Energy_stack.Write("shower_Energy_stack" + str(i))
+  shower_Energy_per_hit_stack.Write("shower_Energy_per_hit_stack" + str(i))
+  shower_cos_stack.Write("shower_cos_stack" + str(i))
   deltaZ_stack.Write("deltaZ_stack" + str(i))
   shower_deltaZ_stack.Write("shower_deltaZ_stack" + str(i))
   shower_nHits_stack.Write("shower_nHits_stack" + str(i))
