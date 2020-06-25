@@ -16,6 +16,7 @@
 #include <ROOT/RDataFrame.hxx>
 
 #include "backgrounds.h"
+#include "selection_defs.h"
 
 #include <iostream>
 #include <math.h>
@@ -69,7 +70,8 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
     .Define("upstreamInt", upstreamInt,
             {"reco_beam_true_byHits_process", "reco_beam_true_byHits_origin"})
 
-    //tag if there is a true Pion with high momentum in event, threshold defined in eventSelection.h
+    //tag if there is a true Pion with high momentum in event, threshold
+    //defined in eventSelection.h
     .Define("true_daughter_pion_momentumHigh", tagDaughterPionMomentumHigh, 
           {"true_beam_daughter_PDG", "true_beam_daughter_startP",
            "true_daughter_nPiPlus", "true_daughter_nPiMinus"})
@@ -121,6 +123,11 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
           {"libo_low", "libo_high", "reco_daughter_allTrack_dQdX_SCE"})
     .Define("reco_daughter_allTrack_truncLibo_dEdX",truncatedMean, 
           {"libo_low", "libo_high", "reco_daughter_allTrack_calibrated_dEdX_SCE"} )
+    .Define("interaction_topology", interaction_topology,
+            {"reco_beam_true_byHits_origin", "true_beam_PDG", "true_beam_ID",
+             "true_beam_endZ", "true_beam_endProcess", "true_daughter_nPi0",
+             "reco_beam_hit_true_origin", "reco_beam_hit_true_ID",
+             "true_beam_daughter_PDG", "true_beam_daughter_startP"})
     //Filter for true primary Pion and Beam Muon
     .Filter("true_beam_PDG == 211 || true_beam_PDG == -13");
 
@@ -439,6 +446,7 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
 
   //Before filling, split it up MC by the true signal/BG
   //This will later be used in the counting as well
+  
   auto beamType_absSignal = mcCUT_beamType.Filter("true_absSignal").Count();
   auto beamType_chexSignal = mcCUT_beamType.Filter("true_chexSignal").Count();
   auto beamType_nPi0Signal = mcCUT_beamType.Filter("true_nPi0Signal").Count();
@@ -468,6 +476,7 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   auto abs_chexSignal = mcSIGNAL_abs.Filter("true_chexSignal").Count();
   auto abs_nPi0Signal = mcSIGNAL_abs.Filter("true_nPi0Signal").Count();
   auto abs_background = mcSIGNAL_abs.Filter("true_backGround").Count();
+  
 
   h_mc_total->SetBinContent(1 , *n_mc_all );
   h_data_total->SetBinContent(1, *n_data_all );
