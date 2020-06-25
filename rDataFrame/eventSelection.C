@@ -305,9 +305,11 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   std::cout << "MC APA3 cut: " << *N_mcCUT_endAPA3 << std::endl;
 
   //Make sure the beam track has a pion-like chi2
+  /*
   auto mcCUT_primChi2 = mcCUT_endAPA3.Filter("primary_passes_chi2");
   auto N_mcCUT_primChi2 = mcCUT_primChi2.Count();
   std::cout << "MC chi2 cut: " << *N_mcCUT_primChi2 << std::endl;
+  */
 
   //Make a file with only primary pions in it
   auto mc_snap_primPion = mcCUT_endAPA3.Snapshot(
@@ -380,12 +382,14 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   auto N_dataCUT_endAPA3 = dataCUT_endAPA3.Count();
   
   //Beam object has pion-like chi2
+  /*
   auto dataCUT_primChi2 = dataCUT_endAPA3.Filter("primary_passes_chi2");
   auto N_dataCUT_primChi2 = dataCUT_primChi2.Count();
+  */
 
   //Make a file with only primary pions in it
-  auto data_snap_primPion = dataCUT_primChi2.Snapshot(
-      "pionana/beamana", "eventSelection_data_PRIMARYPION.root");
+  //auto data_snap_primPion = dataCUT_primChi2.Snapshot(
+  //    "pionana/beamana", "eventSelection_data_PRIMARYPION.root");
 
   //New: making a snapshot for events > APA3 cut
   //auto data_failed_APA3_cut = dataCUT_beamCut.Filter("!primary_ends_inAPA3");
@@ -394,7 +398,7 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   //auto N_data_failed_APA3 = data_failed_APA3_cut.Count();
   //std::cout << "Data failed APA3 cut: " << *N_data_failed_APA3 << std::endl;
 
-  std::cout << "Data chi2 cut: " << *N_dataCUT_primChi2 << std::endl;
+  //std::cout << "Data chi2 cut: " << *N_dataCUT_primChi2 << std::endl;
   std::cout << "Data APA3 cut: " << *N_dataCUT_endAPA3 << std::endl;
   std::cout << "Data beam cut: " << *N_dataCUT_beamCut << std::endl;
   std::cout << "Data beam type: " << *N_dataCUT_beamType << std::endl;
