@@ -301,7 +301,7 @@ auto secondary_noPion= [](
 
 
 auto has_shower_nHits = [](const std::vector<double> &track_score,
-                                  const std::vector<int> &nHits) {
+                           const std::vector<int> &nHits) {
   if(track_score.empty() || nHits.empty())
     return false;
 
@@ -317,5 +317,50 @@ auto has_shower_nHits = [](const std::vector<double> &track_score,
 };
 
 
+auto leading_proton_momentum = [](const std::vector<double> & daughter_p,
+                                  const std::vector<int> & daughter_pdg) {
+  double max_p = -1.;
+  for (size_t i = 0; i < daughter_pdg.size(); ++i) {
+    if (daughter_pdg[i] == 2212) {
+      if (daughter_p[i] > max_p)
+        max_p = daughter_p[i];
+    }
+  }
 
+  return max_p;
+};
 
+auto leading_proton_det_theta = [](const std::vector<double> & daughter_p,
+                                   const std::vector<int> & daughter_pdg,
+                                   const std::vector<double> & daughter_pz) {
+  double max_p = -1.;
+  double max_theta = -999.; 
+  for (size_t i = 0; i < daughter_pdg.size(); ++i) {
+    if (daughter_pdg[i] == 2212) {
+      if (daughter_p[i] > max_p) {
+        max_p = daughter_p[i];
+        max_theta = daughter_pz[i]/daughter_p[i];
+      }
+    }
+  }
+
+  return max_theta;
+};
+
+auto leading_proton_det_phi = [](const std::vector<double> & daughter_p,
+                                   const std::vector<int> & daughter_pdg,
+                                   const std::vector<double> & daughter_px,
+                                   const std::vector<double> & daughter_py) {
+  double max_p = -1.;
+  double max_phi = -999.; 
+  for (size_t i = 0; i < daughter_pdg.size(); ++i) {
+    if (daughter_pdg[i] == 2212) {
+      if (daughter_p[i] > max_p) {
+        max_p = daughter_p[i];
+        max_phi = atan(daughter_px[i]/daughter_py[i]) * 180. / TMath::Pi();
+      }
+    }
+  }
+
+  return max_phi;
+};

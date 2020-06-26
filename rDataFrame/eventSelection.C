@@ -15,6 +15,8 @@
 #include "eventSelection.h"
 #include <ROOT/RDataFrame.hxx>
 
+#include "TGraphAsymmErrors.h"
+
 #include "backgrounds.h"
 #include "selection_defs.h"
 
@@ -311,24 +313,9 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   auto N_mcCUT_endAPA3 = mcCUT_endAPA3.Count();
   std::cout << "MC APA3 cut: " << *N_mcCUT_endAPA3 << std::endl;
 
-  //Make sure the beam track has a pion-like chi2
-  /*
-  auto mcCUT_primChi2 = mcCUT_endAPA3.Filter("primary_passes_chi2");
-  auto N_mcCUT_primChi2 = mcCUT_primChi2.Count();
-  std::cout << "MC chi2 cut: " << *N_mcCUT_primChi2 << std::endl;
-  */
-
   //Make a file with only primary pions in it
   auto mc_snap_primPion = mcCUT_endAPA3.Snapshot(
       "pionana/beamana", "eventSelection_mc_PRIMARYPION.root");
-
-  //New: making a snapshot for events > APA3 cut
-  //auto mc_failed_APA3_cut = mcCUT_beamCut.Filter("!primary_ends_inAPA3");
-  //auto N_failed_APA3 = mc_failed_APA3_cut.Count();
-  //std::cout << "MC failed APA3 cut: " << *N_failed_APA3 << std::endl;
-  //auto mc_snap_failed_APA3 = mc_failed_APA3_cut.Snapshot(
-  //    "pionana/beamana", "eventSelection_mc_failed_APA3.root" );
-
 
   /* ****** COMBINED SAMPLE ******/
 
@@ -388,27 +375,9 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   auto dataCUT_endAPA3 = dataCUT_beamCut.Filter("primary_ends_inAPA3");
   auto N_dataCUT_endAPA3 = dataCUT_endAPA3.Count();
   
-  //Beam object has pion-like chi2
-  /*
-  auto dataCUT_primChi2 = dataCUT_endAPA3.Filter("primary_passes_chi2");
-  auto N_dataCUT_primChi2 = dataCUT_primChi2.Count();
-  */
-
-  //Make a file with only primary pions in it
-  //auto data_snap_primPion = dataCUT_primChi2.Snapshot(
-  //    "pionana/beamana", "eventSelection_data_PRIMARYPION.root");
-
-  //New: making a snapshot for events > APA3 cut
-  //auto data_failed_APA3_cut = dataCUT_beamCut.Filter("!primary_ends_inAPA3");
-  //auto data_snap_failed_APA3 = data_failed_APA3_cut.Snapshot(
-  //    "pionana/beamana", "eventSelection_data_failed_APA3.root" );
-  //auto N_data_failed_APA3 = data_failed_APA3_cut.Count();
-  //std::cout << "Data failed APA3 cut: " << *N_data_failed_APA3 << std::endl;
-
-  //std::cout << "Data chi2 cut: " << *N_dataCUT_primChi2 << std::endl;
-  std::cout << "Data APA3 cut: " << *N_dataCUT_endAPA3 << std::endl;
-  std::cout << "Data beam cut: " << *N_dataCUT_beamCut << std::endl;
-  std::cout << "Data beam type: " << *N_dataCUT_beamType << std::endl;
+ // std::cout << "Data APA3 cut: " << *N_dataCUT_endAPA3 << std::endl;
+ // std::cout << "Data beam cut: " << *N_dataCUT_beamCut << std::endl;
+ // std::cout << "Data beam type: " << *N_dataCUT_beamType << std::endl;
 
   /* ****** COMBINED SAMPLE ******/
 
@@ -457,10 +426,15 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   auto beamCut_nPi0Signal = mcCUT_beamCut.Filter("true_nPi0Signal").Count();
   auto beamCut_background = mcCUT_beamCut.Filter("true_backGround").Count();
 
-  auto endAPA3_absSignal = mcCUT_endAPA3.Filter("true_absSignal").Count();
-  auto endAPA3_chexSignal = mcCUT_endAPA3.Filter("true_chexSignal").Count();
-  auto endAPA3_nPi0Signal = mcCUT_endAPA3.Filter("true_nPi0Signal").Count();
-  auto endAPA3_background = mcCUT_endAPA3.Filter("true_backGround").Count();
+  auto endAPA3_absSignal_filter = mcCUT_endAPA3.Filter("true_absSignal")/*.Count()*/;
+  auto endAPA3_chexSignal_filter = mcCUT_endAPA3.Filter("true_chexSignal")/*.Count()*/;
+  auto endAPA3_nPi0Signal_filter = mcCUT_endAPA3.Filter("true_nPi0Signal")/*.Count()*/;
+  auto endAPA3_background_filter = mcCUT_endAPA3.Filter("true_backGround")/*.Count()*/;
+
+  auto endAPA3_absSignal =  endAPA3_absSignal_filter.Count();
+  auto endAPA3_chexSignal = endAPA3_chexSignal_filter.Count();
+  auto endAPA3_nPi0Signal = endAPA3_nPi0Signal_filter.Count();
+  auto endAPA3_background = endAPA3_background_filter.Count();
 
   auto noPionDaughter_absSignal = mcCUT_noPionDaughter.Filter("true_absSignal").Count();
   auto noPionDaughter_chexSignal = mcCUT_noPionDaughter.Filter("true_chexSignal").Count();
@@ -472,10 +446,16 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   auto chex_nPi0Signal = mcSIGNAL_cex.Filter("true_nPi0Signal").Count();
   auto chex_background = mcSIGNAL_cex.Filter("true_backGround").Count();
 
-  auto abs_absSignal = mcSIGNAL_abs.Filter("true_absSignal").Count();
-  auto abs_chexSignal = mcSIGNAL_abs.Filter("true_chexSignal").Count();
-  auto abs_nPi0Signal = mcSIGNAL_abs.Filter("true_nPi0Signal").Count();
-  auto abs_background = mcSIGNAL_abs.Filter("true_backGround").Count();
+
+  auto abs_absSignal_filter = mcSIGNAL_abs.Filter("true_absSignal");
+  auto abs_chexSignal_filter = mcSIGNAL_abs.Filter("true_chexSignal");
+  auto abs_nPi0Signal_filter = mcSIGNAL_abs.Filter("true_nPi0Signal");
+  auto abs_background_filter = mcSIGNAL_abs.Filter("true_backGround");
+
+  auto abs_absSignal =  abs_absSignal_filter.Count();
+  auto abs_chexSignal = abs_chexSignal_filter.Count();
+  auto abs_nPi0Signal = abs_nPi0Signal_filter.Count();
+  auto abs_background = abs_background_filter.Count();
   
 
   h_mc_total->SetBinContent(1 , *n_mc_all );
@@ -591,6 +571,61 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
 
   auto CUTendAPA3_cex_eff = 100* cex_signal_help / (double)(*endAPA3_chexSignal + *endAPA3_nPi0Signal);
   auto CUTendAPA3_cex_pur = 100* cex_signal_help / (double)*N_mcSIGNAL_cex;
+
+  //New efficiencies based on the number of final state protons
+  double n_selected_abs_0_proton = 
+      *abs_absSignal_filter.Filter("true_daughter_nProton == 0").Count();
+  double n_total_abs_0_proton =
+      *endAPA3_absSignal_filter.Filter("true_daughter_nProton == 0").Count();
+  double n_abs_0_proton_eff = n_selected_abs_0_proton / n_total_abs_0_proton;
+
+  auto selected_abs_1_proton = abs_absSignal_filter.Filter("true_daughter_nProton == 1");
+  double n_selected_abs_1_proton = *selected_abs_1_proton.Count();
+
+  auto total_abs_1_proton = endAPA3_absSignal_filter.Filter("true_daughter_nProton == 1");
+  double n_total_abs_1_proton = *total_abs_1_proton.Count();
+  double n_abs_1_proton_eff = n_selected_abs_1_proton / n_total_abs_1_proton;
+
+  double n_selected_abs_2_proton = 
+      *abs_absSignal_filter.Filter("true_daughter_nProton == 2").Count();
+  double n_total_abs_2_proton =
+      *endAPA3_absSignal_filter.Filter("true_daughter_nProton == 2").Count();
+  double n_abs_2_proton_eff = n_selected_abs_2_proton / n_total_abs_2_proton;
+
+  double n_selected_abs_multi_proton = 
+      *abs_absSignal_filter.Filter("true_daughter_nProton > 2").Count();
+  double n_total_abs_multi_proton =
+      *endAPA3_absSignal_filter.Filter("true_daughter_nProton > 2").Count();
+  double n_abs_multi_proton_eff = n_selected_abs_multi_proton / n_total_abs_multi_proton;
+
+  TH1D abs_selected_nProton("abs_selected_nProton", "", 4, 0, 4);
+  TH1D abs_total_nProton("abs_total_nProton", "", 4, 0, 4);
+  abs_selected_nProton.SetBinContent(1, n_selected_abs_0_proton);
+  abs_selected_nProton.SetBinContent(2, n_selected_abs_1_proton);
+  abs_selected_nProton.SetBinContent(3, n_selected_abs_2_proton);
+  abs_selected_nProton.SetBinContent(4, n_selected_abs_multi_proton);
+  abs_total_nProton.SetBinContent(1, n_total_abs_0_proton);
+  abs_total_nProton.SetBinContent(2, n_total_abs_1_proton);
+  abs_total_nProton.SetBinContent(3, n_total_abs_2_proton);
+  abs_total_nProton.SetBinContent(4, n_total_abs_multi_proton);
+
+  TGraphAsymmErrors abs_eff_nProton(&abs_selected_nProton, &abs_total_nProton);
+  abs_eff_nProton.Write("abs_eff_nProton");
+  
+  selected_abs_1_proton.Define(
+      "leading_proton_momentum", leading_proton_momentum,
+      {"true_beam_daughter_startP", "true_beam_daughter_PDG"});
+  total_abs_1_proton.Define(
+      "leading_proton_momentum", leading_proton_momentum,
+      {"true_beam_daughter_startP", "true_beam_daughter_PDG"});
+  
+  TH1D selected_abs_1_proton_leadingP = *(selected_abs_1_proton.Histo1D(
+      "leading_proton_momentum"));
+  TH1D total_abs_1_proton_leadingP = *(total_abs_1_proton.Histo1D(
+      "leading_proton_momentum"));
+  selected_abs_1_proton_leadingP.Write();
+  total_abs_1_proton_leadingP.Write();
+  /////////////////////////////////////
 
   //*******************
   //Efficiency and Purities after each Cut for Abs
@@ -777,6 +812,13 @@ int eventSelection(const string mcFile, const string dataFile = default_data,
   stack_cutFlow->Write();
   h_data_total->Write();
   output->Write();
+
+  //TH1D abs_eff_nProton("abs_eff_nproton", "", 3, 0, 2);
+  //abs_eff_nProton.SetBinContent(1, n_abs_0_proton_eff);
+  //abs_eff_nProton.SetBinContent(2, n_abs_1_proton_eff);
+  //abs_eff_nProton.SetBinContent(3, n_abs_2_proton_eff);
+  //abs_eff_nProton.Write();
+
   return 0;
 }
 
