@@ -1,0 +1,13 @@
+The scripts in this folder with .C run with the ROOT::RDataFrame
+
+The header file lambda.h contains some lambda function definitions to filter
+the Tree for events etc. plotting is done in thre .C macros.
+
+in the folder inputFile sits an inputFile.root that contains the Tree produced
+by Jakes pionAnalyzerMC_module.cxx with LArSoft. all the macros run by default
+on this. do run one of the macros do:
+
+root -l .x macroName.C
+
+if you'd like to change the input file run the macro as:
+root -l .x "macroName.C(\"path/to/file.root\")"

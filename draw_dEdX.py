@@ -1,5 +1,12 @@
-from ROOT import * 
+#from ROOT import * 
+import ROOT
 import sys
+from ROOT import gROOT
+from ROOT import gDirectory
+from ROOT import gStyle
+from ROOT import TFile
+from ROOT import TTree
+from ROOT import TCanvas
 from set_style import *
 
 gROOT.SetBatch(1)

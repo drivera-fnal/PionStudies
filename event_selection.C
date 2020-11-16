@@ -15,7 +15,7 @@ void event_selection(std::string inputFileName){
   int  true_beam_PDG;
   std::vector< double > 
   tree->SetBranchAddress( "reco_beam_good", &reco_beam_good );
-  tree->SetBranchAddress( "true_beam_PDG", &true_beam_PDG );
+  tree->SetBranchAddress( "true_beam_PDG",  &true_beam_PDG );
   tree->SetBranchAddress( "true_beam_EndProcess", &true_beam_EndProcess );
   tree->SetBranchAddress( "endZ", &endZ );
 
