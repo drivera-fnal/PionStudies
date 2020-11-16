@@ -34,13 +34,13 @@ using namespace ROOT::VecOps;
 
 using namespace std::chrono; 
 
-std::string default_data = 
-    "/Users/fstocker/cernbox/pionAnalyzer/pionAnalyzerTree/pionana_5387_1GeV_1_27_20.root";
-
+std::string default_data = "/dune/data2/users/drivera/ProtoDUNE/MCC12/pionana_5387_7_1_20.root";
+    //"/Users/fstocker/cernbox/pionAnalyzer/pionAnalyzerTree/pionana_5387_1GeV_1_27_20.root";
+std::string default_mc = "/dune/data2/users/drivera/ProtoDUNE/MCC12/pionana_mc_1GeV_6_30_20.root";
 
 //***********************
 //Main Function
-int eventSelection(const string mcFile, const string dataFile = default_data,
+int eventSelection(const string mcFile = default_mc, const string dataFile = default_data,
                    bool doCounting = true, bool doBatch = false) {
 
   //This prevents the canvas from being draw at the end
